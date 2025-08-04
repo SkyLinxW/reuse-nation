@@ -61,7 +61,24 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				eco: {
+					green: 'hsl(var(--eco-green))',
+					'green-light': 'hsl(var(--eco-green-light))',
+					'green-dark': 'hsl(var(--eco-green-dark))',
+					brown: 'hsl(var(--eco-brown))',
+					'brown-light': 'hsl(var(--eco-brown-light))',
+					orange: 'hsl(var(--eco-orange))',
+					blue: 'hsl(var(--eco-blue))'
 				}
+			},
+			backgroundImage: {
+				'gradient-eco': 'var(--gradient-eco)',
+				'gradient-earth': 'var(--gradient-earth)'
+			},
+			boxShadow: {
+				'eco': 'var(--shadow-eco)',
+				'soft': 'var(--shadow-soft)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

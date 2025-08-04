@@ -1,12 +1,19 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from 'react';
+import { Header } from '@/components/Header';
+import { HomePage } from '@/pages/HomePage';
 
 const Index = () => {
+  const [currentPage, setCurrentPage] = useState('home');
+
+  const handleNavigate = (page: string) => {
+    setCurrentPage(page);
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Header onNavigate={handleNavigate} currentPage={currentPage} />
+      {currentPage === 'home' && <HomePage onNavigate={handleNavigate} />}
+      {/* Outras páginas serão implementadas gradualmente */}
     </div>
   );
 };

@@ -8,33 +8,50 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 45 15% 97%;
+    --foreground: 120 15% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 120 15% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 120 15% 15%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 142 76% 36%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 120 20% 92%;
+    --secondary-foreground: 120 15% 15%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 120 20% 92%;
+    --muted-foreground: 120 10% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 35 91% 65%;
+    --accent-foreground: 120 15% 15%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 120 20% 85%;
+    --input: 120 20% 85%;
+    --ring: 142 76% 36%;
+
+    /* Eco colors */
+    --eco-green: 142 76% 36%;
+    --eco-green-light: 142 60% 85%;
+    --eco-green-dark: 142 85% 25%;
+    --eco-brown: 35 45% 55%;
+    --eco-brown-light: 35 35% 85%;
+    --eco-orange: 35 91% 65%;
+    --eco-blue: 200 85% 45%;
+
+    /* Gradients */
+    --gradient-eco: linear-gradient(135deg, hsl(var(--eco-green)), hsl(var(--eco-blue)));
+    --gradient-earth: linear-gradient(180deg, hsl(var(--eco-brown-light)), hsl(var(--eco-brown)));
+
+    /* Shadows */
+    --shadow-eco: 0 10px 30px -10px hsl(var(--eco-green) / 0.3);
+    --shadow-soft: 0 4px 20px -5px hsl(var(--eco-green) / 0.15);
 
     --radius: 0.5rem;
 
