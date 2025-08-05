@@ -7,9 +7,9 @@ import { getCurrentUser, toggleFavorite, getFavorites } from '@/lib/localStorage
 import { useState } from 'react';
 
 interface WasteCardProps {
-  item: WasteItem;
-  onItemClick: (id: string) => void;
-  onContactSeller: (sellerId: string, itemId: string) => void;
+  waste: WasteItem;
+  onNavigate: (page: string) => void;
+  showActions?: boolean;
 }
 
 const categoryLabels = {
@@ -37,7 +37,7 @@ const conditionColors = {
   contaminado: 'bg-destructive text-destructive-foreground'
 };
 
-export const WasteCard = ({ item, onItemClick, onContactSeller }: WasteCardProps) => {
+export const WasteCard = ({ waste, onNavigate, showActions = true }: WasteCardProps) => {
   const currentUser = getCurrentUser();
   const [isFavorited, setIsFavorited] = useState(
     currentUser ? getFavorites(currentUser.id).includes(item.id) : false
