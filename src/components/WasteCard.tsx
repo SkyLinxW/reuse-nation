@@ -1,10 +1,11 @@
-import { Heart, MapPin, Eye, Clock } from 'lucide-react';
+import { Heart, MapPin, Eye, Clock, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { WasteItem } from '@/types';
-import { getCurrentUser, toggleFavorite, getFavorites } from '@/lib/localStorage';
+import { getCurrentUser, toggleFavorite, getFavorites, addToCart } from '@/lib/localStorage';
 import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 interface WasteCardProps {
   waste: WasteItem;
@@ -41,6 +42,7 @@ const conditionColors = {
 
 export const WasteCard = ({ waste, onNavigate, onItemClick, onContactSeller, showActions = true }: WasteCardProps) => {
   const currentUser = getCurrentUser();
+  const { toast } = useToast();
   const [isFavorited, setIsFavorited] = useState(
     currentUser ? getFavorites(currentUser.id).includes(waste.id) : false
   );
@@ -51,6 +53,17 @@ export const WasteCard = ({ waste, onNavigate, onItemClick, onContactSeller, sho
     
     toggleFavorite(currentUser.id, waste.id);
     setIsFavorited(!isFavorited);
+  };
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!currentUser) return;
+    
+    addToCart(currentUser.id, waste.id, 1);
+    toast({
+      title: "Adicionado ao carrinho",
+      description: `${waste.title} foi adicionado ao seu carrinho.`,
+    });
   };
 
   const formatPrice = (price: number) => {
@@ -156,15 +169,25 @@ export const WasteCard = ({ waste, onNavigate, onItemClick, onContactSeller, sho
           </Button>
           
           {currentUser && currentUser.id !== waste.sellerId && (
-            <Button 
-              className="flex-1 bg-gradient-eco hover:opacity-90"
-              onClick={(e) => {
-                e.stopPropagation();
-                onContactSeller?.(waste.sellerId, waste.id);
-              }}
-            >
-              Contatar
-            </Button>
+            <>
+              <Button 
+                variant="outline"
+                className="flex-1"
+                onClick={handleAddToCart}
+              >
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                Carrinho
+              </Button>
+              <Button 
+                className="flex-1 bg-gradient-eco hover:opacity-90"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onContactSeller?.(waste.sellerId, waste.id);
+                }}
+              >
+                Contatar
+              </Button>
+            </>
           )}
         </div>
       </CardFooter>

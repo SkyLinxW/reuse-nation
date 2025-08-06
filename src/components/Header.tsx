@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { Search, Menu, User, Heart, MessageCircle, Plus } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Menu, User, Heart, MessageCircle, Plus, ShoppingCart, Bell, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -10,7 +11,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { getCurrentUser, setCurrentUser } from '@/lib/localStorage';
+import { 
+  getCurrentUser, 
+  setCurrentUser, 
+  getCartItems, 
+  getUnreadNotificationCount 
+} from '@/lib/localStorage';
 import ecoLogo from '@/assets/eco-marketplace-logo.png';
 
 interface HeaderProps {
@@ -20,7 +26,19 @@ interface HeaderProps {
 
 export const Header = ({ onNavigate, currentPage }: HeaderProps) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [cartCount, setCartCount] = useState(0);
+  const [notificationCount, setNotificationCount] = useState(0);
   const currentUser = getCurrentUser();
+
+  useEffect(() => {
+    if (currentUser) {
+      setCartCount(getCartItems(currentUser.id).length);
+      setNotificationCount(getUnreadNotificationCount(currentUser.id));
+    } else {
+      setCartCount(0);
+      setNotificationCount(0);
+    }
+  }, [currentUser]);
 
   const handleLogout = () => {
     setCurrentUser(null);
@@ -68,6 +86,42 @@ export const Header = ({ onNavigate, currentPage }: HeaderProps) => {
           <div className="flex items-center gap-2">
             {currentUser ? (
               <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onNavigate('cart')}
+                  className={`relative ${currentPage === 'cart' ? 'bg-eco-green-light' : ''}`}
+                >
+                  <ShoppingCart className="w-4 h-4" />
+                  {cartCount > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                    >
+                      {cartCount}
+                    </Badge>
+                  )}
+                  <span className="hidden md:inline ml-2">Carrinho</span>
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onNavigate('notifications')}
+                  className={`relative ${currentPage === 'notifications' ? 'bg-eco-green-light' : ''}`}
+                >
+                  <Bell className="w-4 h-4" />
+                  {notificationCount > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                    >
+                      {notificationCount}
+                    </Badge>
+                  )}
+                  <span className="hidden md:inline ml-2">Notificações</span>
+                </Button>
+
                 <Button
                   variant="ghost"
                   size="sm"

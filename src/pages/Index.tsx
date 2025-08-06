@@ -6,6 +6,8 @@ import { RegisterPage } from '@/pages/RegisterPage';
 import { CreateListingPage } from '@/pages/CreateListingPage';
 import { ProductDetailsPage } from '@/pages/ProductDetailsPage';
 import { FavoritesPage } from '@/pages/FavoritesPage';
+import { CartPage } from '@/pages/CartPage';
+import { NotificationsPage } from '@/pages/NotificationsPage';
 import { MyListingsPage } from '@/pages/MyListingsPage';
 import { MessagesPage } from '@/pages/MessagesPage';
 import { TransactionsPage } from '@/pages/TransactionsPage';
@@ -50,6 +52,10 @@ const Index = () => {
         return <ProductDetailsPage onNavigate={handleNavigate} productId={pageParams.id || ''} />;
       case 'favorites':
         return <FavoritesPage onNavigate={handleNavigate} />;
+      case 'cart':
+        return <CartPage onNavigate={handleNavigate} />;
+      case 'notifications':
+        return <NotificationsPage onNavigate={handleNavigate} />;
       case 'my-listings':
         return <MyListingsPage onNavigate={handleNavigate} />;
       case 'messages':

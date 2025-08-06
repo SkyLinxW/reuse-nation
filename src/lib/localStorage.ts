@@ -1,5 +1,25 @@
 import { User, WasteItem, Transaction, Chat, ChatMessage, Review, EcoImpact } from '@/types';
 
+// Cart item interface
+export interface CartItem {
+  id: string;
+  wasteItemId: string;
+  quantity: number;
+  addedAt: string;
+}
+
+// Notification interface
+export interface Notification {
+  id: string;
+  userId: string;
+  type: 'purchase' | 'sale' | 'message' | 'favorite' | 'review';
+  title: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+  relatedId?: string;
+}
+
 // Local Storage keys
 const STORAGE_KEYS = {
   USERS: 'eco_marketplace_users',
@@ -10,7 +30,9 @@ const STORAGE_KEYS = {
   CHAT_MESSAGES: 'eco_marketplace_chat_messages',
   REVIEWS: 'eco_marketplace_reviews',
   ECO_IMPACT: 'eco_marketplace_eco_impact',
-  FAVORITES: 'eco_marketplace_favorites'
+  FAVORITES: 'eco_marketplace_favorites',
+  CART: 'eco_marketplace_cart',
+  NOTIFICATIONS: 'eco_marketplace_notifications'
 };
 
 // Generic storage functions
@@ -345,4 +367,197 @@ export const initializeDemoData = (): void => {
     
     demoItems.forEach(saveWasteItem);
   }
+};
+
+// Cart functions
+export const getCartItems = (userId: string): CartItem[] => {
+  const carts = getFromStorage<Record<string, CartItem[]>>(STORAGE_KEYS.CART);
+  const userCart = carts.find(c => Object.keys(c)[0] === userId);
+  return userCart ? userCart[userId] : [];
+};
+
+export const addToCart = (userId: string, wasteItemId: string, quantity: number = 1): void => {
+  let carts = getFromStorage<Record<string, CartItem[]>>(STORAGE_KEYS.CART);
+  const userCart = getCartItems(userId);
+  
+  const existingItem = userCart.find(item => item.wasteItemId === wasteItemId);
+  
+  if (existingItem) {
+    existingItem.quantity += quantity;
+  } else {
+    userCart.push({
+      id: Date.now().toString(),
+      wasteItemId,
+      quantity,
+      addedAt: new Date().toISOString()
+    });
+  }
+  
+  carts = carts.filter(c => Object.keys(c)[0] !== userId);
+  carts.push({ [userId]: userCart });
+  saveToStorage(STORAGE_KEYS.CART, carts);
+};
+
+export const removeFromCart = (userId: string, wasteItemId: string): void => {
+  let carts = getFromStorage<Record<string, CartItem[]>>(STORAGE_KEYS.CART);
+  const userCart = getCartItems(userId).filter(item => item.wasteItemId !== wasteItemId);
+  
+  carts = carts.filter(c => Object.keys(c)[0] !== userId);
+  carts.push({ [userId]: userCart });
+  saveToStorage(STORAGE_KEYS.CART, carts);
+};
+
+export const updateCartQuantity = (userId: string, wasteItemId: string, quantity: number): void => {
+  let carts = getFromStorage<Record<string, CartItem[]>>(STORAGE_KEYS.CART);
+  const userCart = getCartItems(userId);
+  
+  const item = userCart.find(item => item.wasteItemId === wasteItemId);
+  if (item) {
+    item.quantity = quantity;
+  }
+  
+  carts = carts.filter(c => Object.keys(c)[0] !== userId);
+  carts.push({ [userId]: userCart });
+  saveToStorage(STORAGE_KEYS.CART, carts);
+};
+
+export const clearCart = (userId: string): void => {
+  let carts = getFromStorage<Record<string, CartItem[]>>(STORAGE_KEYS.CART);
+  carts = carts.filter(c => Object.keys(c)[0] !== userId);
+  saveToStorage(STORAGE_KEYS.CART, carts);
+};
+
+export const getCartTotal = (userId: string): number => {
+  const cartItems = getCartItems(userId);
+  return cartItems.reduce((total, cartItem) => {
+    const wasteItem = getWasteItemById(cartItem.wasteItemId);
+    if (wasteItem) {
+      return total + (wasteItem.price * cartItem.quantity);
+    }
+    return total;
+  }, 0);
+};
+
+// Notification functions
+export const getNotifications = (userId: string): Notification[] => {
+  const notifications = getFromStorage<Notification>(STORAGE_KEYS.NOTIFICATIONS);
+  return notifications.filter(n => n.userId === userId).sort((a, b) => 
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+};
+
+export const createNotification = (notification: Notification): void => {
+  const notifications = getFromStorage<Notification>(STORAGE_KEYS.NOTIFICATIONS);
+  notifications.push(notification);
+  saveToStorage(STORAGE_KEYS.NOTIFICATIONS, notifications);
+};
+
+export const markNotificationAsRead = (notificationId: string): void => {
+  const notifications = getFromStorage<Notification>(STORAGE_KEYS.NOTIFICATIONS);
+  const notification = notifications.find(n => n.id === notificationId);
+  if (notification) {
+    notification.read = true;
+    saveToStorage(STORAGE_KEYS.NOTIFICATIONS, notifications);
+  }
+};
+
+export const getUnreadNotificationCount = (userId: string): number => {
+  const notifications = getNotifications(userId);
+  return notifications.filter(n => !n.read).length;
+};
+
+// Purchase function
+export const createPurchaseTransaction = (
+  buyerId: string,
+  cartItems: CartItem[],
+  paymentMethod: Transaction['paymentMethod'],
+  deliveryMethod: Transaction['deliveryMethod']
+): Transaction[] => {
+  const transactions: Transaction[] = [];
+  
+  cartItems.forEach(cartItem => {
+    const wasteItem = getWasteItemById(cartItem.wasteItemId);
+    if (wasteItem) {
+      const transaction: Transaction = {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        buyerId,
+        sellerId: wasteItem.sellerId,
+        wasteItemId: wasteItem.id,
+        quantity: cartItem.quantity,
+        totalPrice: wasteItem.price * cartItem.quantity,
+        status: 'pendente',
+        paymentMethod,
+        deliveryMethod,
+        createdAt: new Date().toISOString()
+      };
+      
+      saveTransaction(transaction);
+      transactions.push(transaction);
+      
+      // Update eco impact
+      updateEcoImpact(transaction, wasteItem);
+      
+      // Create notifications
+      createNotification({
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        userId: buyerId,
+        type: 'purchase',
+        title: 'Compra realizada',
+        message: `Sua compra de ${wasteItem.title} foi processada com sucesso!`,
+        read: false,
+        createdAt: new Date().toISOString(),
+        relatedId: transaction.id
+      });
+      
+      createNotification({
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        userId: wasteItem.sellerId,
+        type: 'sale',
+        title: 'Nova venda',
+        message: `Você vendeu ${wasteItem.title}!`,
+        read: false,
+        createdAt: new Date().toISOString(),
+        relatedId: transaction.id
+      });
+    }
+  });
+  
+  return transactions;
+};
+
+// Recommendation engine
+export const getRecommendedItems = (userId: string): WasteItem[] => {
+  const userTransactions = getUserTransactions(userId);
+  const userFavorites = getFavorites(userId);
+  const allItems = getWasteItems().filter(item => item.isActive && item.sellerId !== userId);
+  
+  // Get categories from user's previous purchases and favorites
+  const userCategories = new Set([
+    ...userTransactions.map(t => {
+      const item = getWasteItemById(t.wasteItemId);
+      return item?.category;
+    }).filter(Boolean),
+    ...userFavorites.map(id => {
+      const item = getWasteItemById(id);
+      return item?.category;
+    }).filter(Boolean)
+  ]);
+  
+  // Recommend items from similar categories
+  const recommended = allItems
+    .filter(item => userCategories.has(item.category))
+    .sort((a, b) => b.views - a.views)
+    .slice(0, 6);
+  
+  // If not enough recommendations, add popular items
+  if (recommended.length < 6) {
+    const popularItems = allItems
+      .filter(item => !recommended.includes(item))
+      .sort((a, b) => b.views - a.views)
+      .slice(0, 6 - recommended.length);
+    
+    recommended.push(...popularItems);
+  }
+  
+  return recommended;
 };
