@@ -40,7 +40,7 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
       }).filter(item => item.wasteItem);
       setCartItems(itemsWithDetails);
     }
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   const handleQuantityChange = (wasteItemId: string, newQuantity: number) => {
     if (!currentUser || newQuantity < 1) return;

@@ -156,20 +156,19 @@ export const WasteCard = ({ waste, onNavigate, onItemClick, onContactSeller, sho
       </CardContent>
 
       <CardFooter className="p-4 pt-0">
-        <div className="flex gap-2 w-full">
-          <Button 
-            variant="outline" 
-            className="flex-1"
-            onClick={(e) => {
-              e.stopPropagation();
-              onItemClick?.(waste.id);
-            }}
-          >
-            Ver Detalhes
-          </Button>
-          
-          {currentUser && currentUser.id !== waste.sellerId && (
-            <>
+        {currentUser && currentUser.id !== waste.sellerId ? (
+          <div className="flex flex-col gap-2 w-full">
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={(e) => {
+                e.stopPropagation();
+                onItemClick?.(waste.id);
+              }}
+            >
+              Ver Detalhes
+            </Button>
+            <div className="flex gap-2">
               <Button 
                 variant="outline"
                 className="flex-1"
@@ -187,9 +186,20 @@ export const WasteCard = ({ waste, onNavigate, onItemClick, onContactSeller, sho
               >
                 Contatar
               </Button>
-            </>
-          )}
-        </div>
+            </div>
+          </div>
+        ) : (
+          <Button 
+            variant="outline" 
+            className="w-full"
+            onClick={(e) => {
+              e.stopPropagation();
+              onItemClick?.(waste.id);
+            }}
+          >
+            Ver Detalhes
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );
