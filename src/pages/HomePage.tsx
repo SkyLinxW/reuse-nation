@@ -220,7 +220,8 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
                   {filteredItems.map(item => (
                     <WasteCard
                       key={item.id}
-                      item={item}
+                      waste={item}
+                      onNavigate={onNavigate}
                       onItemClick={handleItemClick}
                       onContactSeller={handleContactSeller}
                     />

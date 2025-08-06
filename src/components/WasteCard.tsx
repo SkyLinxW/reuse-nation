@@ -9,6 +9,8 @@ import { useState } from 'react';
 interface WasteCardProps {
   waste: WasteItem;
   onNavigate: (page: string) => void;
+  onItemClick?: (id: string) => void;
+  onContactSeller?: (sellerId: string, itemId: string) => void;
   showActions?: boolean;
 }
 
@@ -37,17 +39,17 @@ const conditionColors = {
   contaminado: 'bg-destructive text-destructive-foreground'
 };
 
-export const WasteCard = ({ waste, onNavigate, showActions = true }: WasteCardProps) => {
+export const WasteCard = ({ waste, onNavigate, onItemClick, onContactSeller, showActions = true }: WasteCardProps) => {
   const currentUser = getCurrentUser();
   const [isFavorited, setIsFavorited] = useState(
-    currentUser ? getFavorites(currentUser.id).includes(item.id) : false
+    currentUser ? getFavorites(currentUser.id).includes(waste.id) : false
   );
 
   const handleFavoriteToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!currentUser) return;
     
-    toggleFavorite(currentUser.id, item.id);
+    toggleFavorite(currentUser.id, waste.id);
     setIsFavorited(!isFavorited);
   };
 
@@ -69,18 +71,18 @@ export const WasteCard = ({ waste, onNavigate, showActions = true }: WasteCardPr
   return (
     <Card 
       className="hover:shadow-eco transition-all duration-300 cursor-pointer group border-border"
-      onClick={() => onItemClick(item.id)}
+      onClick={() => onItemClick?.(waste.id)}
     >
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-3">
           <div className="flex gap-2">
             <Badge variant="secondary" className="text-xs">
-              {categoryLabels[item.category]}
+              {categoryLabels[waste.category]}
             </Badge>
             <Badge 
-              className={`text-xs ${conditionColors[item.condition]}`}
+              className={`text-xs ${conditionColors[waste.condition]}`}
             >
-              {conditionLabels[item.condition]}
+              {conditionLabels[waste.condition]}
             </Badge>
           </div>
           
@@ -99,25 +101,25 @@ export const WasteCard = ({ waste, onNavigate, showActions = true }: WasteCardPr
         </div>
 
         <h3 className="font-semibold text-lg mb-2 group-hover:text-eco-green transition-colors line-clamp-2">
-          {item.title}
+          {waste.title}
         </h3>
 
         <p className="text-muted-foreground text-sm mb-3 line-clamp-3">
-          {item.description}
+          {waste.description}
         </p>
 
         <div className="space-y-2 mb-3">
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">Quantidade:</span>
             <span className="text-sm font-medium">
-              {item.quantity.value} {item.quantity.unit}
+              {waste.quantity.value} {waste.quantity.unit}
             </span>
           </div>
           
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Preço por {item.quantity.unit}:</span>
+            <span className="text-sm text-muted-foreground">Preço por {waste.quantity.unit}:</span>
             <span className="text-lg font-bold text-eco-green">
-              {formatPrice(item.price)}
+              {formatPrice(waste.price)}
             </span>
           </div>
         </div>
@@ -125,17 +127,17 @@ export const WasteCard = ({ waste, onNavigate, showActions = true }: WasteCardPr
         <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
           <div className="flex items-center gap-1">
             <MapPin className="w-3 h-3" />
-            <span>{item.location.city}, {item.location.state}</span>
+            <span>{waste.location.city}, {waste.location.state}</span>
           </div>
           
           <div className="flex items-center gap-1">
             <Eye className="w-3 h-3" />
-            <span>{item.views} visualizações</span>
+            <span>{waste.views} visualizações</span>
           </div>
           
           <div className="flex items-center gap-1">
             <Clock className="w-3 h-3" />
-            <span>{formatDate(item.createdAt)}</span>
+            <span>{formatDate(waste.createdAt)}</span>
           </div>
         </div>
       </CardContent>
@@ -147,18 +149,18 @@ export const WasteCard = ({ waste, onNavigate, showActions = true }: WasteCardPr
             className="flex-1"
             onClick={(e) => {
               e.stopPropagation();
-              onItemClick(item.id);
+              onItemClick?.(waste.id);
             }}
           >
             Ver Detalhes
           </Button>
           
-          {currentUser && currentUser.id !== item.sellerId && (
+          {currentUser && currentUser.id !== waste.sellerId && (
             <Button 
               className="flex-1 bg-gradient-eco hover:opacity-90"
               onClick={(e) => {
                 e.stopPropagation();
-                onContactSeller(item.sellerId, item.id);
+                onContactSeller?.(waste.sellerId, waste.id);
               }}
             >
               Contatar
