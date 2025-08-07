@@ -309,6 +309,60 @@ export const initializeDemoData = (): void => {
         reviewCount: 89,
         createdAt: new Date().toISOString(),
         isVerified: true
+      },
+      {
+        id: '3',
+        name: 'GreenTech Soluções',
+        email: 'contato@greentech.com',
+        phone: '(11) 7777-7777',
+        userType: 'pessoa_juridica',
+        cnpj: '98.765.432/0001-10',
+        address: {
+          street: 'Av. Sustentável, 789',
+          city: 'Curitiba',
+          state: 'PR',
+          zipCode: '80000-000'
+        },
+        rating: 4.7,
+        reviewCount: 203,
+        createdAt: new Date().toISOString(),
+        isVerified: true
+      },
+      {
+        id: '4',
+        name: 'João Santos',
+        email: 'joao@email.com',
+        phone: '(85) 6666-6666',
+        userType: 'pessoa_fisica',
+        cpf: '987.654.321-00',
+        address: {
+          street: 'Rua Recicla, 321',
+          city: 'Fortaleza',
+          state: 'CE',
+          zipCode: '60000-000'
+        },
+        rating: 4.6,
+        reviewCount: 67,
+        createdAt: new Date().toISOString(),
+        isVerified: true
+      },
+      {
+        id: '5',
+        name: 'ReciclaMax',
+        email: 'vendas@reciclamax.com',
+        phone: '(51) 5555-5555',
+        userType: 'pessoa_juridica',
+        cnpj: '11.222.333/0001-44',
+        address: {
+          street: 'Rua da Reciclagem, 100',
+          city: 'Porto Alegre',
+          state: 'RS',
+          zipCode: '90000-000'
+        },
+        rating: 4.9,
+        reviewCount: 345,
+        createdAt: new Date().toISOString(),
+        isVerified: true
       }
     ];
     
@@ -362,6 +416,132 @@ export const initializeDemoData = (): void => {
         updatedAt: new Date().toISOString(),
         views: 87,
         favorites: 5
+      },
+      {
+        id: '3',
+        sellerId: '3',
+        title: 'Papel Offset Branco',
+        description: 'Aparas de papel offset branco de alta qualidade. Ideal para produção de papel reciclado.',
+        category: 'papel',
+        subcategory: 'Papel branco',
+        quantity: { value: 300, unit: 'kg' },
+        condition: 'sobras_limpas',
+        price: 1.80,
+        images: [],
+        location: {
+          city: 'Curitiba',
+          state: 'PR'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 156,
+        favorites: 8
+      },
+      {
+        id: '4',
+        sellerId: '4',
+        title: 'Alumínio Recuperado',
+        description: 'Latas de alumínio prensadas e limpas. Perfeitas para reciclagem industrial.',
+        category: 'metais',
+        subcategory: 'Alumínio',
+        quantity: { value: 150, unit: 'kg' },
+        condition: 'usado',
+        price: 4.20,
+        images: [],
+        location: {
+          city: 'Fortaleza',
+          state: 'CE'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 298,
+        favorites: 18
+      },
+      {
+        id: '5',
+        sellerId: '5',
+        title: 'Tecido de Algodão',
+        description: 'Retalhos de tecido de algodão 100% natural. Cores variadas, ideal para artesanato.',
+        category: 'tecidos',
+        subcategory: 'Algodão',
+        quantity: { value: 50, unit: 'kg' },
+        condition: 'novo',
+        price: 8.00,
+        images: [],
+        location: {
+          city: 'Porto Alegre',
+          state: 'RS'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 72,
+        favorites: 15
+      },
+      {
+        id: '6',
+        sellerId: '1',
+        title: 'Componentes Eletrônicos',
+        description: 'Circuitos e componentes eletrônicos para recuperação de metais preciosos.',
+        category: 'eletronicos',
+        subcategory: 'Circuitos',
+        quantity: { value: 25, unit: 'kg' },
+        condition: 'usado',
+        price: 12.50,
+        images: [],
+        location: {
+          city: 'São Paulo',
+          state: 'SP'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 189,
+        favorites: 22
+      },
+      {
+        id: '7',
+        sellerId: '2',
+        title: 'Restos Orgânicos Compostáveis',
+        description: 'Material orgânico ideal para compostagem. Livre de contaminantes químicos.',
+        category: 'organicos',
+        subcategory: 'Restos vegetais',
+        quantity: { value: 100, unit: 'kg' },
+        condition: 'novo',
+        price: 0.50,
+        images: [],
+        location: {
+          city: 'Rio de Janeiro',
+          state: 'RJ'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 45,
+        favorites: 3
+      },
+      {
+        id: '8',
+        sellerId: '3',
+        title: 'Cobre Recuperado',
+        description: 'Fios de cobre recuperados de instalações elétricas. Alta pureza.',
+        category: 'metais',
+        subcategory: 'Cobre',
+        quantity: { value: 80, unit: 'kg' },
+        condition: 'usado',
+        price: 18.00,
+        images: [],
+        location: {
+          city: 'Curitiba',
+          state: 'PR'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 267,
+        favorites: 31
       }
     ];
     
