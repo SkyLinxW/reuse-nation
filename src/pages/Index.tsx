@@ -12,6 +12,7 @@ import { MyListingsPage } from '@/pages/MyListingsPage';
 import { MessagesPage } from '@/pages/MessagesPage';
 import { TransactionsPage } from '@/pages/TransactionsPage';
 import { ProfilePage } from '@/pages/ProfilePage';
+import { SellerProfilePage } from '@/pages/SellerProfilePage';
 import { initializeDemoData } from '@/lib/localStorage';
 
 const Index = () => {
@@ -64,6 +65,8 @@ const Index = () => {
         return <TransactionsPage onNavigate={handleNavigate} />;
       case 'profile':
         return <ProfilePage onNavigate={handleNavigate} />;
+      case 'seller-profile':
+        return <SellerProfilePage onNavigate={handleNavigate} sellerId={pageParams.id || ''} />;
       default:
         return <HomePage onNavigate={handleNavigate} />;
     }

@@ -366,14 +366,21 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
                 </Badge>
               )}
 
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={handleStartChat}
-              >
-                <MessageCircle className="w-4 h-4 mr-2" />
-                Conversar
-              </Button>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => onNavigate(`seller-profile?id=${seller.id}`)}
+                >
+                  Ver Perfil
+                </Button>
+                <Button
+                  className="bg-gradient-eco hover:opacity-90"
+                  onClick={handleStartChat}
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Chat
+                </Button>
+              </div>
             </CardContent>
           </Card>
 

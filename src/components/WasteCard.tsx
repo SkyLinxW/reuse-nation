@@ -163,7 +163,7 @@ export const WasteCard = ({ waste, onNavigate, onItemClick, onContactSeller, sho
               className="w-full"
               onClick={(e) => {
                 e.stopPropagation();
-                onItemClick?.(waste.id);
+                onNavigate(`product?id=${waste.id}`);
               }}
             >
               Ver Detalhes
@@ -194,7 +194,7 @@ export const WasteCard = ({ waste, onNavigate, onItemClick, onContactSeller, sho
             className="w-full"
             onClick={(e) => {
               e.stopPropagation();
-              onItemClick?.(waste.id);
+              onNavigate(`product?id=${waste.id}`);
             }}
           >
             Ver Detalhes

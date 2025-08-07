@@ -194,6 +194,15 @@ export const getUserReviews = (userId: string): Review[] => {
   return reviews.filter(r => r.reviewedUserId === userId);
 };
 
+export const getReviewsByUser = (userId: string): Review[] => {
+  return getUserReviews(userId);
+};
+
+export const getWasteItemsBySeller = (sellerId: string): WasteItem[] => {
+  const items = getFromStorage<WasteItem>(STORAGE_KEYS.WASTE_ITEMS);
+  return items.filter(item => item.sellerId === sellerId);
+};
+
 // Favorites functions
 export const getFavorites = (userId: string): string[] => {
   const favorites = getFromStorage<Record<string, string[]>>(STORAGE_KEYS.FAVORITES);
@@ -490,6 +499,426 @@ export const initializeDemoData = (): void => {
         quantity: { value: 25, unit: 'kg' },
         condition: 'usado',
         price: 12.50,
+        images: [],
+        location: {
+          city: 'São Paulo',
+          state: 'SP'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 189,
+        favorites: 7
+      },
+      {
+        id: '7',
+        sellerId: '2',
+        title: 'Madeira de Modelismo MDF',
+        description: 'Placas de MDF cortadas especialmente para projetos de modelismo e artesanato. Espessuras variadas de 3mm a 15mm.',
+        category: 'madeira',
+        subcategory: 'MDF',
+        quantity: { value: 50, unit: 'unidades' },
+        condition: 'novo',
+        price: 8.99,
+        images: [],
+        location: {
+          city: 'Rio de Janeiro',
+          state: 'RJ'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 324,
+        favorites: 28
+      },
+      {
+        id: '8',
+        sellerId: '3',
+        title: 'Restos de Ferro Fundido',
+        description: 'Peças de ferro fundido de demolição industrial. Excelente para refundição ou projetos de metalurgia.',
+        category: 'metais',
+        subcategory: 'Ferro',
+        quantity: { value: 1.5, unit: 'toneladas' },
+        condition: 'usado',
+        price: 850.00,
+        images: [],
+        location: {
+          city: 'Curitiba',
+          state: 'PR'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 145,
+        favorites: 9
+      },
+      {
+        id: '9',
+        sellerId: '4',
+        title: 'Papel Kraft Marrom',
+        description: 'Bobinas de papel kraft marrom usadas, ideais para embalagens ecológicas e projetos sustentáveis.',
+        category: 'papel',
+        subcategory: 'Kraft',
+        quantity: { value: 800, unit: 'kg' },
+        condition: 'usado',
+        price: 1.20,
+        images: [],
+        location: {
+          city: 'Fortaleza',
+          state: 'CE'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 267,
+        favorites: 11
+      },
+      {
+        id: '10',
+        sellerId: '5',
+        title: 'Resíduos de Jeans',
+        description: 'Retalhos de jeans 100% algodão de confecção. Perfeito para patchwork e upcycling de roupas.',
+        category: 'tecidos',
+        subcategory: 'Jeans',
+        quantity: { value: 120, unit: 'kg' },
+        condition: 'sobras_limpas',
+        price: 6.50,
+        images: [],
+        location: {
+          city: 'Porto Alegre',
+          state: 'RS'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 198,
+        favorites: 22
+      },
+      {
+        id: '11',
+        sellerId: '1',
+        title: 'Plástico HDPE Colorido',
+        description: 'Fragmentos de HDPE em diversas cores provenientes de reciclagem de brinquedos e utilidades domésticas.',
+        category: 'plasticos',
+        subcategory: 'HDPE',
+        quantity: { value: 350, unit: 'kg' },
+        condition: 'sobras_limpas',
+        price: 3.20,
+        images: [],
+        location: {
+          city: 'São Paulo',
+          state: 'SP'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 412,
+        favorites: 31
+      },
+      {
+        id: '12',
+        sellerId: '2',
+        title: 'Madeira de Eucalipto',
+        description: 'Toras de eucalipto tratado, ideais para construção civil e móveis rústicos. Madeira seca e pronta para uso.',
+        category: 'madeira',
+        subcategory: 'Eucalipto',
+        quantity: { value: 8, unit: 'm3' },
+        condition: 'usado',
+        price: 220.00,
+        images: [],
+        location: {
+          city: 'Rio de Janeiro',
+          state: 'RJ'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 167,
+        favorites: 13
+      },
+      {
+        id: '13',
+        sellerId: '3',
+        title: 'Sucata de Cobre',
+        description: 'Fios e tubos de cobre recuperados de instalações elétricas e hidráulicas. Material de alta pureza.',
+        category: 'metais',
+        subcategory: 'Cobre',
+        quantity: { value: 85, unit: 'kg' },
+        condition: 'usado',
+        price: 28.50,
+        images: [],
+        location: {
+          city: 'Curitiba',
+          state: 'PR'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 389,
+        favorites: 47
+      },
+      {
+        id: '14',
+        sellerId: '4',
+        title: 'Papelão Ondulado',
+        description: 'Caixas de papelão ondulado desmontadas e prensadas. Excelente para reciclagem ou reutilização.',
+        category: 'papel',
+        subcategory: 'Papelão',
+        quantity: { value: 600, unit: 'kg' },
+        condition: 'usado',
+        price: 0.80,
+        images: [],
+        location: {
+          city: 'Fortaleza',
+          state: 'CE'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 234,
+        favorites: 8
+      },
+      {
+        id: '15',
+        sellerId: '5',
+        title: 'Tecido de Poliéster',
+        description: 'Sobras de tecido de poliéster de estamparia digital. Cores vibrantes e qualidade premium.',
+        category: 'tecidos',
+        subcategory: 'Poliéster',
+        quantity: { value: 75, unit: 'kg' },
+        condition: 'novo',
+        price: 12.00,
+        images: [],
+        location: {
+          city: 'Porto Alegre',
+          state: 'RS'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 156,
+        favorites: 19
+      },
+      {
+        id: '16',
+        sellerId: '1',
+        title: 'Baterias de Notebook',
+        description: 'Baterias de notebook usadas para recuperação de lítio e outros materiais valiosos. Descarte responsável.',
+        category: 'eletronicos',
+        subcategory: 'Baterias',
+        quantity: { value: 40, unit: 'unidades' },
+        condition: 'usado',
+        price: 15.00,
+        images: [],
+        location: {
+          city: 'São Paulo',
+          state: 'SP'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 278,
+        favorites: 16
+      },
+      {
+        id: '17',
+        sellerId: '2',
+        title: 'Restos Orgânicos Compostáveis',
+        description: 'Resíduos orgânicos de restaurante, perfeitos para compostagem e produção de adubo orgânico.',
+        category: 'organicos',
+        subcategory: 'Compostáveis',
+        quantity: { value: 200, unit: 'kg' },
+        condition: 'sobras_limpas',
+        price: 0.50,
+        images: [],
+        location: {
+          city: 'Rio de Janeiro',
+          state: 'RJ'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 89,
+        favorites: 4
+      },
+      {
+        id: '18',
+        sellerId: '3',
+        title: 'Plástico PP Transparente',
+        description: 'Embalagens de polipropileno transparente de indústria alimentícia. Limpo e pronto para reciclagem.',
+        category: 'plasticos',
+        subcategory: 'PP',
+        quantity: { value: 280, unit: 'kg' },
+        condition: 'sobras_limpas',
+        price: 2.80,
+        images: [],
+        location: {
+          city: 'Curitiba',
+          state: 'PR'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 345,
+        favorites: 24
+      },
+      {
+        id: '19',
+        sellerId: '4',
+        title: 'Madeira de Pinus Tratado',
+        description: 'Ripas e tábuas de pinus tratado com autoclave. Resistente à umidade, ideal para área externa.',
+        category: 'madeira',
+        subcategory: 'Pinus',
+        quantity: { value: 12, unit: 'm3' },
+        condition: 'usado',
+        price: 180.00,
+        images: [],
+        location: {
+          city: 'Fortaleza',
+          state: 'CE'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 201,
+        favorites: 15
+      },
+      {
+        id: '20',
+        sellerId: '5',
+        title: 'Aço Inoxidável Industrial',
+        description: 'Chapas e perfis de aço inoxidável 304 de desmontagem industrial. Excelente estado de conservação.',
+        category: 'metais',
+        subcategory: 'Aço Inox',
+        quantity: { value: 500, unit: 'kg' },
+        condition: 'usado',
+        price: 12.80,
+        images: [],
+        location: {
+          city: 'Porto Alegre',
+          state: 'RS'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 467,
+        favorites: 52
+      },
+      {
+        id: '21',
+        sellerId: '1',
+        title: 'Revista e Livros Usados',
+        description: 'Lote de revistas e livros usados para reciclagem de papel ou projetos artísticos.',
+        category: 'papel',
+        subcategory: 'Livros',
+        quantity: { value: 150, unit: 'kg' },
+        condition: 'usado',
+        price: 1.50,
+        images: [],
+        location: {
+          city: 'São Paulo',
+          state: 'SP'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 123,
+        favorites: 6
+      },
+      {
+        id: '22',
+        sellerId: '2',
+        title: 'Tecido de Lã Virgem',
+        description: 'Sobras de tecido de lã virgem de alta qualidade. Cores neutras, perfeito para roupas de inverno.',
+        category: 'tecidos',
+        subcategory: 'Lã',
+        quantity: { value: 45, unit: 'kg' },
+        condition: 'novo',
+        price: 25.00,
+        images: [],
+        location: {
+          city: 'Rio de Janeiro',
+          state: 'RJ'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 189,
+        favorites: 31
+      },
+      {
+        id: '23',
+        sellerId: '3',
+        title: 'Placas de Circuito Impresso',
+        description: 'PCBs de equipamentos eletrônicos para recuperação de metais preciosos e componentes.',
+        category: 'eletronicos',
+        subcategory: 'PCBs',
+        quantity: { value: 60, unit: 'kg' },
+        condition: 'usado',
+        price: 18.00,
+        images: [],
+        location: {
+          city: 'Curitiba',
+          state: 'PR'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 298,
+        favorites: 23
+      },
+      {
+        id: '24',
+        sellerId: '4',
+        title: 'Borracha de Pneu Triturada',
+        description: 'Borracha de pneu triturada para pavimentação ecológica e fabricação de produtos reciclados.',
+        category: 'outros',
+        subcategory: 'Borracha',
+        quantity: { value: 1.2, unit: 'toneladas' },
+        condition: 'usado',
+        price: 450.00,
+        images: [],
+        location: {
+          city: 'Fortaleza',
+          state: 'CE'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 167,
+        favorites: 12
+      },
+      {
+        id: '25',
+        sellerId: '5',
+        title: 'Casca de Arroz',
+        description: 'Casca de arroz limpa e seca, ideal para biomassa, compostagem ou substrato para plantas.',
+        category: 'organicos',
+        subcategory: 'Biomassa',
+        quantity: { value: 5, unit: 'toneladas' },
+        condition: 'sobras_limpas',
+        price: 80.00,
+        images: [],
+        location: {
+          city: 'Porto Alegre',
+          state: 'RS'
+        },
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        views: 234,
+        favorites: 18
+      },
+      {
+        id: '26',
+        sellerId: '1',
+        title: 'Vidro Temperado Quebrado',
+        description: 'Fragmentos de vidro temperado de construção civil. Seguro para reciclagem industrial.',
+        category: 'outros',
+        subcategory: 'Vidro',
+        quantity: { value: 800, unit: 'kg' },
+        condition: 'usado',
+        price: 0.60,
         images: [],
         location: {
           city: 'São Paulo',
