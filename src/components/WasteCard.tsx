@@ -3,9 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { WasteItem } from '@/types';
-import { getCurrentUser, toggleFavorite, getFavorites, addToCart } from '@/lib/localStorage';
+import { getCurrentUser, addToCart } from '@/lib/localStorage';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useFavorites } from '@/hooks/useFavorites';
 
 interface WasteCardProps {
   waste: WasteItem;
@@ -43,16 +44,13 @@ const conditionColors = {
 export const WasteCard = ({ waste, onNavigate, onItemClick, onContactSeller, showActions = true }: WasteCardProps) => {
   const currentUser = getCurrentUser();
   const { toast } = useToast();
-  const [isFavorited, setIsFavorited] = useState(
-    currentUser ? getFavorites(currentUser.id).includes(waste.id) : false
-  );
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   const handleFavoriteToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!currentUser) return;
     
-    toggleFavorite(currentUser.id, waste.id);
-    setIsFavorited(!isFavorited);
+    toggleFavorite(waste.id);
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -107,7 +105,7 @@ export const WasteCard = ({ waste, onNavigate, onItemClick, onContactSeller, sho
               className="p-1 h-auto hover:bg-eco-green-light"
             >
               <Heart 
-                className={`w-4 h-4 ${isFavorited ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`} 
+                className={`w-4 h-4 ${isFavorite(waste.id) ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`} 
               />
             </Button>
           )}

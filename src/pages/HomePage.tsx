@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Search, Filter, TrendingUp, Leaf, Recycle, Users } from 'lucide-react';
+import { SearchBar } from '@/components/SearchBar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +17,8 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
   const [items, setItems] = useState<WasteItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<WasteItem[]>([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [ecoImpact] = useState(() => getEcoImpact());
 
   useEffect(() => {
@@ -23,7 +26,34 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
     const wasteItems = getWasteItems().filter(item => item.isActive);
     setItems(wasteItems);
     setFilteredItems(wasteItems);
+    
+    // Load recent searches
+    const recent = JSON.parse(localStorage.getItem('eco-recent-searches') || '[]');
+    setRecentSearches(recent);
   }, []);
+
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    applyFilters(term);
+  };
+
+  const applyFilters = (searchTerm?: string) => {
+    let filtered = [...items];
+
+    // Search term filter
+    const searchTermToUse = searchTerm ?? '';
+    if (searchTermToUse) {
+      const searchLower = searchTermToUse.toLowerCase();
+      filtered = filtered.filter(item =>
+        item.title.toLowerCase().includes(searchLower) ||
+        item.description.toLowerCase().includes(searchLower) ||
+        item.category.toLowerCase().includes(searchLower) ||
+        item.subcategory.toLowerCase().includes(searchLower)
+      );
+    }
+
+    setFilteredItems(filtered);
+  };
 
   const handleFiltersChange = (filters: FilterState) => {
     let filtered = [...items];
@@ -108,6 +138,15 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
               recicláveis com quem precisa. Reduza desperdício, economize dinheiro e 
               ajude o meio ambiente.
             </p>
+            
+            {/* Search Bar */}
+            <div className="max-w-2xl mx-auto mb-8">
+              <SearchBar
+                onSearch={handleSearch}
+                onShowFilters={() => setShowFilters(true)}
+                recentSearches={recentSearches}
+              />
+            </div>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Button

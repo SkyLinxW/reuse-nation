@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { WasteCard } from '@/components/WasteCard';
-import { getCurrentUser, getFavorites, getWasteItemById } from '@/lib/localStorage';
+import { getCurrentUser, getWasteItems } from '@/lib/localStorage';
+import { useFavorites } from '@/hooks/useFavorites';
 import { WasteItem } from '@/types';
 import { ArrowLeft, Heart } from 'lucide-react';
 
@@ -13,16 +14,19 @@ interface FavoritesPageProps {
 export const FavoritesPage = ({ onNavigate }: FavoritesPageProps) => {
   const [favoriteItems, setFavoriteItems] = useState<WasteItem[]>([]);
   const currentUser = getCurrentUser();
+  const { favorites } = useFavorites();
 
   useEffect(() => {
-    if (currentUser) {
-      const favoriteIds = getFavorites(currentUser.id);
-      const items = favoriteIds
-        .map(id => getWasteItemById(id))
-        .filter(item => item !== null) as WasteItem[];
-      setFavoriteItems(items);
+    if (currentUser && favorites.length > 0) {
+      const allItems = getWasteItems();
+      const favoriteWasteItems = allItems.filter(item => 
+        favorites.some(fav => fav.wasteItemId === item.id)
+      );
+      setFavoriteItems(favoriteWasteItems);
+    } else {
+      setFavoriteItems([]);
     }
-  }, [currentUser]);
+  }, [currentUser?.id, favorites]);
 
   if (!currentUser) {
     return (

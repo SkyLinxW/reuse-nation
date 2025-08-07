@@ -24,7 +24,7 @@ export const NotificationsPage = ({ onNavigate }: NotificationsPageProps) => {
       const userNotifications = getNotifications(currentUser.id);
       setNotifications(userNotifications);
     }
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   const handleMarkAsRead = (notificationId: string) => {
     markNotificationAsRead(notificationId);
