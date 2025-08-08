@@ -1078,7 +1078,7 @@ export const getUnreadNotificationCount = (userId: string): number => {
 // Purchase function
 export const createPurchaseTransaction = (
   buyerId: string,
-  cartItems: CartItem[],
+  cartItems: Array<CartItem & { wasteItem: WasteItem }>,
   paymentMethod: Transaction['paymentMethod'],
   deliveryMethod: Transaction['deliveryMethod']
 ): Transaction[] => {

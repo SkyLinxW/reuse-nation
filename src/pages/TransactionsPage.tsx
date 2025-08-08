@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TrackingCard } from '@/components/TrackingCard';
 import { 
   getCurrentUser, 
   getUserTransactions, 
@@ -12,7 +11,7 @@ import {
   saveTransaction
 } from '@/lib/localStorage';
 import { Transaction, User, WasteItem } from '@/types';
-import { ArrowLeft, Package, Clock, CheckCircle, XCircle, Truck } from 'lucide-react';
+import { ArrowLeft, Package, TrendingUp, ShoppingBag, Clock, CheckCircle, Truck, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface TransactionsPageProps {
@@ -27,6 +26,7 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
       product: WasteItem | null;
     }
   }>({});
+  const [activeTab, setActiveTab] = useState<'all' | 'purchases' | 'sales'>('all');
   
   const currentUser = getCurrentUser();
   const { toast } = useToast();
@@ -102,6 +102,26 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
     });
   };
 
+  const filteredTransactions = transactions.filter(transaction => {
+    if (activeTab === 'purchases') return transaction.buyerId === currentUser?.id;
+    if (activeTab === 'sales') return transaction.sellerId === currentUser?.id;
+    return true;
+  });
+
+  const handleContactSeller = () => {
+    toast({
+      title: "Contato",
+      description: "Funcionalidade de contato em desenvolvimento.",
+    });
+  };
+
+  const handleRateTransaction = () => {
+    toast({
+      title: "Avaliação",
+      description: "Sistema de avaliação em desenvolvimento.",
+    });
+  };
+
   if (!currentUser) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -132,10 +152,22 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="w-5 h-5" />
-            Minhas Transações
-          </CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle className="flex items-center gap-2">
+              <Package className="w-5 h-5" />
+              Minhas Transações
+            </CardTitle>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <ShoppingBag className="w-4 h-4" />
+                {transactions.filter(t => t.buyerId === currentUser.id).length} Compras
+              </div>
+              <div className="flex items-center gap-1">
+                <TrendingUp className="w-4 h-4" />
+                {transactions.filter(t => t.sellerId === currentUser.id).length} Vendas
+              </div>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {transactions.length === 0 ? (
@@ -150,119 +182,114 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
             </div>
           ) : (
             <div className="space-y-6">
-              {transactions.map((transaction) => {
-                const details = transactionDetails[transaction.id];
-                const isBuyer = transaction.buyerId === currentUser.id;
-                const statusInfo = getStatusInfo(transaction.status);
-                const StatusIcon = statusInfo.icon;
+              <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)}>
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="all">Todas</TabsTrigger>
+                  <TabsTrigger value="purchases">Compras</TabsTrigger>
+                  <TabsTrigger value="sales">Vendas</TabsTrigger>
+                </TabsList>
 
-                if (!details?.otherUser || !details?.product) return null;
+                <TabsContent value="all" className="space-y-4 mt-6">
+                  {filteredTransactions.map((transaction) => {
+                    const details = transactionDetails[transaction.id];
+                    if (!details?.otherUser || !details?.product) return null;
 
-                return (
-                  <Card key={transaction.id} className="border-l-4 border-l-eco-green">
-                    <CardContent className="p-6">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex items-center gap-3">
-                          <Avatar>
-                            <AvatarImage src="" alt={details.otherUser.name} />
-                            <AvatarFallback>
-                              {details.otherUser.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                            </AvatarFallback>
-                          </Avatar>
+                    return (
+                      <TrackingCard
+                        key={transaction.id}
+                        transaction={transaction}
+                        otherUser={details.otherUser}
+                        product={details.product}
+                        onContactSeller={handleContactSeller}
+                        onRateTransaction={handleRateTransaction}
+                      />
+                    );
+                  })}
+                </TabsContent>
+
+                <TabsContent value="purchases" className="space-y-4 mt-6">
+                  {filteredTransactions.map((transaction) => {
+                    const details = transactionDetails[transaction.id];
+                    if (!details?.otherUser || !details?.product) return null;
+
+                    return (
+                      <TrackingCard
+                        key={transaction.id}
+                        transaction={transaction}
+                        otherUser={details.otherUser}
+                        product={details.product}
+                        onContactSeller={handleContactSeller}
+                        onRateTransaction={handleRateTransaction}
+                      />
+                    );
+                  })}
+                </TabsContent>
+
+                <TabsContent value="sales" className="space-y-4 mt-6">
+                  {filteredTransactions.map((transaction) => {
+                    const details = transactionDetails[transaction.id];
+                    if (!details?.otherUser || !details?.product) return null;
+
+                    return (
+                      <div key={transaction.id} className="border-l-4 border-l-eco-brown p-4 bg-card rounded-lg">
+                        <div className="flex justify-between items-start mb-4">
                           <div>
-                            <p className="font-medium">
-                              {isBuyer ? 'Compra de' : 'Venda para'} {details.otherUser.name}
-                            </p>
+                            <h4 className="font-medium">Venda para {details.otherUser.name}</h4>
                             <p className="text-sm text-muted-foreground">
                               {new Date(transaction.createdAt).toLocaleDateString('pt-BR')}
                             </p>
                           </div>
+                          {!['entregue', 'cancelado'].includes(transaction.status) && (
+                            <div className="flex gap-2">
+                              {transaction.status === 'pendente' && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleUpdateStatus(transaction.id, 'confirmado')}
+                                    className="bg-eco-green hover:bg-eco-green/90"
+                                  >
+                                    Confirmar
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleUpdateStatus(transaction.id, 'cancelado')}
+                                  >
+                                    Cancelar
+                                  </Button>
+                                </>
+                              )}
+                              {transaction.status === 'confirmado' && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleUpdateStatus(transaction.id, 'em_transporte')}
+                                  className="bg-eco-green hover:bg-eco-green/90"
+                                >
+                                  Enviar
+                                </Button>
+                              )}
+                            </div>
+                          )}
                         </div>
                         
-                        <Badge className={statusInfo.color}>
-                          <StatusIcon className="w-3 h-3 mr-1" />
-                          {statusInfo.label}
-                        </Badge>
-                      </div>
-
-                      <Separator className="mb-4" />
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <h4 className="font-medium mb-2">Produto</h4>
-                          <p className="text-sm">{details.product.title}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {transaction.quantity} {details.product.quantity.unit}
-                          </p>
-                        </div>
-
-                        <div>
-                          <h4 className="font-medium mb-2">Valor Total</h4>
-                          <p className="text-lg font-bold text-eco-green">
-                            R$ {transaction.totalPrice.toFixed(2)}
-                          </p>
-                        </div>
-
-                        <div>
-                          <h4 className="font-medium mb-2">Pagamento</h4>
-                          <p className="text-sm">{getPaymentMethodLabel(transaction.paymentMethod)}</p>
-                        </div>
-
-                        <div>
-                          <h4 className="font-medium mb-2">Entrega</h4>
-                          <p className="text-sm">{getDeliveryMethodLabel(transaction.deliveryMethod)}</p>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm font-medium">{details.product.title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {transaction.quantity} {details.product.quantity.unit}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-lg font-bold text-eco-green">
+                              R$ {transaction.totalPrice.toFixed(2)}
+                            </p>
+                          </div>
                         </div>
                       </div>
-
-                      {/* Ações baseadas no status e tipo de usuário */}
-                      {!isBuyer && transaction.status === 'pendente' && (
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => handleUpdateStatus(transaction.id, 'confirmado')}
-                            className="bg-eco-green hover:bg-eco-green/90"
-                          >
-                            Confirmar Pedido
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleUpdateStatus(transaction.id, 'cancelado')}
-                          >
-                            Cancelar
-                          </Button>
-                        </div>
-                      )}
-
-                      {!isBuyer && transaction.status === 'confirmado' && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleUpdateStatus(transaction.id, 'em_transporte')}
-                          className="bg-eco-green hover:bg-eco-green/90"
-                        >
-                          Marcar como Em Transporte
-                        </Button>
-                      )}
-
-                      {isBuyer && transaction.status === 'em_transporte' && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleUpdateStatus(transaction.id, 'entregue')}
-                          className="bg-eco-green hover:bg-eco-green/90"
-                        >
-                          Confirmar Recebimento
-                        </Button>
-                      )}
-
-                      {transaction.completedAt && (
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Concluída em {new Date(transaction.completedAt).toLocaleDateString('pt-BR')}
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                    );
+                  })}
+                </TabsContent>
+              </Tabs>
             </div>
           )}
         </CardContent>
