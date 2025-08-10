@@ -14,7 +14,293 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      cart_items: {
+        Row: {
+          created_at: string
+          id: string
+          quantity: number
+          user_id: string
+          waste_item_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          quantity?: number
+          user_id: string
+          waste_item_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          quantity?: number
+          user_id?: string
+          waste_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_items_waste_item_id_fkey"
+            columns: ["waste_item_id"]
+            isOneToOne: false
+            referencedRelation: "waste_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          created_at: string
+          id: string
+          last_message_at: string
+          user1_id: string
+          user2_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          user1_id: string
+          user2_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          user1_id?: string
+          user2_id?: string
+        }
+        Relationships: []
+      }
+      favorites: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+          waste_item_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+          waste_item_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+          waste_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_waste_item_id_fkey"
+            columns: ["waste_item_id"]
+            isOneToOne: false
+            referencedRelation: "waste_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          read: boolean
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          read?: boolean
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          read?: boolean
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          read: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          read?: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          email: string
+          id: string
+          name: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          buyer_id: string
+          completed_at: string | null
+          created_at: string
+          delivery_address: string | null
+          delivery_method: string
+          id: string
+          payment_method: string
+          quantity: number
+          seller_id: string
+          status: string
+          total_price: number
+          waste_item_id: string
+        }
+        Insert: {
+          buyer_id: string
+          completed_at?: string | null
+          created_at?: string
+          delivery_address?: string | null
+          delivery_method: string
+          id?: string
+          payment_method: string
+          quantity: number
+          seller_id: string
+          status?: string
+          total_price: number
+          waste_item_id: string
+        }
+        Update: {
+          buyer_id?: string
+          completed_at?: string | null
+          created_at?: string
+          delivery_address?: string | null
+          delivery_method?: string
+          id?: string
+          payment_method?: string
+          quantity?: number
+          seller_id?: string
+          status?: string
+          total_price?: number
+          waste_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_waste_item_id_fkey"
+            columns: ["waste_item_id"]
+            isOneToOne: false
+            referencedRelation: "waste_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      waste_items: {
+        Row: {
+          availability: boolean
+          category: string
+          condition: string
+          created_at: string
+          description: string
+          id: string
+          image_url: string | null
+          location: string
+          price: number
+          quantity: Json
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          availability?: boolean
+          category: string
+          condition: string
+          created_at?: string
+          description: string
+          id?: string
+          image_url?: string | null
+          location: string
+          price: number
+          quantity: Json
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          availability?: boolean
+          category?: string
+          condition?: string
+          created_at?: string
+          description?: string
+          id?: string
+          image_url?: string | null
+          location?: string
+          price?: number
+          quantity?: Json
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
