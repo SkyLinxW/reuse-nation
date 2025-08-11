@@ -6,13 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { WasteCard } from '@/components/WasteCard';
 import { FilterSidebar, FilterState } from '@/components/FilterSidebar';
-import { getWasteItems, getEcoImpact } from '@/lib/supabase';
+import { getWasteItems, getEcoImpact, getRecentSearches } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 
 interface HomePageProps {
   onNavigate: (page: string) => void;
 }
 
 export const HomePage = ({ onNavigate }: HomePageProps) => {
+  const { user } = useAuth();
   const [items, setItems] = useState<any[]>([]);
   const [filteredItems, setFilteredItems] = useState<any[]>([]);
   const [showFilters, setShowFilters] = useState(false);
@@ -22,24 +24,40 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
 
   useEffect(() => {
     const loadData = async () => {
-      const wasteItems = await getWasteItems();
-      const activeItems = wasteItems.filter(item => item.availability);
-      setItems(activeItems);
-      setFilteredItems(activeItems);
+      try {
+        const wasteItems = await getWasteItems();
+        const activeItems = wasteItems.filter(item => item.availability);
+        setItems(activeItems);
+        setFilteredItems(activeItems);
+      } catch (error) {
+        console.error('Error loading waste items:', error);
+      }
     };
     
     const loadEcoImpact = async () => {
-      const impact = await getEcoImpact();
-      setEcoImpact(impact);
+      try {
+        const impact = await getEcoImpact();
+        setEcoImpact(impact);
+      } catch (error) {
+        console.error('Error loading eco impact:', error);
+      }
+    };
+    
+    const loadRecentSearches = async () => {
+      if (user) {
+        try {
+          const searches = await getRecentSearches(user.id);
+          setRecentSearches(searches);
+        } catch (error) {
+          console.error('Error loading recent searches:', error);
+        }
+      }
     };
     
     loadData();
     loadEcoImpact();
-    
-    // Load recent searches
-    const recent = JSON.parse(localStorage.getItem('eco-recent-searches') || '[]');
-    setRecentSearches(recent);
-  }, []);
+    loadRecentSearches();
+  }, [user]);
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);

@@ -101,7 +101,23 @@ export const CreateListingPage = ({ onNavigate }: CreateListingPageProps) => {
         description: "Seu anúncio já está disponível no marketplace.",
       });
 
-      onNavigate('my-listings');
+      // Clear form and go back to home to show the new listing
+      setFormData({
+        title: '',
+        description: '',
+        category: '' as WasteCategory,
+        subcategory: '',
+        quantityValue: '',
+        quantityUnit: 'kg' as 'kg' | 'm3' | 'unidades' | 'toneladas',
+        condition: '' as 'novo' | 'usado' | 'sobras_limpas' | 'contaminado',
+        price: '',
+        city: '',
+        state: '',
+        plasticType: '',
+        purity: '',
+        composition: ''
+      });
+      onNavigate('home');
     } catch (error) {
       toast({
         title: "Erro ao criar anúncio",
