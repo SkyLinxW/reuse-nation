@@ -30,7 +30,7 @@ export const getWasteItems = async () => {
     .from('waste_items')
     .select(`
       *,
-      profiles!user_id(name, avatar_url)
+      profiles!waste_items_user_id_fkey(name, avatar_url)
     `)
     .eq('availability', true)
     .order('created_at', { ascending: false });
