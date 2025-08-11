@@ -58,8 +58,8 @@ export const SearchPage = ({ onNavigate }: SearchPageProps) => {
             <div className="flex-1">
               <SearchBar
                 onSearch={handleSearch}
+                onShowFilters={() => setShowFilters(!showFilters)}
                 recentSearches={recentSearches}
-                onClearRecentSearches={clearRecentSearches}
               />
             </div>
             <Button
@@ -120,7 +120,11 @@ export const SearchPage = ({ onNavigate }: SearchPageProps) => {
         <div className="flex gap-6">
           {/* Sidebar de filtros */}
           <div className={`${showFilters ? 'block' : 'hidden'} md:block w-full md:w-80 shrink-0`}>
-            <FilterSidebar />
+            <FilterSidebar 
+              isOpen={showFilters}
+              onClose={() => setShowFilters(false)}
+              onFiltersChange={updateFilters}
+            />
           </div>
 
           {/* Resultados */}
