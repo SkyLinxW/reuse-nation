@@ -30,7 +30,7 @@ export const getWasteItems = async () => {
     .from('waste_items')
     .select(`
       *,
-      profiles!waste_items_user_id_fkey(name, avatar_url)
+      profiles(name, avatar_url)
     `)
     .eq('availability', true)
     .order('created_at', { ascending: false });
@@ -44,7 +44,7 @@ export const getWasteItem = async (id: string) => {
     .from('waste_items')
     .select(`
       *,
-      profiles!waste_items_user_id_fkey(name, avatar_url, bio)
+      profiles(name, avatar_url, bio)
     `)
     .eq('id', id)
     .single();
@@ -91,7 +91,7 @@ export const getFavorites = async (userId: string) => {
     .from('favorites')
     .select(`
       *,
-      waste_items(*, profiles!waste_items_user_id_fkey(name, avatar_url))
+      waste_items(*, profiles(name, avatar_url))
     `)
     .eq('user_id', userId);
   
@@ -137,7 +137,7 @@ export const getCartItems = async (userId: string) => {
     .from('cart_items')
     .select(`
       *,
-      waste_items(*, profiles!waste_items_user_id_fkey(name, avatar_url))
+      waste_items(*, profiles(name, avatar_url))
     `)
     .eq('user_id', userId);
   
