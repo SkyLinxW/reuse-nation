@@ -3,14 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrackingCard } from '@/components/TrackingCard';
-import { 
-  getCurrentUser, 
-  getUserTransactions, 
-  getUserById, 
-  getWasteItemById,
-  saveTransaction
-} from '@/lib/localStorage';
-import { Transaction, User, WasteItem } from '@/types';
+import { getTransactions, updateTransactionStatus, getProfile, getWasteItem } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 import { ArrowLeft, Package, TrendingUp, ShoppingBag, Clock, CheckCircle, Truck, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -19,92 +13,119 @@ interface TransactionsPageProps {
 }
 
 export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
   const [transactionDetails, setTransactionDetails] = useState<{
     [key: string]: {
-      otherUser: User | null;
-      product: WasteItem | null;
+      otherUser: any | null;
+      product: any | null;
     }
   }>({});
   const [activeTab, setActiveTab] = useState<'all' | 'purchases' | 'sales'>('all');
+  const [loading, setLoading] = useState(true);
   
-  const currentUser = getCurrentUser();
+  const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (currentUser) {
-      const userTransactions = getUserTransactions(currentUser.id);
-      setTransactions(userTransactions);
+    const loadTransactions = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
-      // Carregar detalhes das transações
-      const details: typeof transactionDetails = {};
-      userTransactions.forEach(transaction => {
-        const otherUserId = transaction.buyerId === currentUser.id 
-          ? transaction.sellerId 
-          : transaction.buyerId;
+      try {
+        const userTransactions = await getTransactions(user.id);
+        setTransactions(userTransactions);
+
+        // Carregar detalhes das transações
+        const details: typeof transactionDetails = {};
         
-        details[transaction.id] = {
-          otherUser: getUserById(otherUserId),
-          product: getWasteItemById(transaction.wasteItemId)
-        };
-      });
-      setTransactionDetails(details);
-    }
-  }, [currentUser]);
+        for (const transaction of userTransactions) {
+          const otherUserId = transaction.buyer_id === user.id 
+            ? transaction.seller_id 
+            : transaction.buyer_id;
+          
+          const [otherUser, product] = await Promise.all([
+            getProfile(otherUserId),
+            getWasteItem(transaction.waste_item_id)
+          ]);
+          
+          details[transaction.id] = {
+            otherUser,
+            product
+          };
+        }
+        
+        setTransactionDetails(details);
+      } catch (error) {
+        console.error('Erro ao carregar transações:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar transações.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const getStatusInfo = (status: Transaction['status']) => {
-    const statusMap = {
+    loadTransactions();
+  }, [user, toast]);
+
+  const getStatusInfo = (status: string) => {
+    const statusMap: any = {
       pendente: { label: 'Pendente', icon: Clock, color: 'bg-yellow-100 text-yellow-800' },
       confirmado: { label: 'Confirmado', icon: CheckCircle, color: 'bg-blue-100 text-blue-800' },
       em_transporte: { label: 'Em Transporte', icon: Truck, color: 'bg-purple-100 text-purple-800' },
       entregue: { label: 'Entregue', icon: CheckCircle, color: 'bg-green-100 text-green-800' },
       cancelado: { label: 'Cancelado', icon: XCircle, color: 'bg-red-100 text-red-800' }
     };
-    return statusMap[status];
+    return statusMap[status] || statusMap.pendente;
   };
 
-  const getPaymentMethodLabel = (method: Transaction['paymentMethod']) => {
-    const methods = {
+  const getPaymentMethodLabel = (method: string) => {
+    const methods: any = {
       pix: 'PIX',
       boleto: 'Boleto',
       cartao: 'Cartão',
       dinheiro: 'Dinheiro'
     };
-    return methods[method];
+    return methods[method] || method;
   };
 
-  const getDeliveryMethodLabel = (method: Transaction['deliveryMethod']) => {
-    const methods = {
+  const getDeliveryMethodLabel = (method: string) => {
+    const methods: any = {
       retirada_local: 'Retirada Local',
       entrega: 'Entrega',
       transportadora: 'Transportadora'
     };
-    return methods[method];
+    return methods[method] || method;
   };
 
-  const handleUpdateStatus = (transactionId: string, newStatus: Transaction['status']) => {
-    const transaction = transactions.find(t => t.id === transactionId);
-    if (!transaction) return;
+  const handleUpdateStatus = async (transactionId: string, newStatus: string) => {
+    try {
+      await updateTransactionStatus(transactionId, newStatus);
+      
+      setTransactions(prev => 
+        prev.map(t => t.id === transactionId ? { ...t, status: newStatus } : t)
+      );
 
-    const updatedTransaction = { ...transaction, status: newStatus };
-    if (newStatus === 'entregue') {
-      updatedTransaction.completedAt = new Date().toISOString();
+      toast({
+        title: "Status atualizado",
+        description: `Transação marcada como ${getStatusInfo(newStatus).label.toLowerCase()}.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar status da transação.",
+        variant: "destructive",
+      });
     }
-
-    saveTransaction(updatedTransaction);
-    setTransactions(prev => 
-      prev.map(t => t.id === transactionId ? updatedTransaction : t)
-    );
-
-    toast({
-      title: "Status atualizado",
-      description: `Transação marcada como ${getStatusInfo(newStatus).label.toLowerCase()}.`,
-    });
   };
 
   const filteredTransactions = transactions.filter(transaction => {
-    if (activeTab === 'purchases') return transaction.buyerId === currentUser?.id;
-    if (activeTab === 'sales') return transaction.sellerId === currentUser?.id;
+    if (activeTab === 'purchases') return transaction.buyer_id === user?.id;
+    if (activeTab === 'sales') return transaction.seller_id === user?.id;
     return true;
   });
 
@@ -122,7 +143,7 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
     });
   };
 
-  if (!currentUser) {
+  if (!user) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Card>
@@ -160,17 +181,21 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <ShoppingBag className="w-4 h-4" />
-                {transactions.filter(t => t.buyerId === currentUser.id).length} Compras
+                {transactions.filter(t => t.buyer_id === user?.id).length} Compras
               </div>
               <div className="flex items-center gap-1">
                 <TrendingUp className="w-4 h-4" />
-                {transactions.filter(t => t.sellerId === currentUser.id).length} Vendas
+                {transactions.filter(t => t.seller_id === user?.id).length} Vendas
               </div>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          {transactions.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Carregando transações...</p>
+            </div>
+          ) : transactions.length === 0 ? (
             <div className="text-center py-8">
               <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
               <p className="text-muted-foreground mb-4">
@@ -236,7 +261,7 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
                           <div>
                             <h4 className="font-medium">Venda para {details.otherUser.name}</h4>
                             <p className="text-sm text-muted-foreground">
-                              {new Date(transaction.createdAt).toLocaleDateString('pt-BR')}
+                              {new Date(transaction.created_at).toLocaleDateString('pt-BR')}
                             </p>
                           </div>
                           {!['entregue', 'cancelado'].includes(transaction.status) && (
@@ -276,12 +301,12 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
                           <div>
                             <p className="text-sm font-medium">{details.product.title}</p>
                             <p className="text-xs text-muted-foreground">
-                              {transaction.quantity} {details.product.quantity.unit}
+                              {transaction.quantity} {JSON.parse(details.product.quantity || '{}').unit || 'unidades'}
                             </p>
                           </div>
                           <div className="text-right">
                             <p className="text-lg font-bold text-eco-green">
-                              R$ {transaction.totalPrice.toFixed(2)}
+                              R$ {Number(transaction.total_price).toFixed(2)}
                             </p>
                           </div>
                         </div>

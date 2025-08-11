@@ -79,34 +79,19 @@ export const CreateListingPage = ({ onNavigate }: CreateListingPageProps) => {
     setLoading(true);
 
     try {
-      const newListing: WasteItem = {
-        id: Date.now().toString(),
-        sellerId: user.id,
+      const newListing = {
+        user_id: user.id,
         title: formData.title,
         description: formData.description,
         category: formData.category,
-        subcategory: formData.subcategory,
-        quantity: {
+        quantity: JSON.stringify({
           value: parseFloat(formData.quantityValue),
           unit: formData.quantityUnit
-        },
+        }),
         condition: formData.condition,
         price: parseFloat(formData.price),
-        images: [],
-        location: {
-          city: formData.city,
-          state: formData.state
-        },
-        technicalDetails: formData.category === 'plasticos' ? {
-          plasticType: formData.plasticType,
-          purity: formData.purity,
-          composition: formData.composition
-        } : undefined,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        views: 0,
-        favorites: 0
+        location: `${formData.city}, ${formData.state}`,
+        availability: true
       };
 
       const result = await createWasteItem(newListing);
