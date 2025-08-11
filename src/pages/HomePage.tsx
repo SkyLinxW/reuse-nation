@@ -6,26 +6,35 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { WasteCard } from '@/components/WasteCard';
 import { FilterSidebar, FilterState } from '@/components/FilterSidebar';
-import { getWasteItems, getEcoImpact, initializeDemoData } from '@/lib/localStorage';
-import { WasteItem } from '@/types';
+import { getWasteItems, getEcoImpact } from '@/lib/supabase';
 
 interface HomePageProps {
   onNavigate: (page: string) => void;
 }
 
 export const HomePage = ({ onNavigate }: HomePageProps) => {
-  const [items, setItems] = useState<WasteItem[]>([]);
-  const [filteredItems, setFilteredItems] = useState<WasteItem[]>([]);
+  const [items, setItems] = useState<any[]>([]);
+  const [filteredItems, setFilteredItems] = useState<any[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
-  const [ecoImpact] = useState(() => getEcoImpact());
+  const [ecoImpact, setEcoImpact] = useState({ totalWasteReused: 0, co2Saved: 0, transactionsCount: 0 });
 
   useEffect(() => {
-    initializeDemoData();
-    const wasteItems = getWasteItems().filter(item => item.isActive);
-    setItems(wasteItems);
-    setFilteredItems(wasteItems);
+    const loadData = async () => {
+      const wasteItems = await getWasteItems();
+      const activeItems = wasteItems.filter(item => item.availability);
+      setItems(activeItems);
+      setFilteredItems(activeItems);
+    };
+    
+    const loadEcoImpact = async () => {
+      const impact = await getEcoImpact();
+      setEcoImpact(impact);
+    };
+    
+    loadData();
+    loadEcoImpact();
     
     // Load recent searches
     const recent = JSON.parse(localStorage.getItem('eco-recent-searches') || '[]');
@@ -139,19 +148,12 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
               ajude o meio ambiente.
             </p>
             
-            {/* Search Bar */}
-            <div className="max-w-2xl mx-auto mb-8">
-              <SearchBar
-                onSearch={handleSearch}
-                onShowFilters={() => setShowFilters(true)}
-                recentSearches={recentSearches}
-              />
-            </div>
+            {/* Search Bar - Removed from home, moved to header */}
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Button
                 size="lg"
-                onClick={() => onNavigate('register')}
+                onClick={() => onNavigate('auth')}
                 className="bg-gradient-eco hover:opacity-90 shadow-eco text-lg px-8 py-6"
               >
                 Começar Agora
