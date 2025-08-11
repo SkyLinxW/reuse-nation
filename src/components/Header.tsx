@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { getCurrentUser, setCurrentUser, getCartItems, getUnreadNotificationCount } from '@/lib/localStorage';
+import { useAuth } from '@/hooks/useAuth';
+import { getCartItems, getUnreadNotificationCount } from '@/lib/supabase';
 import ecoLogo from '@/assets/eco-marketplace-logo.png';
 interface HeaderProps {
   onNavigate: (page: string) => void;
@@ -18,18 +19,27 @@ export const Header = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [cartCount, setCartCount] = useState(0);
   const [notificationCount, setNotificationCount] = useState(0);
-  const currentUser = getCurrentUser();
+  const { user, signOut } = useAuth();
   useEffect(() => {
-    if (currentUser) {
-      setCartCount(getCartItems(currentUser.id).length);
-      setNotificationCount(getUnreadNotificationCount(currentUser.id));
-    } else {
-      setCartCount(0);
-      setNotificationCount(0);
-    }
-  }, [currentUser]);
-  const handleLogout = () => {
-    setCurrentUser(null);
+    const loadCounts = async () => {
+      if (user) {
+        try {
+          const cartItems = await getCartItems(user.id);
+          setCartCount(cartItems.length);
+          const unreadCount = await getUnreadNotificationCount(user.id);
+          setNotificationCount(unreadCount);
+        } catch (error) {
+          console.error('Error loading counts:', error);
+        }
+      } else {
+        setCartCount(0);
+        setNotificationCount(0);
+      }
+    };
+    loadCounts();
+  }, [user]);
+  const handleLogout = async () => {
+    await signOut();
     onNavigate('home');
   };
   const handleSearch = (e: React.FormEvent) => {
@@ -60,7 +70,7 @@ export const Header = ({
 
           {/* Navigation */}
           <div className="flex items-center gap-2">
-            {currentUser ? <>
+            {user ? <>
                 <Button variant="ghost" size="sm" onClick={() => onNavigate('cart')} className={`relative ${currentPage === 'cart' ? 'bg-eco-green-light' : ''}`}>
                   <ShoppingCart className="w-4 h-4" />
                   {cartCount > 0 && <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs">
@@ -96,9 +106,9 @@ export const Header = ({
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src="" alt={currentUser.name} />
+                        <AvatarImage src="" alt={user?.user_metadata?.name || user?.email || ''} />
                         <AvatarFallback className="bg-eco-green text-white">
-                          {currentUser.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                          {(user?.user_metadata?.name || user?.email || 'U').split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                         </AvatarFallback>
                       </Avatar>
                     </Button>
@@ -106,9 +116,9 @@ export const Header = ({
                   <DropdownMenuContent className="w-56" align="end">
                     <div className="flex items-center justify-start gap-2 p-2">
                       <div className="flex flex-col space-y-1 leading-none">
-                        <p className="font-medium">{currentUser.name}</p>
+                        <p className="font-medium">{user?.user_metadata?.name || 'Usuário'}</p>
                         <p className="w-[200px] truncate text-sm text-muted-foreground">
-                          {currentUser.email}
+                          {user?.email}
                         </p>
                       </div>
                     </div>
@@ -132,10 +142,10 @@ export const Header = ({
                   </DropdownMenuContent>
                 </DropdownMenu>
               </> : <>
-                <Button variant="ghost" onClick={() => onNavigate('login')}>
+                <Button variant="ghost" onClick={() => onNavigate('auth')}>
                   Entrar
                 </Button>
-                <Button onClick={() => onNavigate('register')} className="bg-gradient-eco hover:opacity-90">
+                <Button onClick={() => onNavigate('auth')} className="bg-gradient-eco hover:opacity-90">
                   Cadastrar
                 </Button>
               </>}
