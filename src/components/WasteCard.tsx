@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { WasteItem } from '@/types';
-import { getCurrentUser, addToCart } from '@/lib/localStorage';
+import { useAuth } from '@/hooks/useAuth';
+import { addToCart } from '@/lib/supabase';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useFavorites } from '@/hooks/useFavorites';
@@ -42,26 +43,34 @@ const conditionColors = {
 };
 
 export const WasteCard = ({ waste, onNavigate, onItemClick, onContactSeller, showActions = true }: WasteCardProps) => {
-  const currentUser = getCurrentUser();
+  const { user } = useAuth();
   const { toast } = useToast();
   const { isFavorite, toggleFavorite } = useFavorites();
 
   const handleFavoriteToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!currentUser) return;
+    if (!user) return;
     
     toggleFavorite(waste.id);
   };
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!currentUser) return;
+    if (!user) return;
     
-    addToCart(currentUser.id, waste.id, 1);
-    toast({
-      title: "Adicionado ao carrinho",
-      description: `${waste.title} foi adicionado ao seu carrinho.`,
-    });
+    try {
+      await addToCart(user.id, waste.id, 1);
+      toast({
+        title: "Adicionado ao carrinho",
+        description: `${waste.title} foi adicionado ao seu carrinho.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao adicionar item ao carrinho",
+        variant: "destructive",
+      });
+    }
   };
 
   const formatPrice = (price: number) => {
@@ -97,7 +106,7 @@ export const WasteCard = ({ waste, onNavigate, onItemClick, onContactSeller, sho
             </Badge>
           </div>
           
-          {currentUser && (
+          {user && (
             <Button
               variant="ghost"
               size="sm"
@@ -154,7 +163,7 @@ export const WasteCard = ({ waste, onNavigate, onItemClick, onContactSeller, sho
       </CardContent>
 
       <CardFooter className="p-4 pt-0">
-        {currentUser && currentUser.id !== waste.sellerId ? (
+        {user && user.id !== waste.sellerId ? (
           <div className="flex flex-col gap-2 w-full">
             <Button 
               variant="outline" 

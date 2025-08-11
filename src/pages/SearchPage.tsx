@@ -6,7 +6,7 @@ import { SearchBar } from '@/components/SearchBar';
 import { FilterSidebar } from '@/components/FilterSidebar';
 import { WasteCard } from '@/components/WasteCard';
 import { useSearch } from '@/hooks/useSearch';
-import { getWasteItems, initializeDemoData } from '@/lib/localStorage';
+import { getWasteItems } from '@/lib/supabase';
 import { WasteItem } from '@/types';
 
 interface SearchPageProps {

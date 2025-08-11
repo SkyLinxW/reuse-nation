@@ -3,12 +3,21 @@ import { ArrowLeft, Bell, Check, X, MessageCircle, ShoppingCart, Heart, Star } f
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  getCurrentUser, 
-  getNotifications, 
-  markNotificationAsRead,
-  Notification 
-} from '@/lib/localStorage';
+import { useAuth } from '@/hooks/useAuth';
+import {
+  getNotifications,
+  markNotificationAsRead
+} from '@/lib/supabase';
+
+interface Notification {
+  id: string;
+  user_id: string;
+  title: string;
+  message: string;
+  type: string;
+  read: boolean;
+  created_at: string;
+}
 
 interface NotificationsPageProps {
   onNavigate: (page: string) => void;

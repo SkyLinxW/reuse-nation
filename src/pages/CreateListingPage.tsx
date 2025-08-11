@@ -6,7 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { saveWasteItem, getCurrentUser } from '@/lib/localStorage';
+import { useAuth } from '@/hooks/useAuth';
+import { createWasteItem } from '@/lib/supabase';
 import { WasteItem, WasteCategory } from '@/types';
 import { ArrowLeft, Upload } from 'lucide-react';
 

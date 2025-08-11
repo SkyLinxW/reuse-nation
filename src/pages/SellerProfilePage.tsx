@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { WasteCard } from '@/components/WasteCard';
 import { User, WasteItem, Review } from '@/types';
-import { getUserById, getWasteItemsBySeller, getReviewsByUser } from '@/lib/localStorage';
+import { getProfile, getWasteItems } from '@/lib/supabase';
 
 interface SellerProfilePageProps {
   onNavigate: (page: string) => void;

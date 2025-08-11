@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { getCurrentUser } from '@/lib/localStorage';
+import { useAuth } from '@/hooks/useAuth';
+import { getFavorites, addToFavorites as addFavorite, removeFromFavorites as removeFavorite } from '@/lib/supabase';
 
 export interface FavoriteItem {
   id: string;
@@ -8,69 +9,51 @@ export interface FavoriteItem {
   createdAt: string;
 }
 
-const FAVORITES_KEY = 'eco-marketplace-favorites';
-
 export const useFavorites = () => {
-  const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
-  const currentUser = getCurrentUser();
+  const [favorites, setFavorites] = useState<any[]>([]);
+  const { user } = useAuth();
 
   useEffect(() => {
-    if (currentUser) {
+    if (user) {
       loadFavorites();
     }
-  }, [currentUser?.id]);
+  }, [user?.id]);
 
-  const loadFavorites = () => {
+  const loadFavorites = async () => {
     try {
-      const stored = localStorage.getItem(FAVORITES_KEY);
-      const allFavorites = stored ? JSON.parse(stored) : [];
-      const userFavorites = allFavorites.filter((fav: FavoriteItem) => fav.userId === currentUser?.id);
-      setFavorites(userFavorites);
+      if (!user) return;
+      const userFavorites = await getFavorites(user.id);
+      setFavorites(userFavorites || []);
     } catch (error) {
       console.error('Error loading favorites:', error);
       setFavorites([]);
     }
   };
 
-  const addToFavorites = (wasteItemId: string) => {
-    if (!currentUser) return;
-
-    const newFavorite: FavoriteItem = {
-      id: `fav_${Date.now()}_${Math.random()}`,
-      userId: currentUser.id,
-      wasteItemId,
-      createdAt: new Date().toISOString()
-    };
+  const addToFavorites = async (wasteItemId: string) => {
+    if (!user) return;
 
     try {
-      const stored = localStorage.getItem(FAVORITES_KEY);
-      const allFavorites = stored ? JSON.parse(stored) : [];
-      const updatedFavorites = [...allFavorites, newFavorite];
-      localStorage.setItem(FAVORITES_KEY, JSON.stringify(updatedFavorites));
-      setFavorites(prev => [...prev, newFavorite]);
+      await addFavorite(user.id, wasteItemId);
+      loadFavorites(); // Reload favorites
     } catch (error) {
       console.error('Error adding to favorites:', error);
     }
   };
 
-  const removeFromFavorites = (wasteItemId: string) => {
-    if (!currentUser) return;
+  const removeFromFavorites = async (wasteItemId: string) => {
+    if (!user) return;
 
     try {
-      const stored = localStorage.getItem(FAVORITES_KEY);
-      const allFavorites = stored ? JSON.parse(stored) : [];
-      const updatedFavorites = allFavorites.filter((fav: FavoriteItem) => 
-        !(fav.userId === currentUser.id && fav.wasteItemId === wasteItemId)
-      );
-      localStorage.setItem(FAVORITES_KEY, JSON.stringify(updatedFavorites));
-      setFavorites(prev => prev.filter(fav => fav.wasteItemId !== wasteItemId));
+      await removeFavorite(user.id, wasteItemId);
+      loadFavorites(); // Reload favorites
     } catch (error) {
       console.error('Error removing from favorites:', error);
     }
   };
 
   const isFavorite = (wasteItemId: string) => {
-    return favorites.some(fav => fav.wasteItemId === wasteItemId);
+    return favorites.some(fav => fav.waste_item_id === wasteItemId);
   };
 
   const toggleFavorite = (wasteItemId: string) => {

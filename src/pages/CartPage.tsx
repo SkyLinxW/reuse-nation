@@ -7,17 +7,14 @@ import { useToast } from '@/hooks/use-toast';
 import { PaymentForm } from '@/components/PaymentForm';
 import { DeliveryForm } from '@/components/DeliveryForm';
 import { OrderSummary } from '@/components/OrderSummary';
-import { 
-  getCurrentUser, 
-  getCartItems, 
-  getWasteItemById, 
-  updateCartQuantity, 
-  removeFromCart, 
-  getCartTotal,
-  createPurchaseTransaction,
+import { useAuth } from '@/hooks/useAuth';
+import {
+  getCartItems,
+  updateCartItemQuantity,
+  removeFromCart,
   clearCart,
-  CartItem 
-} from '@/lib/localStorage';
+  createTransaction
+} from '@/lib/supabase';
 import { WasteItem } from '@/types';
 
 interface CartPageProps {
@@ -25,51 +22,60 @@ interface CartPageProps {
 }
 
 export const CartPage = ({ onNavigate }: CartPageProps) => {
-  const [cartItems, setCartItems] = useState<Array<CartItem & { wasteItem: WasteItem }>>([]);
+  const [cartItems, setCartItems] = useState<any[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'boleto' | 'cartao' | 'dinheiro'>('pix');
   const [deliveryMethod, setDeliveryMethod] = useState<'retirada_local' | 'entrega' | 'transportadora'>('retirada_local');
   const [deliveryData, setDeliveryData] = useState<any>({});
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState<'cart' | 'delivery' | 'payment' | 'summary'>('cart');
-  const currentUser = getCurrentUser();
+  const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (currentUser) {
-      const items = getCartItems(currentUser.id);
-      const itemsWithDetails = items.map(cartItem => {
-        const wasteItem = getWasteItemById(cartItem.wasteItemId);
-        return { ...cartItem, wasteItem: wasteItem! };
-      }).filter(item => item.wasteItem);
-      setCartItems(itemsWithDetails);
+    if (user) {
+      loadCartItems();
     }
-  }, [currentUser?.id]);
+  }, [user?.id]);
 
-  const handleQuantityChange = (wasteItemId: string, newQuantity: number) => {
-    if (!currentUser || newQuantity < 1) return;
-    
-    updateCartQuantity(currentUser.id, wasteItemId, newQuantity);
-    setCartItems(prev => prev.map(item => 
-      item.wasteItemId === wasteItemId 
-        ? { ...item, quantity: newQuantity }
-        : item
-    ));
+  const loadCartItems = async () => {
+    if (!user) return;
+    try {
+      const items = await getCartItems(user.id);
+      setCartItems(items || []);
+    } catch (error) {
+      console.error('Error loading cart items:', error);
+    }
   };
 
-  const handleRemoveItem = (wasteItemId: string) => {
-    if (!currentUser) return;
+  const handleQuantityChange = async (wasteItemId: string, newQuantity: number) => {
+    if (!user || newQuantity < 1) return;
     
-    removeFromCart(currentUser.id, wasteItemId);
-    setCartItems(prev => prev.filter(item => item.wasteItemId !== wasteItemId));
+    try {
+      await updateCartItemQuantity(user.id, wasteItemId, newQuantity);
+      loadCartItems();
+    } catch (error) {
+      console.error('Error updating quantity:', error);
+    }
+  };
+
+  const handleRemoveItem = async (wasteItemId: string) => {
+    if (!user) return;
     
-    toast({
-      title: "Item removido",
-      description: "O item foi removido do seu carrinho.",
-    });
+    try {
+      await removeFromCart(user.id, wasteItemId);
+      loadCartItems();
+      
+      toast({
+        title: "Item removido",
+        description: "O item foi removido do seu carrinho.",
+      });
+    } catch (error) {
+      console.error('Error removing item:', error);
+    }
   };
 
   const handlePaymentProcess = async (paymentData: any) => {
-    if (!currentUser || cartItems.length === 0) return;
+    if (!user || cartItems.length === 0) return;
     
     setIsProcessing(true);
     
@@ -77,19 +83,27 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
       // Simular processamento de pagamento
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      const transactions = createPurchaseTransaction(
-        currentUser.id,
-        cartItems,
-        paymentMethod,
-        deliveryMethod
-      );
+      // Create transactions for each item
+      for (const cartItem of cartItems) {
+        await createTransaction({
+          buyer_id: user.id,
+          seller_id: cartItem.waste_items?.user_id,
+          waste_item_id: cartItem.waste_item_id,
+          quantity: cartItem.quantity,
+          total_price: (cartItem.waste_items?.price || 0) * cartItem.quantity,
+          payment_method: paymentMethod,
+          delivery_method: deliveryMethod,
+          delivery_address: deliveryMethod === 'entrega' ? deliveryData.address : null,
+          status: 'pendente'
+        });
+      }
       
-      clearCart(currentUser.id);
+      await clearCart(user.id);
       setCartItems([]);
       
       toast({
         title: "Compra realizada com sucesso!",
-        description: `Pagamento processado. ${transactions.length} transação(ões) foram criadas.`,
+        description: `Pagamento processado. ${cartItems.length} transação(ões) foram criadas.`,
       });
       
       onNavigate('transactions');
@@ -114,7 +128,7 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
   };
 
   const getSubtotal = () => {
-    return cartItems.reduce((sum, item) => sum + (item.wasteItem.price * item.quantity), 0);
+    return cartItems.reduce((sum, item) => sum + ((item.waste_items?.price || 0) * item.quantity), 0);
   };
 
   const getPixDiscount = () => {
@@ -137,7 +151,7 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
 
   const sellerAddress = cartItems.length > 0 ? "Rua das Empresas, 123 - São Paulo, SP" : "";
 
-  if (!currentUser) {
+  if (!user) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Card>
@@ -183,61 +197,61 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
                   <div className="space-y-4">
                     {cartItems.map((item) => (
                       <div key={item.id} className="flex gap-4 p-4 border rounded-lg">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-lg mb-2">
-                            {item.wasteItem.title}
-                          </h3>
-                          <p className="text-muted-foreground text-sm mb-2">
-                            {item.wasteItem.description}
-                          </p>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span>Preço: {formatPrice(item.wasteItem.price)}/{item.wasteItem.quantity.unit}</span>
-                            <span>Disponível: {item.wasteItem.quantity.value} {item.wasteItem.quantity.unit}</span>
-                          </div>
-                        </div>
+                         <div className="flex-1">
+                           <h3 className="font-semibold text-lg mb-2">
+                             {item.waste_items?.title}
+                           </h3>
+                           <p className="text-muted-foreground text-sm mb-2">
+                             {item.waste_items?.description}
+                           </p>
+                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                             <span>Preço: {formatPrice(item.waste_items?.price || 0)}</span>
+                             <span>Disponível: {JSON.parse(item.waste_items?.quantity || '{}').value} {JSON.parse(item.waste_items?.quantity || '{}').unit}</span>
+                           </div>
+                         </div>
                         
                         <div className="flex flex-col items-end gap-2">
                           <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleQuantityChange(item.wasteItemId, item.quantity - 1)}
-                              disabled={item.quantity <= 1}
-                            >
-                              <Minus className="w-3 h-3" />
-                            </Button>
-                            <Input
-                              value={item.quantity}
-                              onChange={(e) => {
-                                const value = parseInt(e.target.value) || 1;
-                                handleQuantityChange(item.wasteItemId, value);
-                              }}
-                              className="w-16 text-center"
-                              min="1"
-                              max={item.wasteItem.quantity.value}
-                            />
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleQuantityChange(item.wasteItemId, item.quantity + 1)}
-                              disabled={item.quantity >= item.wasteItem.quantity.value}
-                            >
-                              <Plus className="w-3 h-3" />
-                            </Button>
+                             <Button
+                               variant="outline"
+                               size="sm"
+                               onClick={() => handleQuantityChange(item.waste_item_id, item.quantity - 1)}
+                               disabled={item.quantity <= 1}
+                             >
+                               <Minus className="w-3 h-3" />
+                             </Button>
+                             <Input
+                               value={item.quantity}
+                               onChange={(e) => {
+                                 const value = parseInt(e.target.value) || 1;
+                                 handleQuantityChange(item.waste_item_id, value);
+                               }}
+                               className="w-16 text-center"
+                               min="1"
+                               max={JSON.parse(item.waste_items?.quantity || '{}').value || 999}
+                             />
+                             <Button
+                               variant="outline"
+                               size="sm"
+                               onClick={() => handleQuantityChange(item.waste_item_id, item.quantity + 1)}
+                               disabled={item.quantity >= (JSON.parse(item.waste_items?.quantity || '{}').value || 999)}
+                             >
+                               <Plus className="w-3 h-3" />
+                             </Button>
                           </div>
                           
-                          <div className="text-lg font-bold text-eco-green">
-                            {formatPrice(item.wasteItem.price * item.quantity)}
-                          </div>
-                          
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveItem(item.wasteItemId)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                           <div className="text-lg font-bold text-eco-green">
+                             {formatPrice((item.waste_items?.price || 0) * item.quantity)}
+                           </div>
+                           
+                           <Button
+                             variant="ghost"
+                             size="sm"
+                             onClick={() => handleRemoveItem(item.waste_item_id)}
+                             className="text-red-500 hover:text-red-700"
+                           >
+                             <Trash2 className="w-4 h-4" />
+                           </Button>
                         </div>
                       </div>
                     ))}
