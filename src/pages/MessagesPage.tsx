@@ -5,13 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { 
-  getCurrentUser, 
-  getUserChats, 
-  getChatMessages, 
-  saveChatMessage,
-  getUserById,
-  getWasteItemById
-} from '@/lib/localStorage';
+  getConversations, 
+  getMessages, 
+  sendMessage,
+  getProfile,
+  getWasteItem
+} from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 import { Chat, ChatMessage, User, WasteItem } from '@/types';
 import { ArrowLeft, Send, MessageCircle } from 'lucide-react';
 
@@ -21,62 +21,72 @@ interface MessagesPageProps {
 }
 
 export const MessagesPage = ({ onNavigate, chatId }: MessagesPageProps) => {
-  const [chats, setChats] = useState<Chat[]>([]);
-  const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [chats, setChats] = useState<any[]>([]);
+  const [selectedChat, setSelectedChat] = useState<any | null>(null);
+  const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [otherUser, setOtherUser] = useState<User | null>(null);
-  const [product, setProduct] = useState<WasteItem | null>(null);
+  const [otherUser, setOtherUser] = useState<any | null>(null);
+  const [product, setProduct] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
   
-  const currentUser = getCurrentUser();
+  const { user } = useAuth();
 
   useEffect(() => {
-    if (currentUser) {
-      const userChats = getUserChats(currentUser.id);
-      setChats(userChats);
+    const loadChats = async () => {
+      if (user) {
+        try {
+          const userChats = await getConversations(user.id);
+          setChats(userChats);
 
-      if (chatId) {
-        const chat = userChats.find(c => c.id === chatId);
-        if (chat) {
-          setSelectedChat(chat);
-          loadChatData(chat);
+          if (chatId) {
+            const chat = userChats.find((c: any) => c.id === chatId);
+            if (chat) {
+              setSelectedChat(chat);
+              await loadChatData(chat);
+            }
+          }
+        } catch (error) {
+          console.error('Error loading chats:', error);
         }
       }
-    }
-  }, [currentUser, chatId]);
-
-  const loadChatData = (chat: Chat) => {
-    const chatMessages = getChatMessages(chat.id);
-    setMessages(chatMessages);
-
-    const otherUserId = chat.buyerId === currentUser?.id ? chat.sellerId : chat.buyerId;
-    const user = getUserById(otherUserId);
-    setOtherUser(user);
-
-    const wasteItem = getWasteItemById(chat.wasteItemId);
-    setProduct(wasteItem);
-  };
-
-  const handleChatSelect = (chat: Chat) => {
-    setSelectedChat(chat);
-    loadChatData(chat);
-  };
-
-  const handleSendMessage = () => {
-    if (!newMessage.trim() || !selectedChat || !currentUser) return;
-
-    const message: ChatMessage = {
-      id: Date.now().toString(),
-      chatId: selectedChat.id,
-      senderId: currentUser.id,
-      content: newMessage.trim(),
-      timestamp: new Date().toISOString(),
-      read: false
+      setLoading(false);
     };
 
-    saveChatMessage(message);
-    setMessages(prev => [...prev, message]);
-    setNewMessage('');
+    loadChats();
+  }, [user, chatId]);
+
+  const loadChatData = async (chat: any) => {
+    try {
+      const chatMessages = await getMessages(chat.id);
+      setMessages(chatMessages);
+
+      const otherUserId = chat.user1_id === user?.id ? chat.user2_id : chat.user1_id;
+      const userProfile = await getProfile(otherUserId);
+      setOtherUser(userProfile);
+
+      // Note: We'll need to add wasteItemId to conversations table or get it from another way
+      // For now, we'll skip the product loading
+      setProduct(null);
+    } catch (error) {
+      console.error('Error loading chat data:', error);
+    }
+  };
+
+  const handleChatSelect = async (chat: any) => {
+    setSelectedChat(chat);
+    await loadChatData(chat);
+  };
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !selectedChat || !user) return;
+
+    try {
+      const message = await sendMessage(selectedChat.id, user.id, newMessage.trim());
+      setMessages(prev => [...prev, message]);
+      setNewMessage('');
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -86,7 +96,19 @@ export const MessagesPage = ({ onNavigate, chatId }: MessagesPageProps) => {
     }
   };
 
-  if (!currentUser) {
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card>
+          <CardContent className="text-center py-8">
+            <p className="text-muted-foreground">Carregando mensagens...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!user) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Card>
@@ -94,7 +116,7 @@ export const MessagesPage = ({ onNavigate, chatId }: MessagesPageProps) => {
             <p className="text-muted-foreground mb-4">
               Você precisa estar logado para ver suas mensagens.
             </p>
-            <Button onClick={() => onNavigate('login')}>
+            <Button onClick={() => onNavigate('auth')}>
               Fazer Login
             </Button>
           </CardContent>
@@ -131,12 +153,8 @@ export const MessagesPage = ({ onNavigate, chatId }: MessagesPageProps) => {
             ) : (
               <div className="space-y-0">
                 {chats.map((chat) => {
-                  const otherUserId = chat.buyerId === currentUser.id ? chat.sellerId : chat.buyerId;
-                  const user = getUserById(otherUserId);
-                  const wasteItem = getWasteItemById(chat.wasteItemId);
+                  const otherUserId = chat.user1_id === user.id ? chat.user2_id : chat.user1_id;
                   
-                  if (!user || !wasteItem) return null;
-
                   return (
                     <div
                       key={chat.id}
@@ -147,15 +165,15 @@ export const MessagesPage = ({ onNavigate, chatId }: MessagesPageProps) => {
                     >
                       <div className="flex items-center gap-3">
                         <Avatar className="w-10 h-10">
-                          <AvatarImage src="" alt={user.name} />
+                          <AvatarImage src="" alt="Usuário" />
                           <AvatarFallback>
-                            {user.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                            U
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{user.name}</p>
+                          <p className="font-medium truncate">Conversa</p>
                           <p className="text-sm text-muted-foreground truncate">
-                            {wasteItem.title}
+                            {new Date(chat.last_message_at).toLocaleDateString('pt-BR')}
                           </p>
                         </div>
                       </div>
@@ -169,7 +187,7 @@ export const MessagesPage = ({ onNavigate, chatId }: MessagesPageProps) => {
 
         {/* Área de mensagens */}
         <Card className="lg:col-span-2">
-          {selectedChat && otherUser && product ? (
+          {selectedChat ? (
             <>
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-3">
@@ -180,8 +198,8 @@ export const MessagesPage = ({ onNavigate, chatId }: MessagesPageProps) => {
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium">{otherUser.name}</p>
-                    <p className="text-sm text-muted-foreground">{product.title}</p>
+                    <p className="font-medium">{otherUser?.name || 'Usuário'}</p>
+                    <p className="text-sm text-muted-foreground">Conversa</p>
                   </div>
                 </div>
               </CardHeader>
@@ -191,8 +209,8 @@ export const MessagesPage = ({ onNavigate, chatId }: MessagesPageProps) => {
               <CardContent className="flex-1 p-4 max-h-96 overflow-y-auto">
                 <div className="space-y-4">
                   {messages.map((message) => {
-                    const isMyMessage = message.senderId === currentUser.id;
-                    const sender = isMyMessage ? currentUser : otherUser;
+                    const isMyMessage = message.sender_id === user.id;
+                    const senderName = isMyMessage ? (user.user_metadata?.name || user.email) : (otherUser?.name || 'Usuário');
                     
                     return (
                       <div
@@ -200,9 +218,9 @@ export const MessagesPage = ({ onNavigate, chatId }: MessagesPageProps) => {
                         className={`flex gap-3 ${isMyMessage ? 'flex-row-reverse' : ''}`}
                       >
                         <Avatar className="w-8 h-8">
-                          <AvatarImage src="" alt={sender.name} />
+                          <AvatarImage src="" alt={senderName} />
                           <AvatarFallback className="text-xs">
-                            {sender.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                            {senderName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2) || 'U'}
                           </AvatarFallback>
                         </Avatar>
                         <div
@@ -216,7 +234,7 @@ export const MessagesPage = ({ onNavigate, chatId }: MessagesPageProps) => {
                           <p className={`text-xs mt-1 ${
                             isMyMessage ? 'text-white/70' : 'text-muted-foreground'
                           }`}>
-                            {new Date(message.timestamp).toLocaleTimeString('pt-BR', {
+                            {new Date(message.created_at).toLocaleTimeString('pt-BR', {
                               hour: '2-digit',
                               minute: '2-digit'
                             })}
