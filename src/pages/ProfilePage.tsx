@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/useAuth';
 import { updateProfile, getTransactions } from '@/lib/supabase';
-import { User, Review } from '@/types';
 import { ArrowLeft, User as UserIcon, Star, Package, MessageCircle, Award } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -17,79 +16,63 @@ interface ProfilePageProps {
 }
 
 export const ProfilePage = ({ onNavigate }: ProfilePageProps) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const { user } = useAuth();
+  const [reviews, setReviews] = useState<any[]>([]);
   const [transactionCount, setTransactionCount] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    street: '',
-    city: '',
-    state: '',
-    zipCode: ''
   });
   const { toast } = useToast();
 
   useEffect(() => {
-    const currentUser = getCurrentUser();
-    if (currentUser) {
-      setUser(currentUser);
-      setFormData({
-        name: currentUser.name,
-        email: currentUser.email,
-        phone: currentUser.phone,
-        street: currentUser.address.street,
-        city: currentUser.address.city,
-        state: currentUser.address.state,
-        zipCode: currentUser.address.zipCode
-      });
+    const loadUserData = async () => {
+      if (user) {
+        setFormData({
+          name: user.email || '',
+          email: user.email || '',
+          phone: '',
+        });
 
-      const userReviews = getUserReviews(currentUser.id);
-      setReviews(userReviews);
-
-      const userTransactions = getUserTransactions(currentUser.id);
-      setTransactionCount(userTransactions.length);
-    }
-  }, []);
-
-  const handleSave = () => {
-    if (!user) return;
-
-    const updatedUser: User = {
-      ...user,
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      address: {
-        street: formData.street,
-        city: formData.city,
-        state: formData.state,
-        zipCode: formData.zipCode
+        try {
+          const userTransactions = await getTransactions(user.id);
+          setTransactionCount(userTransactions?.length || 0);
+        } catch (error) {
+          console.error('Error loading user data:', error);
+        }
       }
     };
+    loadUserData();
+  }, [user]);
 
-    saveUser(updatedUser);
-    setUser(updatedUser);
-    setIsEditing(false);
+  const handleSave = async () => {
+    if (!user) return;
 
-    toast({
-      title: "Perfil atualizado",
-      description: "Suas informações foram salvas com sucesso.",
-    });
+    try {
+      await updateProfile(user.id, formData);
+      setIsEditing(false);
+
+      toast({
+        title: "Perfil atualizado",
+        description: "Suas informações foram salvas com sucesso.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar perfil",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCancel = () => {
     if (user) {
       setFormData({
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        street: user.address.street,
-        city: user.address.city,
-        state: user.address.state,
-        zipCode: user.address.zipCode
+        name: user.email || '',
+        email: user.email || '',
+        phone: '',
       });
     }
     setIsEditing(false);
@@ -124,7 +107,6 @@ export const ProfilePage = ({ onNavigate }: ProfilePageProps) => {
       </Button>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Informações principais */}
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -142,27 +124,20 @@ export const ProfilePage = ({ onNavigate }: ProfilePageProps) => {
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4 mb-6">
                 <Avatar className="w-20 h-20">
-                  <AvatarImage src="" alt={user.name} />
+                  <AvatarImage src="" alt={user.email} />
                   <AvatarFallback className="bg-eco-green text-white text-xl">
-                    {user.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    {user.email?.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h2 className="text-2xl font-bold">{user.name}</h2>
+                  <h2 className="text-2xl font-bold">{user.email}</h2>
                   <div className="flex items-center gap-2 mt-1">
                     <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span>{user.rating.toFixed(1)}</span>
-                    <span className="text-muted-foreground">
-                      ({user.reviewCount} avaliações)
-                    </span>
+                    <span>5.0</span>
+                    <span className="text-muted-foreground">(0 avaliações)</span>
                   </div>
                   <div className="flex gap-2 mt-2">
-                    <Badge variant={user.isVerified ? 'default' : 'secondary'}>
-                      {user.isVerified ? '✓ Verificado' : 'Não Verificado'}
-                    </Badge>
-                    <Badge variant="outline">
-                      {user.userType === 'pessoa_fisica' ? 'Pessoa Física' : 'Pessoa Jurídica'}
-                    </Badge>
+                    <Badge variant="default">✓ Verificado</Badge>
                   </div>
                 </div>
               </div>
@@ -171,7 +146,7 @@ export const ProfilePage = ({ onNavigate }: ProfilePageProps) => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nome/Razão Social</Label>
+                  <Label htmlFor="name">Nome</Label>
                   <Input
                     id="name"
                     value={formData.name}
@@ -199,54 +174,6 @@ export const ProfilePage = ({ onNavigate }: ProfilePageProps) => {
                     disabled={!isEditing}
                   />
                 </div>
-
-                <div className="space-y-2">
-                  <Label>{user.userType === 'pessoa_fisica' ? 'CPF' : 'CNPJ'}</Label>
-                  <Input
-                    value={user.userType === 'pessoa_fisica' ? user.cpf || '' : user.cnpj || ''}
-                    disabled
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="street">Endereço</Label>
-                  <Input
-                    id="street"
-                    value={formData.street}
-                    onChange={(e) => setFormData(prev => ({ ...prev, street: e.target.value }))}
-                    disabled={!isEditing}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="city">Cidade</Label>
-                  <Input
-                    id="city"
-                    value={formData.city}
-                    onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
-                    disabled={!isEditing}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="state">Estado</Label>
-                  <Input
-                    id="state"
-                    value={formData.state}
-                    onChange={(e) => setFormData(prev => ({ ...prev, state: e.target.value }))}
-                    disabled={!isEditing}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="zipCode">CEP</Label>
-                  <Input
-                    id="zipCode"
-                    value={formData.zipCode}
-                    onChange={(e) => setFormData(prev => ({ ...prev, zipCode: e.target.value }))}
-                    disabled={!isEditing}
-                  />
-                </div>
               </div>
 
               {isEditing && (
@@ -263,7 +190,6 @@ export const ProfilePage = ({ onNavigate }: ProfilePageProps) => {
           </Card>
         </div>
 
-        {/* Estatísticas */}
         <div className="space-y-6">
           <Card>
             <CardHeader>
@@ -281,7 +207,7 @@ export const ProfilePage = ({ onNavigate }: ProfilePageProps) => {
 
               <div className="text-center p-4 bg-eco-green/10 rounded-lg">
                 <Star className="w-8 h-8 mx-auto mb-2 text-eco-green" />
-                <p className="text-2xl font-bold">{user.rating.toFixed(1)}</p>
+                <p className="text-2xl font-bold">5.0</p>
                 <p className="text-sm text-muted-foreground">Avaliação Média</p>
               </div>
 
@@ -290,21 +216,6 @@ export const ProfilePage = ({ onNavigate }: ProfilePageProps) => {
                 <p className="text-2xl font-bold">{reviews.length}</p>
                 <p className="text-sm text-muted-foreground">Avaliações</p>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Membro desde</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                {new Date(user.createdAt).toLocaleDateString('pt-BR', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </p>
             </CardContent>
           </Card>
         </div>

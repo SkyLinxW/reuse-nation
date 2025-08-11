@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { WasteCard } from '@/components/WasteCard';
 import { useAuth } from '@/hooks/useAuth';
 import { getWasteItems, deleteWasteItem } from '@/lib/supabase';
-import { WasteItem } from '@/types';
 import { ArrowLeft, Plus, Edit, Trash2, Eye, Heart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -14,30 +13,43 @@ interface MyListingsPageProps {
 }
 
 export const MyListingsPage = ({ onNavigate }: MyListingsPageProps) => {
-  const [myListings, setMyListings] = useState<WasteItem[]>([]);
-  const currentUser = getCurrentUser();
+  const { user } = useAuth();
+  const [listings, setListings] = useState<any[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (currentUser) {
-      const allItems = getWasteItems();
-      const userItems = allItems.filter(item => item.sellerId === currentUser.id);
-      setMyListings(userItems);
-    }
-  }, [currentUser]);
+    const loadListings = async () => {
+      if (user) {
+        try {
+          const allItems = await getWasteItems();
+          const userListings = allItems.filter(item => item.user_id === user.id);
+          setListings(userListings);
+        } catch (error) {
+          console.error('Error loading listings:', error);
+        }
+      }
+    };
+    loadListings();
+  }, [user?.id]);
 
-  const handleDeleteListing = (itemId: string) => {
-    if (confirm('Tem certeza que deseja excluir este anúncio?')) {
-      deleteWasteItem(itemId);
-      setMyListings(prev => prev.filter(item => item.id !== itemId));
+  const handleDeleteListing = async (listingId: string) => {
+    try {
+      await deleteWasteItem(listingId);
+      setListings(prev => prev.filter(item => item.id !== listingId));
       toast({
         title: "Anúncio excluído",
-        description: "Seu anúncio foi removido com sucesso.",
+        description: "O anúncio foi removido com sucesso.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir anúncio",
+        variant: "destructive",
       });
     }
   };
 
-  if (!currentUser) {
+  if (!user) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Card>
@@ -76,7 +88,7 @@ export const MyListingsPage = ({ onNavigate }: MyListingsPageProps) => {
         </Button>
       </div>
 
-      {myListings.length === 0 ? (
+      {listings.length === 0 ? (
         <Card>
           <CardContent className="text-center py-8">
             <Plus className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
@@ -94,11 +106,11 @@ export const MyListingsPage = ({ onNavigate }: MyListingsPageProps) => {
       ) : (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {myListings.map((item) => (
+            {listings.map((item) => (
               <Card key={item.id} className="relative">
                 <div className="absolute top-2 right-2 z-10 flex gap-1">
-                  <Badge variant={item.isActive ? 'default' : 'secondary'}>
-                    {item.isActive ? 'Ativo' : 'Inativo'}
+                  <Badge variant={item.availability ? 'default' : 'secondary'}>
+                    {item.availability ? 'Ativo' : 'Inativo'}
                   </Badge>
                 </div>
                 
@@ -109,19 +121,6 @@ export const MyListingsPage = ({ onNavigate }: MyListingsPageProps) => {
                 />
                 
                 <CardContent className="pt-2">
-                  <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-1">
-                        <Eye className="w-4 h-4" />
-                        {item.views}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Heart className="w-4 h-4" />
-                        {item.favorites}
-                      </div>
-                    </div>
-                  </div>
-                  
                   <div className="flex gap-2">
                     <Button
                       variant="outline"

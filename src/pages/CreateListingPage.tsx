@@ -16,7 +16,7 @@ interface CreateListingPageProps {
 }
 
 export const CreateListingPage = ({ onNavigate }: CreateListingPageProps) => {
-  const currentUser = getCurrentUser();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -67,7 +67,7 @@ export const CreateListingPage = ({ onNavigate }: CreateListingPageProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!currentUser) {
+    if (!user) {
       toast({
         title: "Erro",
         description: "Você precisa estar logado para criar um anúncio.",
@@ -81,7 +81,7 @@ export const CreateListingPage = ({ onNavigate }: CreateListingPageProps) => {
     try {
       const newListing: WasteItem = {
         id: Date.now().toString(),
-        sellerId: currentUser.id,
+        sellerId: user.id,
         title: formData.title,
         description: formData.description,
         category: formData.category,
@@ -109,7 +109,7 @@ export const CreateListingPage = ({ onNavigate }: CreateListingPageProps) => {
         favorites: 0
       };
 
-      saveWasteItem(newListing);
+      const result = await createWasteItem(newListing);
 
       toast({
         title: "Anúncio criado com sucesso!",
@@ -128,7 +128,7 @@ export const CreateListingPage = ({ onNavigate }: CreateListingPageProps) => {
     }
   };
 
-  if (!currentUser) {
+  if (!user) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Card>

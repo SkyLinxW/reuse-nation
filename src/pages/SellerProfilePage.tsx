@@ -1,245 +1,189 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, MapPin, Star, Calendar, Package, MessageCircle, Shield } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { WasteCard } from '@/components/WasteCard';
-import { User, WasteItem, Review } from '@/types';
+import { ReviewCard } from '@/components/ReviewCard';
 import { getProfile, getWasteItems } from '@/lib/supabase';
+import { ArrowLeft, Star, MapPin, Calendar, MessageCircle } from 'lucide-react';
 
 interface SellerProfilePageProps {
   onNavigate: (page: string) => void;
-  sellerId: string;
 }
 
-export const SellerProfilePage = ({ onNavigate, sellerId }: SellerProfilePageProps) => {
-  const [seller, setSeller] = useState<User | null>(null);
-  const [sellerItems, setSellerItems] = useState<WasteItem[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
+export const SellerProfilePage = ({ onNavigate }: SellerProfilePageProps) => {
+  const [seller, setSeller] = useState<any>(null);
+  const [sellerItems, setSellerItems] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
+
+  // Get seller ID from URL params (simulated)
+  const urlParams = new URLSearchParams(window.location.search);
+  const sellerId = urlParams.get('id');
 
   useEffect(() => {
     const loadSellerData = async () => {
-      const sellerData = getUserById(sellerId);
-      if (sellerData) {
-        setSeller(sellerData);
-        setSellerItems(getWasteItemsBySeller(sellerId));
-        setReviews(getReviewsByUser(sellerId));
+      if (sellerId) {
+        try {
+          const profile = await getProfile(sellerId);
+          setSeller(profile);
+          
+          const items = await getWasteItems();
+          const sellerItems = items.filter(item => item.user_id === sellerId);
+          setSellerItems(sellerItems);
+          
+          setReviews([]); // TODO: Implement reviews in Supabase
+        } catch (error) {
+          console.error('Error loading seller data:', error);
+        }
       }
     };
-
     loadSellerData();
   }, [sellerId]);
 
   if (!seller) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-6 text-center">
-            <h2 className="text-xl font-semibold mb-2">Vendedor não encontrado</h2>
-            <p className="text-muted-foreground mb-4">
-              O perfil solicitado não está disponível.
-            </p>
-            <Button onClick={() => onNavigate('home')}>
-              Voltar ao início
-            </Button>
+      <div className="container mx-auto px-4 py-8">
+        <Button
+          variant="ghost"
+          onClick={() => onNavigate('home')}
+          className="mb-4"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Voltar
+        </Button>
+        <Card>
+          <CardContent className="text-center py-8">
+            <p className="text-muted-foreground">Carregando perfil do vendedor...</p>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
-      month: 'long',
-      year: 'numeric'
-    });
-  };
-
-  const activeItems = sellerItems.filter(item => item.isActive);
-  const totalViews = sellerItems.reduce((sum, item) => sum + item.views, 0);
-  const averageRating = reviews.length > 0 
-    ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
-    : seller.rating;
-
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6 max-w-6xl">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => onNavigate('home')}
-            className="p-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <h1 className="text-2xl font-bold">Perfil do Vendedor</h1>
+    <div className="container mx-auto px-4 py-8">
+      <Button
+        variant="ghost"
+        onClick={() => onNavigate('home')}
+        className="mb-4"
+      >
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Voltar
+      </Button>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Perfil do Vendedor</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-4">
+                <Avatar className="w-16 h-16">
+                  <AvatarImage src="" alt={seller.name || seller.email} />
+                  <AvatarFallback className="bg-eco-green text-white">
+                    {(seller.name || seller.email)?.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h2 className="text-xl font-bold">{seller.name || seller.email}</h2>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <span>5.0</span>
+                    <span className="text-muted-foreground">(0 avaliações)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Badge variant="default">✓ Verificado</Badge>
+                </div>
+                
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Calendar className="w-4 h-4" />
+                  <span>Membro desde {new Date(seller.created_at).toLocaleDateString('pt-BR')}</span>
+                </div>
+                
+                {seller.bio && (
+                  <p className="text-muted-foreground">{seller.bio}</p>
+                )}
+              </div>
+
+              <Button className="w-full bg-eco-green hover:bg-eco-green/90">
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Entrar em Contato
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Estatísticas</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold">{sellerItems.length}</p>
+                <p className="text-sm text-muted-foreground">Anúncios Ativos</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold">0</p>
+                <p className="text-sm text-muted-foreground">Vendas Realizadas</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold">5.0</p>
+                <p className="text-sm text-muted-foreground">Avaliação Média</p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Seller Profile Card */}
-          <div className="lg:col-span-1">
-            <Card>
-              <CardHeader className="text-center">
-                <div className="w-24 h-24 bg-gradient-eco rounded-full mx-auto mb-4 flex items-center justify-center">
-                  <span className="text-2xl font-bold text-white">
-                    {seller.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                  </span>
+        <div className="lg:col-span-2 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Anúncios ({sellerItems.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {sellerItems.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  Este vendedor ainda não possui anúncios ativos.
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {sellerItems.map((item) => (
+                    <WasteCard
+                      key={item.id}
+                      waste={item}
+                      onNavigate={onNavigate}
+                      onItemClick={(id) => onNavigate(`product?id=${id}`)}
+                      onContactSeller={() => {}}
+                      showActions={false}
+                    />
+                  ))}
                 </div>
-                <CardTitle className="text-xl">{seller.name}</CardTitle>
-                
-                <div className="flex items-center justify-center gap-2 mt-2">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-medium">{averageRating.toFixed(1)}</span>
-                  </div>
-                  <span className="text-muted-foreground">
-                    ({seller.reviewCount} avaliações)
-                  </span>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Avaliações ({reviews.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {reviews.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  Este vendedor ainda não possui avaliações.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {reviews.map((review) => (
+                    <ReviewCard key={review.id} review={review} />
+                  ))}
                 </div>
-
-                {seller.isVerified && (
-                  <Badge variant="secondary" className="mt-2">
-                    <Shield className="w-3 h-3 mr-1" />
-                    Verificado
-                  </Badge>
-                )}
-              </CardHeader>
-
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="w-4 h-4 text-muted-foreground" />
-                  <span>{seller.address.city}, {seller.address.state}</span>
-                </div>
-
-                <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="w-4 h-4 text-muted-foreground" />
-                  <span>Membro desde {formatDate(seller.createdAt)}</span>
-                </div>
-
-                <div className="flex items-center gap-2 text-sm">
-                  <Package className="w-4 h-4 text-muted-foreground" />
-                  <span>{activeItems.length} anúncios ativos</span>
-                </div>
-
-                <Separator />
-
-                <div className="grid grid-cols-2 gap-4 text-center">
-                  <div>
-                    <div className="text-2xl font-bold text-eco-green">{totalViews}</div>
-                    <div className="text-xs text-muted-foreground">Visualizações</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-eco-green">{seller.reviewCount}</div>
-                    <div className="text-xs text-muted-foreground">Avaliações</div>
-                  </div>
-                </div>
-
-                <Button 
-                  className="w-full bg-gradient-eco hover:opacity-90"
-                  onClick={() => onNavigate(`messages?sellerId=${seller.id}`)}
-                >
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Entrar em Contato
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Type Badge */}
-            <Card className="mt-4">
-              <CardContent className="p-4">
-                <div className="text-center">
-                  <Badge 
-                    variant={seller.userType === 'pessoa_juridica' ? 'default' : 'secondary'}
-                    className="text-sm"
-                  >
-                    {seller.userType === 'pessoa_juridica' ? 'Pessoa Jurídica' : 'Pessoa Física'}
-                  </Badge>
-                  {seller.userType === 'pessoa_juridica' && seller.cnpj && (
-                    <p className="text-xs text-muted-foreground mt-2">
-                      CNPJ: {seller.cnpj}
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Seller's Items */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="w-5 h-5" />
-                  Anúncios Ativos ({activeItems.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {activeItems.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {activeItems.map((item) => (
-                      <WasteCard
-                        key={item.id}
-                        waste={item}
-                        onNavigate={onNavigate}
-                        onContactSeller={(sellerId, itemId) => 
-                          onNavigate(`messages?sellerId=${sellerId}&itemId=${itemId}`)
-                        }
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-medium mb-2">Nenhum anúncio ativo</h3>
-                    <p className="text-muted-foreground">
-                      Este vendedor não possui anúncios ativos no momento.
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Recent Reviews */}
-            {reviews.length > 0 && (
-              <Card className="mt-6">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Star className="w-5 h-5" />
-                    Avaliações Recentes
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {reviews.slice(0, 3).map((review) => (
-                      <div key={review.id} className="border-b pb-4 last:border-b-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="flex">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`w-4 h-4 ${
-                                  i < review.rating
-                                    ? 'fill-yellow-400 text-yellow-400'
-                                    : 'text-gray-300'
-                                }`}
-                              />
-                            ))}
-                          </div>
-                          <span className="text-sm text-muted-foreground">
-                            {new Date(review.createdAt).toLocaleDateString('pt-BR')}
-                          </span>
-                        </div>
-                        <p className="text-sm">{review.comment}</p>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

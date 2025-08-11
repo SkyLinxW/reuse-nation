@@ -26,14 +26,21 @@ interface NotificationsPageProps {
 export const NotificationsPage = ({ onNavigate }: NotificationsPageProps) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
-  const currentUser = getCurrentUser();
+  const { user } = useAuth();
 
   useEffect(() => {
-    if (currentUser) {
-      const userNotifications = getNotifications(currentUser.id);
-      setNotifications(userNotifications);
-    }
-  }, [currentUser?.id]);
+    const loadNotifications = async () => {
+      if (user) {
+        try {
+          const userNotifications = await getNotifications(user.id);
+          setNotifications(userNotifications || []);
+        } catch (error) {
+          console.error('Error loading notifications:', error);
+        }
+      }
+    };
+    loadNotifications();
+  }, [user?.id]);
 
   const handleMarkAsRead = (notificationId: string) => {
     markNotificationAsRead(notificationId);
@@ -85,7 +92,7 @@ export const NotificationsPage = ({ onNavigate }: NotificationsPageProps) => {
     }
   };
 
-  if (!currentUser) {
+  if (!user) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Card>
@@ -180,7 +187,7 @@ export const NotificationsPage = ({ onNavigate }: NotificationsPageProps) => {
                           {notification.message}
                         </p>
                         <p className="text-xs text-muted-foreground mt-2">
-                          {formatDate(notification.createdAt)}
+                          {formatDate(notification.created_at)}
                         </p>
                       </div>
                       

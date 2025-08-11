@@ -13,23 +13,30 @@ interface FavoritesPageProps {
 }
 
 export const FavoritesPage = ({ onNavigate }: FavoritesPageProps) => {
-  const [favoriteItems, setFavoriteItems] = useState<WasteItem[]>([]);
-  const currentUser = getCurrentUser();
+  const [favoriteItems, setFavoriteItems] = useState<any[]>([]);
+  const { user } = useAuth();
   const { favorites } = useFavorites();
 
   useEffect(() => {
-    if (currentUser && favorites.length > 0) {
-      const allItems = getWasteItems();
-      const favoriteWasteItems = allItems.filter(item => 
-        favorites.some(fav => fav.wasteItemId === item.id)
-      );
-      setFavoriteItems(favoriteWasteItems);
-    } else {
-      setFavoriteItems([]);
-    }
-  }, [currentUser?.id, favorites]);
+    const loadFavorites = async () => {
+      if (user && favorites.length > 0) {
+        try {
+          const allItems = await getWasteItems();
+          const favoriteWasteItems = allItems.filter(item => 
+            favorites.some(fav => fav.waste_item_id === item.id)
+          );
+          setFavoriteItems(favoriteWasteItems);
+        } catch (error) {
+          console.error('Error loading favorites:', error);
+        }
+      } else {
+        setFavoriteItems([]);
+      }
+    };
+    loadFavorites();
+  }, [user?.id, favorites]);
 
-  if (!currentUser) {
+  if (!user) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Card>

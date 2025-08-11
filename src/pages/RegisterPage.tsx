@@ -14,6 +14,7 @@ interface RegisterPageProps {
 }
 
 export const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
+  const { signUp } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -70,8 +71,21 @@ export const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
         isVerified: false
       };
 
-      saveUser(newUser);
-      setCurrentUser(newUser);
+      const { error } = await signUp(formData.email, formData.password, { data: { name: formData.name } });
+      
+      if (error) {
+        toast({
+          title: "Erro ao criar conta",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Conta criada com sucesso!",
+          description: "Bem-vindo ao EcoMarket!",
+        });
+        onNavigate('home');
+      }
 
       toast({
         title: "Cadastro realizado com sucesso!",

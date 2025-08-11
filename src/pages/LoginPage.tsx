@@ -12,6 +12,7 @@ interface LoginPageProps {
 }
 
 export const LoginPage = ({ onNavigate }: LoginPageProps) => {
+  const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -23,21 +24,19 @@ export const LoginPage = ({ onNavigate }: LoginPageProps) => {
     setLoading(true);
 
     try {
-      // Simulação de autenticação
-      const user = authenticateUser(email, password);
-      if (user) {
-        setCurrentUser(user);
+      const { error } = await signIn(email, password);
+      if (error) {
         toast({
-          title: "Login realizado com sucesso!",
-          description: `Bem-vindo(a), ${user.name}!`,
-        });
-        onNavigate('home');
-      } else {
-        toast({
-          title: "Erro no login",
-          description: "Email ou senha incorretos.",
+          title: "Erro ao fazer login",
+          description: error.message,
           variant: "destructive",
         });
+      } else {
+        toast({
+          title: "Login realizado com sucesso!",
+          description: `Bem-vindo(a)!`,
+        });
+        onNavigate('home');
       }
     } catch (error) {
       toast({
