@@ -7,16 +7,16 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { 
-  getWasteItemById, 
-  getUserById, 
-  getCurrentUser, 
-  toggleFavorite, 
-  getFavorites,
-  saveTransaction,
-  saveChat,
-  getUserChats
-} from '@/lib/localStorage';
+  getWasteItem, 
+  getProfile, 
+  isFavorite,
+  addToFavorites,
+  removeFromFavorites,
+  createTransaction,
+  getOrCreateConversation
+} from '@/lib/supabase';
 import { WasteItem, User, Transaction, Chat } from '@/types';
 import { 
   ArrowLeft, 
@@ -36,31 +36,38 @@ interface ProductDetailsPageProps {
 }
 
 export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPageProps) => {
-  const [product, setProduct] = useState<WasteItem | null>(null);
-  const [seller, setSeller] = useState<User | null>(null);
+  const [product, setProduct] = useState<any | null>(null);
+  const [seller, setSeller] = useState<any | null>(null);
   const [isFavorited, setIsFavorited] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   
-  const currentUser = getCurrentUser();
+  const { user } = useAuth();
 
   useEffect(() => {
-    const item = getWasteItemById(productId);
-    if (item) {
-      setProduct(item);
-      const sellerData = getUserById(item.sellerId);
-      setSeller(sellerData);
-      
-      if (currentUser) {
-        const favorites = getFavorites(currentUser.id);
-        setIsFavorited(favorites.includes(productId));
+    const loadProduct = async () => {
+      try {
+        const item = await getWasteItem(productId);
+        if (item) {
+          setProduct(item);
+          setSeller(item.profiles);
+          
+          if (user) {
+            const favorited = await isFavorite(user.id, productId);
+            setIsFavorited(!!favorited);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading product:', error);
       }
-    }
-  }, [productId, currentUser]);
+    };
+    
+    loadProduct();
+  }, [productId, user]);
 
-  const handleToggleFavorite = () => {
-    if (!currentUser) {
+  const handleToggleFavorite = async () => {
+    if (!user) {
       toast({
         title: "Login necessário",
         description: "Você precisa estar logado para favoritar produtos.",
@@ -69,19 +76,32 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
       return;
     }
 
-    toggleFavorite(currentUser.id, productId);
-    setIsFavorited(!isFavorited);
-    
-    toast({
-      title: isFavorited ? "Removido dos favoritos" : "Adicionado aos favoritos",
-      description: isFavorited ? 
-        "Produto removido da sua lista de favoritos." : 
-        "Produto adicionado à sua lista de favoritos.",
-    });
+    try {
+      if (isFavorited) {
+        await removeFromFavorites(user.id, productId);
+      } else {
+        await addToFavorites(user.id, productId);
+      }
+      
+      setIsFavorited(!isFavorited);
+      
+      toast({
+        title: isFavorited ? "Removido dos favoritos" : "Adicionado aos favoritos",
+        description: isFavorited ? 
+          "Produto removido da sua lista de favoritos." : 
+          "Produto adicionado à sua lista de favoritos.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar favoritos.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleStartChat = () => {
-    if (!currentUser || !product || !seller) {
+  const handleStartChat = async () => {
+    if (!user || !product || !seller) {
       toast({
         title: "Login necessário",
         description: "Você precisa estar logado para conversar com o vendedor.",
@@ -90,35 +110,20 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
       return;
     }
 
-    // Verificar se já existe um chat
-    const existingChats = getUserChats(currentUser.id);
-    const existingChat = existingChats.find(
-      chat => chat.wasteItemId === product.id && 
-              ((chat.buyerId === currentUser.id && chat.sellerId === seller.id) ||
-               (chat.buyerId === seller.id && chat.sellerId === currentUser.id))
-    );
-
-    if (existingChat) {
-      onNavigate(`messages?chatId=${existingChat.id}`);
-      return;
+    try {
+      const conversation = await getOrCreateConversation(user.id, seller.user_id);
+      onNavigate(`messages?conversationId=${conversation.id}`);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao iniciar conversa.",
+        variant: "destructive",
+      });
     }
-
-    // Criar novo chat
-    const newChat: Chat = {
-      id: Date.now().toString(),
-      buyerId: currentUser.id,
-      sellerId: seller.id,
-      wasteItemId: product.id,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    saveChat(newChat);
-    onNavigate(`messages?chatId=${newChat.id}`);
   };
 
-  const handleBuyNow = () => {
-    if (!currentUser || !product || !seller) {
+  const handleBuyNow = async () => {
+    if (!user || !product || !seller) {
       toast({
         title: "Login necessário",
         description: "Você precisa estar logado para fazer uma compra.",
@@ -127,7 +132,7 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
       return;
     }
 
-    if (currentUser.id === seller.id) {
+    if (user.id === seller.user_id) {
       toast({
         title: "Erro",
         description: "Você não pode comprar seu próprio produto.",
@@ -139,20 +144,18 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
     setLoading(true);
 
     try {
-      const transaction: Transaction = {
-        id: Date.now().toString(),
-        buyerId: currentUser.id,
-        sellerId: seller.id,
-        wasteItemId: product.id,
+      const transaction = {
+        buyer_id: user.id,
+        seller_id: seller.user_id,
+        waste_item_id: product.id,
         quantity: quantity,
-        totalPrice: product.price * quantity,
+        total_price: product.price * quantity,
         status: 'pendente',
-        paymentMethod: 'pix',
-        deliveryMethod: 'retirada_local',
-        createdAt: new Date().toISOString()
+        payment_method: 'pix',
+        delivery_method: 'retirada_local'
       };
 
-      saveTransaction(transaction);
+      await createTransaction(transaction);
 
       toast({
         title: "Pedido realizado!",
@@ -290,13 +293,13 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
                 <div>
                   <h4 className="font-medium">Quantidade</h4>
                   <p className="text-muted-foreground">
-                    {product.quantity.value} {product.quantity.unit}
+                    {JSON.parse(product.quantity || '{}').value} {JSON.parse(product.quantity || '{}').unit}
                   </p>
                 </div>
                 <div>
                   <h4 className="font-medium">Preço unitário</h4>
                   <p className="text-muted-foreground">
-                    R$ {product.price.toFixed(2)} por {product.quantity.unit}
+                    R$ {Number(product.price).toFixed(2)} por {JSON.parse(product.quantity || '{}').unit}
                   </p>
                 </div>
               </div>
@@ -369,7 +372,7 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   variant="outline"
-                  onClick={() => onNavigate(`seller-profile?id=${seller.id}`)}
+                  onClick={() => onNavigate(`seller-profile?id=${seller.user_id}`)}
                 >
                   Ver Perfil
                 </Button>
@@ -396,12 +399,12 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
                   id="quantity"
                   type="number"
                   min="1"
-                  max={product.quantity.value}
+                  max={JSON.parse(product.quantity || '{}').value}
                   value={quantity}
                   onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Máximo disponível: {product.quantity.value} {product.quantity.unit}
+                  Máximo disponível: {JSON.parse(product.quantity || '{}').value} {JSON.parse(product.quantity || '{}').unit}
                 </p>
               </div>
 
@@ -417,13 +420,13 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
               <Button
                 className="w-full bg-gradient-eco hover:opacity-90"
                 onClick={handleBuyNow}
-                disabled={loading || !currentUser || currentUser.id === seller.id}
+                disabled={loading || !user || user.id === seller?.user_id}
               >
                 <ShoppingCart className="w-4 h-4 mr-2" />
                 {loading ? 'Processando...' : 'Comprar Agora'}
               </Button>
 
-              {!currentUser && (
+              {!user && (
                 <p className="text-xs text-muted-foreground text-center">
                   <Button
                     variant="link"
@@ -436,7 +439,7 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
                 </p>
               )}
 
-              {currentUser && currentUser.id === seller.id && (
+              {user && user.id === seller?.user_id && (
                 <p className="text-xs text-muted-foreground text-center">
                   Este é seu próprio anúncio
                 </p>

@@ -70,6 +70,33 @@ export type Database = {
         }
         Relationships: []
       }
+      eco_impact: {
+        Row: {
+          category_impact: Json
+          co2_saved: number
+          id: string
+          total_waste_reused: number
+          transactions_count: number
+          updated_at: string
+        }
+        Insert: {
+          category_impact?: Json
+          co2_saved?: number
+          id?: string
+          total_waste_reused?: number
+          transactions_count?: number
+          updated_at?: string
+        }
+        Update: {
+          category_impact?: Json
+          co2_saved?: number
+          id?: string
+          total_waste_reused?: number
+          transactions_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       favorites: {
         Row: {
           created_at: string
@@ -197,6 +224,60 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          rating: number
+          reviewed_user_id: string
+          reviewer_id: string
+          transaction_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating: number
+          reviewed_user_id: string
+          reviewer_id: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating?: number
+          reviewed_user_id?: string
+          reviewer_id?: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      search_history: {
+        Row: {
+          created_at: string
+          id: string
+          search_term: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          search_term: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          search_term?: string
+          user_id?: string | null
         }
         Relationships: []
       }

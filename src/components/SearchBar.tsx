@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, X, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/hooks/useAuth';
+import { saveSearchTerm, getRecentSearches } from '@/lib/supabase';
 
 interface SearchBarProps {
   onSearch: (term: string) => void;
@@ -20,17 +22,29 @@ export const SearchBar = ({
 }: SearchBarProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [recentSearchesState, setRecentSearchesState] = useState<string[]>([]);
+  const { user } = useAuth();
 
-  const handleSearch = (term: string) => {
+  useEffect(() => {
+    const loadRecentSearches = async () => {
+      if (user) {
+        const searches = await getRecentSearches(user.id);
+        setRecentSearchesState(searches);
+      }
+    };
+    loadRecentSearches();
+  }, [user]);
+
+  const handleSearch = async (term: string) => {
     setSearchTerm(term);
     onSearch(term);
     setShowSuggestions(false);
     
     // Save to recent searches
-    if (term.trim()) {
-      const recent = JSON.parse(localStorage.getItem('eco-recent-searches') || '[]');
-      const updated = [term, ...recent.filter((s: string) => s !== term)].slice(0, 5);
-      localStorage.setItem('eco-recent-searches', JSON.stringify(updated));
+    if (term.trim() && user) {
+      await saveSearchTerm(user.id, term);
+      const updatedSearches = await getRecentSearches(user.id);
+      setRecentSearchesState(updatedSearches);
     }
   };
 
@@ -108,13 +122,13 @@ export const SearchBar = ({
           />
           <Card className="absolute top-full left-0 right-0 mt-2 z-20 shadow-lg">
             <CardContent className="p-4">
-              {recentSearches.length > 0 && (
+              {recentSearchesState.length > 0 && (
                 <div className="mb-4">
                   <h4 className="text-sm font-medium text-muted-foreground mb-2">
                     Buscas Recentes
                   </h4>
                   <div className="flex flex-wrap gap-2">
-                    {recentSearches.map((search, index) => (
+                    {recentSearchesState.map((search, index) => (
                       <Badge
                         key={index}
                         variant="secondary"

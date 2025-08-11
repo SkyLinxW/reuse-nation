@@ -2,11 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Receipt, Package, Truck, CreditCard, Shield, Percent } from 'lucide-react';
-import { CartItem } from '@/lib/localStorage';
-import { WasteItem } from '@/types';
 
 interface OrderSummaryProps {
-  cartItems: Array<CartItem & { wasteItem: WasteItem }>;
+  cartItems: Array<any>;
   deliveryMethod: 'retirada_local' | 'entrega' | 'transportadora';
   paymentMethod: 'pix' | 'boleto' | 'cartao' | 'dinheiro';
   subtotal: number;
@@ -73,13 +71,13 @@ export const OrderSummary = ({
             {cartItems.map((item) => (
               <div key={item.id} className="flex justify-between items-center p-2 bg-muted rounded-lg">
                 <div className="flex-1">
-                  <p className="font-medium text-sm">{item.wasteItem.title}</p>
+                  <p className="font-medium text-sm">{item.waste_items.title}</p>
                   <p className="text-xs text-muted-foreground">
-                    {item.quantity} {item.wasteItem.quantity.unit} × {formatPrice(item.wasteItem.price)}
+                    {item.quantity} {JSON.parse(item.waste_items.quantity || '{}').unit} × {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(item.waste_items.price))}
                   </p>
                 </div>
                 <span className="font-bold text-sm">
-                  {formatPrice(item.wasteItem.price * item.quantity)}
+                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(item.waste_items.price) * item.quantity)}
                 </span>
               </div>
             ))}

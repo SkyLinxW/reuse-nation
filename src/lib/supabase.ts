@@ -354,20 +354,98 @@ export const sendMessage = async (conversationId: string, senderId: string, cont
 
 // Get eco impact stats
 export const getEcoImpact = async () => {
-  const { data: transactions, error: transError } = await supabase
-    .from('transactions')
-    .select('quantity');
-  
-  if (transError) throw transError;
-  
-  // Calculate totals from actual data
-  const totalWasteReused = transactions?.reduce((sum, t) => sum + (t.quantity || 0), 0) || 10250;
-  const co2Saved = Math.round(totalWasteReused * 0.5) || 5125;
-  const transactionsCount = transactions?.length || 342;
-  
+  const { data, error } = await supabase
+    .from('eco_impact')
+    .select('*')
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error) {
+    console.error('Error fetching eco impact:', error);
+    return {
+      totalWasteReused: 0,
+      co2Saved: 0,
+      transactionsCount: 0
+    };
+  }
+
   return {
-    totalWasteReused,
-    co2Saved,
-    transactionsCount
+    totalWasteReused: Number(data.total_waste_reused),
+    co2Saved: Number(data.co2_saved),
+    transactionsCount: data.transactions_count
   };
+};
+
+// Search history functions
+export const getRecentSearches = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('search_history')
+    .select('search_term')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  if (error) {
+    console.error('Error fetching recent searches:', error);
+    return [];
+  }
+
+  return data.map(item => item.search_term);
+};
+
+export const saveSearchTerm = async (userId: string, searchTerm: string) => {
+  if (!searchTerm.trim()) return;
+
+  const { error } = await supabase
+    .from('search_history')
+    .upsert(
+      { user_id: userId, search_term: searchTerm },
+      { onConflict: 'user_id,search_term' }
+    );
+
+  if (error) {
+    console.error('Error saving search term:', error);
+  }
+};
+
+// Reviews functions
+export const getReviewsByUser = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('reviews')
+    .select(`
+      *,
+      reviewer:reviewer_id(name),
+      transaction:transaction_id(*)
+    `)
+    .eq('reviewed_user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching reviews:', error);
+    return [];
+  }
+
+  return data;
+};
+
+export const createReview = async (review: {
+  reviewer_id: string;
+  reviewed_user_id: string;
+  transaction_id?: string;
+  rating: number;
+  comment?: string;
+}) => {
+  const { data, error } = await supabase
+    .from('reviews')
+    .insert(review)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating review:', error);
+    throw error;
+  }
+
+  return data;
 };
