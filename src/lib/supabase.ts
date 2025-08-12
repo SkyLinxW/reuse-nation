@@ -30,7 +30,7 @@ export const getProfile = async (userId: string): Promise<any> => {
     return null;
   }
   
-  return data;
+  return data?.[0] || null;
 };
 
 export const updateProfile = async (userId: string, updates: any) => {
