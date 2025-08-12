@@ -237,7 +237,7 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
                   <CardTitle className="text-2xl">{product.title}</CardTitle>
                   <CardDescription className="flex items-center gap-2 mt-2">
                     <MapPin className="w-4 h-4" />
-                    {product.location.city}, {product.location.state}
+                    {product.location || 'Localização não informada'}
                   </CardDescription>
                 </div>
                 <div className="flex gap-2">
@@ -276,7 +276,7 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
                 </div>
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
-                  {new Date(product.createdAt).toLocaleDateString('pt-BR')}
+                  {new Date(product.created_at).toLocaleDateString('pt-BR')}
                 </div>
               </div>
 
@@ -293,13 +293,13 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
                 <div>
                   <h4 className="font-medium">Quantidade</h4>
                   <p className="text-muted-foreground">
-                    {JSON.parse(product.quantity || '{}').value} {JSON.parse(product.quantity || '{}').unit}
+                    {product.quantity?.value || 'N/A'} {product.quantity?.unit || ''}
                   </p>
                 </div>
                 <div>
                   <h4 className="font-medium">Preço unitário</h4>
                   <p className="text-muted-foreground">
-                    R$ {Number(product.price).toFixed(2)} por {JSON.parse(product.quantity || '{}').unit}
+                    R$ {Number(product.price).toFixed(2)} por {product.quantity?.unit || 'unidade'}
                   </p>
                 </div>
               </div>
@@ -393,20 +393,20 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
               <CardTitle className="text-lg">Comprar</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="quantity">Quantidade ({product.quantity.unit})</Label>
-                <Input
-                  id="quantity"
-                  type="number"
-                  min="1"
-                  max={JSON.parse(product.quantity || '{}').value}
-                  value={quantity}
-                  onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Máximo disponível: {JSON.parse(product.quantity || '{}').value} {JSON.parse(product.quantity || '{}').unit}
-                </p>
-              </div>
+                <div>
+                  <Label htmlFor="quantity">Quantidade ({product.quantity?.unit || 'unidade'})</Label>
+                  <Input
+                    id="quantity"
+                    type="number"
+                    min="1"
+                    max={product.quantity?.value || 999}
+                    value={quantity}
+                    onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Máximo disponível: {product.quantity?.value || 'N/A'} {product.quantity?.unit || ''}
+                  </p>
+                </div>
 
               <div className="bg-muted/50 p-4 rounded-lg">
                 <div className="flex justify-between items-center">

@@ -1,14 +1,35 @@
 import { supabase } from '@/integrations/supabase/client';
 
-// Profiles
-export const getProfile = async (userId: string) => {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('user_id', userId)
-    .single();
+// Profile management functions
+export const getProfile = async (userId: string): Promise<any> => {
+  // Try to get full profile if it's the current user
+  const { data: { user } } = await supabase.auth.getUser();
   
-  if (error) throw error;
+  if (user && user.id === userId) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching own profile:', error);
+      return null;
+    }
+    
+    return data;
+  }
+  
+  // For other users, use RPC function to get public profile
+  const { data, error } = await supabase.rpc('get_public_profile', {
+    profile_user_id: userId
+  });
+
+  if (error) {
+    console.error('Error fetching public profile:', error);
+    return null;
+  }
+  
   return data;
 };
 

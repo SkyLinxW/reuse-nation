@@ -147,12 +147,19 @@ export const WasteCard = ({ waste, onNavigate, onItemClick, onContactSeller, sho
         <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
           <div className="flex items-center gap-1">
             <MapPin className="w-3 h-3" />
-            <span>{waste.location.city}, {waste.location.state}</span>
+            <span>
+              {typeof waste.location === 'string' 
+                ? waste.location 
+                : waste.location 
+                  ? `${waste.location.city}, ${waste.location.state}` 
+                  : 'Localização não informada'
+              }
+            </span>
           </div>
           
           <div className="flex items-center gap-1">
             <Eye className="w-3 h-3" />
-            <span>{waste.views} visualizações</span>
+            <span>{waste.views || 0} visualizações</span>
           </div>
           
           <div className="flex items-center gap-1">

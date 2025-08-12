@@ -142,8 +142,19 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
     onNavigate(`item/${id}`);
   };
 
-  const handleContactSeller = (sellerId: string, itemId: string) => {
-    onNavigate(`chat/${sellerId}/${itemId}`);
+  const handleContactSeller = async (sellerId: string, itemId: string) => {
+    if (!user) {
+      onNavigate('auth');
+      return;
+    }
+    
+    try {
+      const { getOrCreateConversation } = await import('@/lib/supabase');
+      const conversation = await getOrCreateConversation(user.id, sellerId);
+      onNavigate(`messages?conversationId=${conversation.id}`);
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+    }
   };
 
   const formatNumber = (num: number) => {
