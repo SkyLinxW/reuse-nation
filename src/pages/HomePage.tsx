@@ -25,8 +25,11 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
   useEffect(() => {
     const loadData = async () => {
       try {
+        console.log('Loading waste items...');
         const wasteItems = await getWasteItems();
+        console.log('Raw waste items:', wasteItems);
         const activeItems = wasteItems.filter(item => item.availability);
+        console.log('Active items:', activeItems);
         setItems(activeItems);
         setFilteredItems(activeItems);
       } catch (error) {
