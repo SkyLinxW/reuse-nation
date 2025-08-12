@@ -618,15 +618,7 @@ export type Database = {
       }
     }
     Functions: {
-      get_public_profile: {
-        Args: { profile_user_id: string }
-        Returns: {
-          user_id: string
-          name: string
-          avatar_url: string
-          bio: string
-        }[]
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never
