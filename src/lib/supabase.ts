@@ -123,6 +123,8 @@ export const getFavorites = async (userId: string) => {
 };
 
 export const addToFavorites = async (userId: string, wasteItemId: string) => {
+  console.log('Adding to favorites:', { userId, wasteItemId });
+  
   // Use upsert to avoid duplicate key errors
   const { data, error } = await supabase
     .from('favorites')
@@ -133,7 +135,11 @@ export const addToFavorites = async (userId: string, wasteItemId: string) => {
     .select()
     .single();
   
-  if (error) throw error;
+  if (error) {
+    console.error('Supabase error adding to favorites:', error);
+    throw error;
+  }
+  console.log('Successfully added to favorites:', data);
   return data;
 };
 
