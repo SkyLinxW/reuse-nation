@@ -268,11 +268,11 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Eye className="w-4 h-4" />
-                  {product.views} visualizações
+                  0 visualizações
                 </div>
                 <div className="flex items-center gap-1">
                   <Heart className="w-4 h-4" />
-                  {product.favorites} favoritos
+                  0 favoritos
                 </div>
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
@@ -355,15 +355,15 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
                   <p className="font-medium">{seller.name}</p>
                   <div className="flex items-center gap-1">
                     <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="text-sm">{seller.rating}</span>
+                    <span className="text-sm">5.0</span>
                     <span className="text-sm text-muted-foreground">
-                      ({seller.reviewCount} avaliações)
+                      (0 avaliações)
                     </span>
                   </div>
                 </div>
               </div>
 
-              {seller.isVerified && (
+              {false && (
                 <Badge variant="secondary" className="bg-green-100 text-green-800">
                   ✓ Verificado
                 </Badge>

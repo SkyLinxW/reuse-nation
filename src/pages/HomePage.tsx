@@ -26,7 +26,21 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
     const loadData = async () => {
       try {
         const wasteItems = await getWasteItems();
-        const activeItems = wasteItems.filter(item => item.availability);
+        // Transform the data from database format to frontend interface
+        const transformedItems = wasteItems.map(item => ({
+          ...item,
+          sellerId: item.user_id,
+          createdAt: item.created_at,
+          updatedAt: item.updated_at,
+          isActive: item.availability,
+          views: 0,
+          favorites: 0,
+          images: item.image_url ? [item.image_url] : [],
+          location: typeof item.location === 'string' 
+            ? { city: item.location, state: '' }
+            : item.location || { city: 'Não informado', state: '' }
+        }));
+        const activeItems = transformedItems.filter(item => item.availability);
         setItems(activeItems);
         setFilteredItems(activeItems);
       } catch (error) {
