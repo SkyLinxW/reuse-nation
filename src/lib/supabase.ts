@@ -30,7 +30,7 @@ export const getWasteItems = async () => {
     .from('waste_items')
     .select(`
       *,
-      profiles!inner(name, avatar_url)
+      public_profiles!inner(name, avatar_url)
     `)
     .eq('availability', true)
     .order('created_at', { ascending: false });
@@ -44,7 +44,7 @@ export const getWasteItem = async (id: string) => {
     .from('waste_items')
     .select(`
       *,
-      profiles!inner(name, avatar_url, bio)
+      public_profiles!inner(name, avatar_url, bio)
     `)
     .eq('id', id)
     .single();
@@ -91,7 +91,7 @@ export const getFavorites = async (userId: string) => {
     .from('favorites')
     .select(`
       *,
-      waste_items(*, profiles!inner(name, avatar_url))
+      waste_items(*, public_profiles!inner(name, avatar_url))
     `)
     .eq('user_id', userId);
   
@@ -137,7 +137,7 @@ export const getCartItems = async (userId: string) => {
     .from('cart_items')
     .select(`
       *,
-      waste_items(*, profiles!inner(name, avatar_url))
+      waste_items(*, public_profiles!inner(name, avatar_url))
     `)
     .eq('user_id', userId);
   
@@ -209,8 +209,8 @@ export const getTransactions = async (userId: string) => {
     .select(`
       *,
       waste_items(*),
-      buyer:profiles!transactions_buyer_id_fkey(name, avatar_url),
-      seller:profiles!transactions_seller_id_fkey(name, avatar_url)
+      buyer:public_profiles!transactions_buyer_id_fkey(name, avatar_url),
+      seller:public_profiles!transactions_seller_id_fkey(name, avatar_url)
     `)
     .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
     .order('created_at', { ascending: false });
@@ -288,8 +288,8 @@ export const getConversations = async (userId: string) => {
     .from('conversations')
     .select(`
       *,
-      user1:profiles!conversations_user1_id_fkey(name, avatar_url),
-      user2:profiles!conversations_user2_id_fkey(name, avatar_url),
+      user1:public_profiles!conversations_user1_id_fkey(name, avatar_url),
+      user2:public_profiles!conversations_user2_id_fkey(name, avatar_url),
       messages(content, created_at, sender_id)
     `)
     .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
@@ -325,7 +325,7 @@ export const getMessages = async (conversationId: string) => {
     .from('messages')
     .select(`
       *,
-      sender:profiles!messages_sender_id_fkey(name, avatar_url)
+      sender:public_profiles!messages_sender_id_fkey(name, avatar_url)
     `)
     .eq('conversation_id', conversationId)
     .order('created_at', { ascending: true });
