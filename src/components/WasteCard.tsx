@@ -49,14 +49,34 @@ export const WasteCard = ({ waste, onNavigate, onItemClick, onContactSeller, sho
 
   const handleFavoriteToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: "Login necessário",
+        description: "Faça login para favoritar itens",
+        variant: "destructive",
+      });
+      return;
+    }
     
+    const wasFavorite = isFavorite(waste.id);
     toggleFavorite(waste.id);
+    
+    toast({
+      title: wasFavorite ? "Removido dos favoritos" : "Adicionado aos favoritos",
+      description: `${waste.title} foi ${wasFavorite ? 'removido dos' : 'adicionado aos'} favoritos.`,
+    });
   };
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: "Login necessário",
+        description: "Faça login para adicionar itens ao carrinho",
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
       await addToCart(user.id, waste.id, 1);
@@ -65,6 +85,7 @@ export const WasteCard = ({ waste, onNavigate, onItemClick, onContactSeller, sho
         description: `${waste.title} foi adicionado ao seu carrinho.`,
       });
     } catch (error) {
+      console.error('Cart error:', error);
       toast({
         title: "Erro",
         description: "Erro ao adicionar item ao carrinho",

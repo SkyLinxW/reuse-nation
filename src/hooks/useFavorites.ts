@@ -35,9 +35,12 @@ export const useFavorites = () => {
 
     try {
       await addFavorite(user.id, wasteItemId);
-      loadFavorites(); // Reload favorites
+      // Update local state immediately for better UX
+      setFavorites(prev => [...prev, { waste_item_id: wasteItemId, user_id: user.id }]);
     } catch (error) {
       console.error('Error adding to favorites:', error);
+      // Reload favorites to ensure consistency
+      loadFavorites();
     }
   };
 
@@ -46,9 +49,12 @@ export const useFavorites = () => {
 
     try {
       await removeFavorite(user.id, wasteItemId);
-      loadFavorites(); // Reload favorites
+      // Update local state immediately for better UX
+      setFavorites(prev => prev.filter(fav => fav.waste_item_id !== wasteItemId));
     } catch (error) {
       console.error('Error removing from favorites:', error);
+      // Reload favorites to ensure consistency
+      loadFavorites();
     }
   };
 

@@ -123,9 +123,13 @@ export const getFavorites = async (userId: string) => {
 };
 
 export const addToFavorites = async (userId: string, wasteItemId: string) => {
+  // Use upsert to avoid duplicate key errors
   const { data, error } = await supabase
     .from('favorites')
-    .insert({ user_id: userId, waste_item_id: wasteItemId })
+    .upsert(
+      { user_id: userId, waste_item_id: wasteItemId },
+      { onConflict: 'user_id,waste_item_id' }
+    )
     .select()
     .single();
   
@@ -149,9 +153,9 @@ export const isFavorite = async (userId: string, wasteItemId: string) => {
     .select('id')
     .eq('user_id', userId)
     .eq('waste_item_id', wasteItemId)
-    .single();
+    .maybeSingle();
   
-  return !error && data;
+  return !!data;
 };
 
 // Cart
