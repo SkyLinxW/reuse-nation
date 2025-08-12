@@ -47,7 +47,7 @@ export const WasteCard = ({ waste, onNavigate, onItemClick, onContactSeller, sho
   const { toast } = useToast();
   const { isFavorite, toggleFavorite } = useFavorites();
 
-  const handleFavoriteToggle = (e: React.MouseEvent) => {
+  const handleFavoriteToggle = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) {
       toast({
@@ -59,12 +59,21 @@ export const WasteCard = ({ waste, onNavigate, onItemClick, onContactSeller, sho
     }
     
     const wasFavorite = isFavorite(waste.id);
-    toggleFavorite(waste.id);
     
-    toast({
-      title: wasFavorite ? "Removido dos favoritos" : "Adicionado aos favoritos",
-      description: `${waste.title} foi ${wasFavorite ? 'removido dos' : 'adicionado aos'} favoritos.`,
-    });
+    try {
+      await toggleFavorite(waste.id);
+      toast({
+        title: wasFavorite ? "Removido dos favoritos" : "Adicionado aos favoritos",
+        description: `${waste.title} foi ${wasFavorite ? 'removido dos' : 'adicionado aos'} favoritos.`,
+      });
+    } catch (error) {
+      console.error('Favorite error:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar favoritos",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleAddToCart = async (e: React.MouseEvent) => {
