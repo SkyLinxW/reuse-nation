@@ -20,17 +20,19 @@ export const getProfile = async (userId: string): Promise<any> => {
     return data;
   }
   
-  // For other users, use RPC function to get public profile
-  const { data, error } = await supabase.rpc('get_public_profile', {
-    profile_user_id: userId
-  });
+  // For other users, get public profile from public_profiles view
+  const { data, error } = await supabase
+    .from('public_profiles')
+    .select('user_id, name, avatar_url, bio, created_at')
+    .eq('user_id', userId)
+    .single();
 
   if (error) {
     console.error('Error fetching public profile:', error);
     return null;
   }
   
-  return data?.[0] || null;
+  return data;
 };
 
 export const updateProfile = async (userId: string, updates: any) => {
