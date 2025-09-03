@@ -29,12 +29,14 @@ const Index = () => {
   }, [user, currentPage]);
 
   const handleNavigate = (page: string) => {
+    console.log('Navigating to:', page);
     const [pageName, queryString] = page.split('?');
     
     // Protected routes that require authentication
     const protectedRoutes = ['cart', 'favorites', 'create-listing', 'my-listings', 'profile', 'transactions', 'notifications', 'messages'];
     
     if (protectedRoutes.includes(pageName) && !user) {
+      console.log('Protected route requires auth, redirecting to auth page');
       setCurrentPage('auth');
       return;
     }
