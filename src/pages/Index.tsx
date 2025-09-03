@@ -23,6 +23,7 @@ const Index = () => {
   // Redirect authenticated users away from auth page
   useEffect(() => {
     if (user && currentPage === 'auth') {
+      console.log('User authenticated, redirecting from auth to home');
       setCurrentPage('home');
     }
   }, [user, currentPage]);

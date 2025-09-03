@@ -69,7 +69,10 @@ export default {
 					brown: 'hsl(var(--eco-brown))',
 					'brown-light': 'hsl(var(--eco-brown-light))',
 					orange: 'hsl(var(--eco-orange))',
-					blue: 'hsl(var(--eco-blue))'
+					blue: 'hsl(var(--eco-blue))',
+					light: 'hsl(var(--eco-light))',
+					cream: 'hsl(var(--eco-cream))',
+					dark: 'hsl(var(--eco-dark))'
 				}
 			},
 			backgroundImage: {

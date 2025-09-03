@@ -44,6 +44,9 @@ All colors MUST be HSL.
     --eco-brown-light: 35 35% 85%;
     --eco-orange: 35 91% 65%;
     --eco-blue: 200 85% 45%;
+    --eco-light: 142 30% 95%;
+    --eco-cream: 45 50% 96%;
+    --eco-dark: 142 30% 20%;
 
     /* Gradients */
     --gradient-eco: linear-gradient(135deg, hsl(var(--eco-green)), hsl(var(--eco-blue)));

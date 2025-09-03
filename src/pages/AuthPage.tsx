@@ -27,31 +27,45 @@ export const AuthPage = ({ onNavigate }: AuthPageProps) => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Login button clicked, starting login process');
     setLoading(true);
 
-    const { error } = await signIn(loginEmail, loginPassword);
+    try {
+      console.log('Attempting to sign in with:', loginEmail);
+      const { error } = await signIn(loginEmail, loginPassword);
     
-    if (error) {
+      if (error) {
+        console.error('Login error:', error);
+        toast({
+          title: "Erro no login",
+          description: error.message === 'Invalid login credentials' 
+            ? "Email ou senha incorretos." 
+            : error.message,
+          variant: "destructive"
+        });
+      } else {
+        console.log('Login successful, navigating to home');
+        toast({
+          title: "Login realizado!",
+          description: "Bem-vindo de volta!"
+        });
+        onNavigate('home');
+      }
+    } catch (err) {
+      console.error('Unexpected login error:', err);
       toast({
         title: "Erro no login",
-        description: error.message === 'Invalid login credentials' 
-          ? "Email ou senha incorretos." 
-          : error.message,
+        description: "Ocorreu um erro inesperado.",
         variant: "destructive"
       });
-    } else {
-      toast({
-        title: "Login realizado!",
-        description: "Bem-vindo de volta!"
-      });
-      onNavigate('home');
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Signup button clicked, starting signup process');
     
     if (signupPassword !== confirmPassword) {
       toast({
@@ -73,25 +87,37 @@ export const AuthPage = ({ onNavigate }: AuthPageProps) => {
 
     setLoading(true);
 
-    const { error } = await signUp(signupEmail, signupPassword, signupName);
+    try {
+      console.log('Attempting to sign up with:', signupEmail, signupName);
+      const { error } = await signUp(signupEmail, signupPassword, signupName);
     
-    if (error) {
+      if (error) {
+        console.error('Signup error:', error);
+        toast({
+          title: "Erro no cadastro",
+          description: error.message === 'User already registered' 
+            ? "Este email já está cadastrado." 
+            : error.message,
+          variant: "destructive"
+        });
+      } else {
+        console.log('Signup successful, navigating to home');
+        toast({
+          title: "Cadastro realizado!",
+          description: "Verifique seu email para confirmar a conta."
+        });
+        onNavigate('home');
+      }
+    } catch (err) {
+      console.error('Unexpected signup error:', err);
       toast({
         title: "Erro no cadastro",
-        description: error.message === 'User already registered' 
-          ? "Este email já está cadastrado." 
-          : error.message,
+        description: "Ocorreu um erro inesperado.",
         variant: "destructive"
       });
-    } else {
-      toast({
-        title: "Cadastro realizado!",
-        description: "Verifique seu email para confirmar a conta."
-      });
-      onNavigate('home');
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (
