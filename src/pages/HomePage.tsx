@@ -21,11 +21,22 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [ecoImpact, setEcoImpact] = useState({ totalWasteReused: 0, co2Saved: 0, transactionsCount: 0 });
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  
+  console.log('HomePage render, user:', user?.id, 'loading:', isLoading);
 
   useEffect(() => {
+    console.log('HomePage useEffect triggered, user:', user?.id);
+    
     const loadData = async () => {
       try {
+        setIsLoading(true);
+        setHasError(false);
+        console.log('Starting to load waste items...');
         const wasteItems = await getWasteItems();
+        console.log('Loaded waste items:', wasteItems?.length);
+        
         // Transform the data from database format to frontend interface
         const transformedItems = wasteItems.map(item => ({
           ...item,
@@ -41,10 +52,17 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
             : item.location || { city: 'Não informado', state: '' }
         }));
         const activeItems = transformedItems.filter(item => item.availability);
+        console.log('Active items after transformation:', activeItems.length);
         setItems(activeItems);
         setFilteredItems(activeItems);
       } catch (error) {
         console.error('Error loading waste items:', error);
+        setHasError(true);
+        // Set empty arrays to prevent white screen
+        setItems([]);
+        setFilteredItems([]);
+      } finally {
+        setIsLoading(false);
       }
     };
     
@@ -174,6 +192,38 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('pt-BR').format(num);
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-eco-green-light/20 to-eco-brown-light/20 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-eco-green mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando materiais...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (hasError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-eco-green-light/20 to-eco-brown-light/20 flex items-center justify-center">
+        <Card className="max-w-md mx-auto m-4">
+          <CardContent className="text-center p-8">
+            <div className="text-red-500 mb-4">⚠️</div>
+            <h3 className="text-lg font-semibold mb-2">Erro ao carregar</h3>
+            <p className="text-muted-foreground mb-4">
+              Houve um problema ao carregar os materiais. Tente recarregar a página.
+            </p>
+            <Button onClick={() => window.location.reload()}>
+              Recarregar Página
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-eco-green-light/20 to-eco-brown-light/20">

@@ -63,6 +63,7 @@ const Index = () => {
   }
 
   const renderPage = () => {
+    console.log('renderPage called, currentPage:', currentPage, 'user:', user?.id);
     switch (currentPage) {
       case 'home':
         return <HomePage onNavigate={handleNavigate} />;
@@ -96,9 +97,11 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground">
       <Header onNavigate={handleNavigate} currentPage={currentPage} />
-      {renderPage()}
+      <div className="relative">
+        {renderPage()}
+      </div>
     </div>
   );
 };

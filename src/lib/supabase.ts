@@ -49,6 +49,8 @@ export const updateProfile = async (userId: string, updates: any) => {
 
 // Waste Items
 export const getWasteItems = async () => {
+  console.log('getWasteItems: Starting query...');
+  
   const { data, error } = await supabase
     .from('waste_items')
     .select(`
@@ -58,7 +60,12 @@ export const getWasteItems = async () => {
     .eq('availability', true)
     .order('created_at', { ascending: false });
   
-  if (error) throw error;
+  if (error) {
+    console.error('getWasteItems: Error occurred:', error);
+    throw error;
+  }
+  
+  console.log('getWasteItems: Success, returning data:', data?.length, 'items');
   return data;
 };
 
