@@ -51,7 +51,11 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
         const item = await getWasteItem(productId);
         if (item) {
           setProduct(item);
-          setSeller(item.public_profiles);
+          // Combine profile data with user_id from item
+          setSeller({
+            ...item.public_profiles,
+            user_id: item.user_id
+          });
           
           if (user) {
             const favorited = await isFavorite(user.id, productId);
