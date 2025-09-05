@@ -58,13 +58,6 @@ export type Database = {
             referencedRelation: "public_profiles"
             referencedColumns: ["user_id"]
           },
-          {
-            foreignKeyName: "fk_cart_items_waste_item_id"
-            columns: ["waste_item_id"]
-            isOneToOne: false
-            referencedRelation: "waste_items"
-            referencedColumns: ["id"]
-          },
         ]
       }
       conversations: {
@@ -187,13 +180,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_profiles"
             referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "fk_favorites_waste_item_id"
-            columns: ["waste_item_id"]
-            isOneToOne: false
-            referencedRelation: "waste_items"
-            referencedColumns: ["id"]
           },
         ]
       }
@@ -510,13 +496,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_profiles"
             referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "fk_transactions_waste_item_id"
-            columns: ["waste_item_id"]
-            isOneToOne: false
-            referencedRelation: "waste_items"
-            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "transactions_waste_item_id_fkey"

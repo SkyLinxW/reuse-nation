@@ -111,7 +111,10 @@ export const SellerProfilePage = ({ onNavigate }: SellerProfilePageProps) => {
                 )}
               </div>
 
-              <Button className="w-full bg-eco-green hover:bg-eco-green/90">
+              <Button 
+                className="w-full bg-eco-green hover:bg-eco-green/90"
+                onClick={() => onNavigate(`messages?sellerId=${sellerId}`)}
+              >
                 <MessageCircle className="w-4 h-4 mr-2" />
                 Entrar em Contato
               </Button>

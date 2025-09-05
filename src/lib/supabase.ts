@@ -121,7 +121,7 @@ export const getFavorites = async (userId: string) => {
     .from('favorites')
     .select(`
       *,
-      waste_items(*, public_profiles!inner(name, avatar_url))
+      waste_items(*)
     `)
     .eq('user_id', userId);
   
@@ -177,7 +177,7 @@ export const getCartItems = async (userId: string) => {
     .from('cart_items')
     .select(`
       *,
-      waste_items(*, public_profiles!inner(name, avatar_url))
+      waste_items(*)
     `)
     .eq('user_id', userId);
   
@@ -248,9 +248,7 @@ export const getTransactions = async (userId: string) => {
     .from('transactions')
     .select(`
       *,
-      waste_items(*),
-      buyer:public_profiles!transactions_buyer_id_fkey(name, avatar_url),
-      seller:public_profiles!transactions_seller_id_fkey(name, avatar_url)
+      waste_items(*)
     `)
     .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
     .order('created_at', { ascending: false });
@@ -328,14 +326,28 @@ export const getConversations = async (userId: string) => {
     .from('conversations')
     .select(`
       *,
-      user1:public_profiles!conversations_user1_id_fkey(name, avatar_url),
-      user2:public_profiles!conversations_user2_id_fkey(name, avatar_url),
       messages(content, created_at, sender_id)
     `)
     .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
     .order('last_message_at', { ascending: false });
   
   if (error) throw error;
+  
+  // Manually fetch profile data for each conversation
+  if (data) {
+    const conversationsWithProfiles = await Promise.all(
+      data.map(async (conversation) => {
+        const otherUserId = conversation.user1_id === userId ? conversation.user2_id : conversation.user1_id;
+        const profile = await getProfile(otherUserId);
+        return {
+          ...conversation,
+          other_user: profile
+        };
+      })
+    );
+    return conversationsWithProfiles;
+  }
+  
   return data;
 };
 
@@ -363,14 +375,26 @@ export const getOrCreateConversation = async (user1Id: string, user2Id: string) 
 export const getMessages = async (conversationId: string) => {
   const { data, error } = await supabase
     .from('messages')
-    .select(`
-      *,
-      sender:public_profiles!messages_sender_id_fkey(name, avatar_url)
-    `)
+    .select('*')
     .eq('conversation_id', conversationId)
     .order('created_at', { ascending: true });
   
   if (error) throw error;
+  
+  // Manually fetch profile data for each message sender
+  if (data) {
+    const messagesWithProfiles = await Promise.all(
+      data.map(async (message) => {
+        const profile = await getProfile(message.sender_id);
+        return {
+          ...message,
+          sender: profile
+        };
+      })
+    );
+    return messagesWithProfiles;
+  }
+  
   return data;
 };
 

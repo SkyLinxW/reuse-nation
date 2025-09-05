@@ -4,12 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { 
-  getConversations, 
-  getMessages, 
+import {
+  getConversations,
+  getMessages,
   sendMessage,
   getProfile,
-  getWasteItem
+  getWasteItem,
+  getOrCreateConversation
 } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { Chat, ChatMessage, User, WasteItem } from '@/types';
@@ -53,6 +54,32 @@ export const MessagesPage = ({ onNavigate, chatId }: MessagesPageProps) => {
     };
 
     loadChats();
+    
+    // Check if we need to create a conversation with a seller
+    const checkSellerConversation = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const sellerId = urlParams.get('sellerId');
+      
+      if (sellerId && user && sellerId !== user.id) {
+        try {
+          const conversation = await getOrCreateConversation(user.id, sellerId);
+          const updatedChats = await getConversations(user.id);
+          setChats(updatedChats);
+          
+          const newSelectedChat = updatedChats.find((c: any) => c.id === conversation.id);
+          if (newSelectedChat) {
+            setSelectedChat(newSelectedChat);
+            await loadChatData(newSelectedChat);
+          }
+        } catch (error) {
+          console.error('Error creating conversation with seller:', error);
+        }
+      }
+    };
+    
+    if (user) {
+      checkSellerConversation();
+    }
   }, [user, chatId]);
 
   const loadChatData = async (chat: any) => {
@@ -60,9 +87,14 @@ export const MessagesPage = ({ onNavigate, chatId }: MessagesPageProps) => {
       const chatMessages = await getMessages(chat.id);
       setMessages(chatMessages);
 
-      const otherUserId = chat.user1_id === user?.id ? chat.user2_id : chat.user1_id;
-      const userProfile = await getProfile(otherUserId);
-      setOtherUser(userProfile);
+      // Use other_user if available from getConversations, otherwise get profile
+      if (chat.other_user) {
+        setOtherUser(chat.other_user);
+      } else {
+        const otherUserId = chat.user1_id === user?.id ? chat.user2_id : chat.user1_id;
+        const userProfile = await getProfile(otherUserId);
+        setOtherUser(userProfile);
+      }
 
       // Note: We'll need to add wasteItemId to conversations table or get it from another way
       // For now, we'll skip the product loading
