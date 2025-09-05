@@ -16,6 +16,8 @@ export const SellerProfilePage = ({ onNavigate }: SellerProfilePageProps) => {
   const [seller, setSeller] = useState<any>(null);
   const [sellerItems, setSellerItems] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Get seller ID from URL params (simulated)
   const urlParams = new URLSearchParams(window.location.search);
@@ -24,9 +26,19 @@ export const SellerProfilePage = ({ onNavigate }: SellerProfilePageProps) => {
   useEffect(() => {
     const loadSellerData = async () => {
       if (sellerId) {
+        setLoading(true);
+        setError(null);
+        console.log('Loading seller profile for ID:', sellerId);
         try {
           const profile = await getProfile(sellerId);
-          setSeller(profile);
+          console.log('Profile loaded:', profile);
+          
+          if (!profile) {
+            setError('Perfil não encontrado');
+            setSeller(null);
+          } else {
+            setSeller(profile);
+          }
           
           const items = await getWasteItems();
           const sellerItems = items.filter(item => item.user_id === sellerId);
@@ -35,13 +47,17 @@ export const SellerProfilePage = ({ onNavigate }: SellerProfilePageProps) => {
           setReviews([]); // TODO: Implement reviews in Supabase
         } catch (error) {
           console.error('Error loading seller data:', error);
+          setError('Erro ao carregar perfil do vendedor');
+          setSeller(null);
+        } finally {
+          setLoading(false);
         }
       }
     };
     loadSellerData();
   }, [sellerId]);
 
-  if (!seller) {
+  if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Button
@@ -55,6 +71,32 @@ export const SellerProfilePage = ({ onNavigate }: SellerProfilePageProps) => {
         <Card>
           <CardContent className="text-center py-8">
             <p className="text-muted-foreground">Carregando perfil do vendedor...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (error || !seller) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Button
+          variant="ghost"
+          onClick={() => onNavigate('home')}
+          className="mb-4"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Voltar
+        </Button>
+        <Card>
+          <CardContent className="text-center py-8">
+            <p className="text-destructive">{error || 'Perfil do vendedor não encontrado'}</p>
+            <Button 
+              className="mt-4"
+              onClick={() => window.location.reload()}
+            >
+              Tentar Novamente
+            </Button>
           </CardContent>
         </Card>
       </div>

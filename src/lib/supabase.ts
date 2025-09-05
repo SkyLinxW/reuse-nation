@@ -2,10 +2,13 @@ import { supabase } from '@/integrations/supabase/client';
 
 // Profile management functions
 export const getProfile = async (userId: string): Promise<any> => {
+  console.log('getProfile called for userId:', userId);
+  
   // Try to get full profile if it's the current user
   const { data: { user } } = await supabase.auth.getUser();
   
   if (user && user.id === userId) {
+    console.log('Getting full profile for current user');
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -17,10 +20,28 @@ export const getProfile = async (userId: string): Promise<any> => {
       return null;
     }
     
+    console.log('Full profile data:', data);
     return data;
   }
   
-  // For other users, get public profile from public_profiles view
+  // For other users, try getting from profiles table first (fallback for public_profiles issues)
+  console.log('Getting public profile for other user');
+  const { data: profileData, error: profileError } = await supabase
+    .from('profiles')
+    .select('user_id, name, avatar_url, bio, created_at, email')
+    .eq('user_id', userId)
+    .single();
+
+  if (profileData) {
+    console.log('Profile data found:', profileData);
+    return profileData;
+  }
+
+  if (profileError) {
+    console.error('Error fetching profile from profiles table:', profileError);
+  }
+
+  // Fallback: try public_profiles view
   const { data, error } = await supabase
     .from('public_profiles')
     .select('user_id, name, avatar_url, bio, created_at')
@@ -28,10 +49,11 @@ export const getProfile = async (userId: string): Promise<any> => {
     .single();
 
   if (error) {
-    console.error('Error fetching public profile:', error);
+    console.error('Error fetching public profile from view:', error);
     return null;
   }
   
+  console.log('Public profile data:', data);
   return data;
 };
 
