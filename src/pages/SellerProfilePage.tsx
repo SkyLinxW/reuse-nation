@@ -10,18 +10,17 @@ import { ArrowLeft, Star, MapPin, Calendar, MessageCircle } from 'lucide-react';
 
 interface SellerProfilePageProps {
   onNavigate: (page: string) => void;
+  sellerId: string;
 }
 
-export const SellerProfilePage = ({ onNavigate }: SellerProfilePageProps) => {
+export const SellerProfilePage = ({ onNavigate, sellerId }: SellerProfilePageProps) => {
   const [seller, setSeller] = useState<any>(null);
   const [sellerItems, setSellerItems] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Get seller ID from URL params (simulated)
-  const urlParams = new URLSearchParams(window.location.search);
-  const sellerId = urlParams.get('id');
+  // sellerId is now passed as a prop from the router
 
   useEffect(() => {
     const loadSellerData = async () => {

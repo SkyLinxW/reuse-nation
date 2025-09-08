@@ -88,7 +88,7 @@ const Index = () => {
       case 'profile':
         return <ProfilePage onNavigate={handleNavigate} />;
       case 'seller-profile':
-        return <SellerProfilePage onNavigate={handleNavigate} />;
+        return <SellerProfilePage onNavigate={handleNavigate} sellerId={pageParams.id || ''} />;
       case 'search':
         return <SearchPage onNavigate={handleNavigate} />;
       default:
