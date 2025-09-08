@@ -443,20 +443,32 @@ export const getMessages = async (conversationId: string) => {
 };
 
 export const sendMessage = async (conversationId: string, senderId: string, content: string) => {
+  console.log('sendMessage: Sending message to conversation', conversationId);
+  
   const { data, error } = await supabase
     .from('messages')
     .insert({ conversation_id: conversationId, sender_id: senderId, content })
     .select()
     .single();
   
-  if (error) throw error;
+  if (error) {
+    console.error('Error inserting message:', error);
+    throw error;
+  }
+
+  console.log('sendMessage: Message inserted successfully:', data.id);
 
   // Update conversation last_message_at
-  await supabase
+  const { error: updateError } = await supabase
     .from('conversations')
     .update({ last_message_at: new Date().toISOString() })
     .eq('id', conversationId);
 
+  if (updateError) {
+    console.error('Error updating conversation timestamp:', updateError);
+  }
+
+  console.log('sendMessage: Message sent and conversation updated');
   return data;
 };
 

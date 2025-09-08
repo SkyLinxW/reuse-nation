@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +30,8 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
   const [otherUser, setOtherUser] = useState<any | null>(null);
   const [product, setProduct] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   
   const { user } = useAuth();
 
@@ -84,6 +86,15 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
     loadChats();
   }, [user, chatId, sellerId]);
 
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   const loadChatData = async (chat: any) => {
     console.log('MessagesPage: Loading chat data for:', chat.id);
     try {
@@ -117,12 +128,25 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedChat || !user) return;
 
+    const messageContent = newMessage.trim();
+    setNewMessage(''); // Clear input immediately for better UX
+
     try {
-      const message = await sendMessage(selectedChat.id, user.id, newMessage.trim());
+      console.log('Sending message:', messageContent);
+      const message = await sendMessage(selectedChat.id, user.id, messageContent);
+      console.log('Message sent successfully:', message);
+      
+      // Add message to state immediately
       setMessages(prev => [...prev, message]);
-      setNewMessage('');
+      
+      // Update conversation last_message_at
+      const updatedChats = await getConversations(user.id);
+      setChats(updatedChats);
+      
     } catch (error) {
       console.error('Error sending message:', error);
+      // Restore message in input if failed
+      setNewMessage(messageContent);
     }
   };
 
@@ -163,157 +187,175 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Button
-        variant="ghost"
-        onClick={() => onNavigate('home')}
-        className="mb-4"
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Voltar
-      </Button>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8">
+        <Button
+          variant="ghost"
+          onClick={() => onNavigate('home')}
+          className="mb-4"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Voltar
+        </Button>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
-        {/* Lista de conversas */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageCircle className="w-5 h-5" />
-              Conversas
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {chats.length === 0 ? (
-              <div className="p-4 text-center text-muted-foreground">
-                Nenhuma conversa encontrada
-              </div>
-            ) : (
-              <div className="space-y-0">
-                {chats.map((chat) => {
-                  // Display name from other_user or fallback
-                  const displayName = chat.other_user?.name || chat.other_user?.email || 'Usuário';
-                  const initials = displayName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
-                  
-                  return (
-                    <div
-                      key={chat.id}
-                      className={`p-4 cursor-pointer hover:bg-muted/50 border-b ${
-                        selectedChat?.id === chat.id ? 'bg-muted' : ''
-                      }`}
-                      onClick={() => handleChatSelect(chat)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Avatar className="w-10 h-10">
-                          <AvatarImage src={chat.other_user?.avatar_url || ""} alt={displayName} />
-                          <AvatarFallback className="bg-eco-green text-white">
-                            {initials}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{displayName}</p>
-                          <p className="text-sm text-muted-foreground truncate">
-                            {new Date(chat.last_message_at).toLocaleDateString('pt-BR')}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Área de mensagens */}
-        <Card className="lg:col-span-2">
-          {selectedChat ? (
-            <>
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-3">
-                  <Avatar>
-                    <AvatarImage src={otherUser?.avatar_url || ""} alt={otherUser?.name || 'Usuário'} />
-                    <AvatarFallback className="bg-eco-green text-white">
-                      {otherUser?.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium">{otherUser?.name || otherUser?.email || 'Usuário'}</p>
-                    <p className="text-sm text-muted-foreground">Conversa</p>
-                  </div>
+        <div className="flex h-[calc(100vh-200px)] bg-background rounded-lg border">
+          {/* Lista de conversas - Sidebar */}
+          <div className="w-80 border-r bg-card">
+            <div className="p-4 border-b">
+              <h2 className="font-semibold flex items-center gap-2">
+                <MessageCircle className="w-5 h-5" />
+                Conversas
+              </h2>
+            </div>
+            <div className="overflow-y-auto h-full">
+              {chats.length === 0 ? (
+                <div className="p-4 text-center text-muted-foreground">
+                  Nenhuma conversa encontrada
                 </div>
-              </CardHeader>
-              <Separator />
-              
-              {/* Mensagens */}
-              <CardContent className="flex-1 p-4 max-h-96 overflow-y-auto">
-                <div className="space-y-4">
-                  {messages.map((message) => {
-                    const isMyMessage = message.sender_id === user.id;
-                    const senderName = isMyMessage ? (user.user_metadata?.name || user.email) : (otherUser?.name || 'Usuário');
+              ) : (
+                <div className="space-y-0">
+                  {chats.map((chat) => {
+                    // Display name from other_user or fallback
+                    const displayName = chat.other_user?.name || chat.other_user?.email || 'Usuário';
+                    const initials = displayName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
                     
                     return (
                       <div
-                        key={message.id}
-                        className={`flex gap-3 ${isMyMessage ? 'flex-row-reverse' : ''}`}
+                        key={chat.id}
+                        className={`p-4 cursor-pointer hover:bg-muted/50 border-b transition-colors ${
+                          selectedChat?.id === chat.id ? 'bg-muted' : ''
+                        }`}
+                        onClick={() => handleChatSelect(chat)}
                       >
-                        <Avatar className="w-8 h-8">
-                          <AvatarImage src="" alt={senderName} />
-                          <AvatarFallback className="text-xs">
-                            {senderName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2) || 'U'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div
-                          className={`max-w-[70%] p-3 rounded-lg ${
-                            isMyMessage
-                              ? 'bg-eco-green text-white'
-                              : 'bg-muted'
-                          }`}
-                        >
-                          <p className="text-sm">{message.content}</p>
-                          <p className={`text-xs mt-1 ${
-                            isMyMessage ? 'text-white/70' : 'text-muted-foreground'
-                          }`}>
-                            {new Date(message.created_at).toLocaleTimeString('pt-BR', {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </p>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="w-12 h-12">
+                            <AvatarImage src={chat.other_user?.avatar_url || ""} alt={displayName} />
+                            <AvatarFallback className="bg-eco-green text-white">
+                              {initials}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">{displayName}</p>
+                            <p className="text-sm text-muted-foreground truncate">
+                              {new Date(chat.last_message_at).toLocaleDateString('pt-BR')}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     );
                   })}
                 </div>
-              </CardContent>
-              
-              {/* Input de nova mensagem */}
-              <Separator />
-              <div className="p-4">
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Digite sua mensagem..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                  />
-                  <Button
-                    onClick={handleSendMessage}
-                    disabled={!newMessage.trim()}
-                    className="bg-eco-green hover:bg-eco-green/90"
-                  >
-                    <Send className="w-4 h-4" />
-                  </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Área de mensagens */}
+          <div className="flex-1 flex flex-col">
+            {selectedChat ? (
+              <>
+                {/* Header do chat */}
+                <div className="p-4 border-b bg-card">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-10 h-10">
+                      <AvatarImage src={otherUser?.avatar_url || ""} alt={otherUser?.name || 'Usuário'} />
+                      <AvatarFallback className="bg-eco-green text-white">
+                        {otherUser?.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium">{otherUser?.name || otherUser?.email || 'Usuário'}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {otherUser?.bio ? otherUser.bio : 'Ativo'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Container de mensagens com scroll */}
+                <div 
+                  ref={messagesContainerRef}
+                  className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/20"
+                  style={{ maxHeight: 'calc(100vh - 320px)' }}
+                >
+                  {messages.length === 0 ? (
+                    <div className="flex items-center justify-center h-32 text-muted-foreground">
+                      <p>Nenhuma mensagem ainda. Comece a conversa!</p>
+                    </div>
+                  ) : (
+                    <>
+                      {messages.map((message) => {
+                        const isMyMessage = message.sender_id === user.id;
+                        const senderName = isMyMessage ? (user.user_metadata?.name || user.email) : (otherUser?.name || 'Usuário');
+                        
+                        return (
+                          <div
+                            key={message.id}
+                            className={`flex gap-3 ${isMyMessage ? 'flex-row-reverse' : ''}`}
+                          >
+                            <Avatar className="w-8 h-8 flex-shrink-0">
+                              <AvatarImage src="" alt={senderName} />
+                              <AvatarFallback className="text-xs">
+                                {senderName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2) || 'U'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div
+                              className={`max-w-[70%] p-3 rounded-2xl ${
+                                isMyMessage
+                                  ? 'bg-eco-green text-white rounded-br-md'
+                                  : 'bg-white border rounded-bl-md shadow-sm'
+                              }`}
+                            >
+                              <p className="text-sm break-words">{message.content}</p>
+                              <p className={`text-xs mt-1 ${
+                                isMyMessage ? 'text-white/70' : 'text-muted-foreground'
+                              }`}>
+                                {new Date(message.created_at).toLocaleTimeString('pt-BR', {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div ref={messagesEndRef} />
+                    </>
+                  )}
+                </div>
+                
+                {/* Input de nova mensagem - Fixo na parte inferior */}
+                <div className="p-4 bg-card border-t">
+                  <div className="flex gap-3 items-end">
+                    <div className="flex-1">
+                      <Input
+                        placeholder="Digite uma mensagem..."
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        className="resize-none border-2 rounded-full px-4 py-2 focus:border-eco-green"
+                      />
+                    </div>
+                    <Button
+                      onClick={handleSendMessage}
+                      disabled={!newMessage.trim()}
+                      className="rounded-full w-12 h-12 bg-eco-green hover:bg-eco-green/90 flex-shrink-0"
+                    >
+                      <Send className="w-5 h-5" />
+                    </Button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex-1 flex items-center justify-center bg-muted/20">
+                <div className="text-center text-muted-foreground">
+                  <MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium mb-2">Selecione uma conversa</p>
+                  <p className="text-sm">Escolha uma conversa da lista para começar a trocar mensagens</p>
                 </div>
               </div>
-            </>
-          ) : (
-            <CardContent className="flex items-center justify-center h-full">
-              <div className="text-center text-muted-foreground">
-                <MessageCircle className="w-16 h-16 mx-auto mb-4" />
-                <p>Selecione uma conversa para começar</p>
-              </div>
-            </CardContent>
-          )}
-        </Card>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
