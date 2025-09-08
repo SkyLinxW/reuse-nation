@@ -82,7 +82,7 @@ const Index = () => {
       case 'my-listings':
         return <MyListingsPage onNavigate={handleNavigate} />;
       case 'messages':
-        return <MessagesPage onNavigate={handleNavigate} chatId={pageParams.chatId} />;
+        return <MessagesPage onNavigate={handleNavigate} chatId={pageParams.conversationId} sellerId={pageParams.sellerId} />;
       case 'transactions':
         return <TransactionsPage onNavigate={handleNavigate} />;
       case 'profile':

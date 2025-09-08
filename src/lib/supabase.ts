@@ -344,53 +344,75 @@ export const getUnreadNotificationCount = async (userId: string) => {
 
 // Messages and Conversations
 export const getConversations = async (userId: string) => {
+  console.log('getConversations: Starting query for userId:', userId);
+  
+  // Simplified query without embedding messages to avoid foreign key issues
   const { data, error } = await supabase
     .from('conversations')
-    .select(`
-      *,
-      messages(content, created_at, sender_id)
-    `)
+    .select('*')
     .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
     .order('last_message_at', { ascending: false });
   
-  if (error) throw error;
+  if (error) {
+    console.error('Error fetching conversations:', error);
+    throw error;
+  }
   
-  // Manually fetch profile data for each conversation
-  if (data) {
+  console.log('getConversations: Found', data?.length || 0, 'conversations');
+  
+  // Get other user profiles manually
+  if (data && data.length > 0) {
     const conversationsWithProfiles = await Promise.all(
       data.map(async (conversation) => {
         const otherUserId = conversation.user1_id === userId ? conversation.user2_id : conversation.user1_id;
-        const profile = await getProfile(otherUserId);
-        return {
-          ...conversation,
-          other_user: profile
-        };
+        try {
+          const otherUser = await getProfile(otherUserId);
+          return {
+            ...conversation,
+            other_user: otherUser
+          };
+        } catch (error) {
+          console.error('Error fetching other user profile:', error);
+          return conversation;
+        }
       })
     );
+    console.log('getConversations: Returning with profiles');
     return conversationsWithProfiles;
   }
   
-  return data;
+  return data || [];
 };
 
 export const getOrCreateConversation = async (user1Id: string, user2Id: string) => {
-  // Try to find existing conversation
+  console.log('getOrCreateConversation: Looking for conversation between', user1Id, 'and', user2Id);
+  
+  // Try to find existing conversation using maybeSingle to avoid errors
   const { data: existing, error: searchError } = await supabase
     .from('conversations')
     .select('*')
     .or(`and(user1_id.eq.${user1Id},user2_id.eq.${user2Id}),and(user1_id.eq.${user2Id},user2_id.eq.${user1Id})`)
-    .single();
+    .maybeSingle();
 
-  if (existing) return existing;
+  if (existing) {
+    console.log('getOrCreateConversation: Found existing conversation:', existing.id);
+    return existing;
+  }
 
   // Create new conversation
+  console.log('getOrCreateConversation: Creating new conversation');
   const { data, error } = await supabase
     .from('conversations')
     .insert({ user1_id: user1Id, user2_id: user2Id })
     .select()
     .single();
   
-  if (error) throw error;
+  if (error) {
+    console.error('Error creating conversation:', error);
+    throw error;
+  }
+  
+  console.log('getOrCreateConversation: Created new conversation:', data.id);
   return data;
 };
 

@@ -19,9 +19,10 @@ import { ArrowLeft, Send, MessageCircle } from 'lucide-react';
 interface MessagesPageProps {
   onNavigate: (page: string) => void;
   chatId?: string;
+  sellerId?: string;
 }
 
-export const MessagesPage = ({ onNavigate, chatId }: MessagesPageProps) => {
+export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps) => {
   const [chats, setChats] = useState<any[]>([]);
   const [selectedChat, setSelectedChat] = useState<any | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
@@ -34,70 +35,74 @@ export const MessagesPage = ({ onNavigate, chatId }: MessagesPageProps) => {
 
   useEffect(() => {
     const loadChats = async () => {
-      if (user) {
-        try {
-          const userChats = await getConversations(user.id);
-          setChats(userChats);
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
-          if (chatId) {
-            const chat = userChats.find((c: any) => c.id === chatId);
-            if (chat) {
-              setSelectedChat(chat);
-              await loadChatData(chat);
-            }
+      try {
+        console.log('MessagesPage: Loading chats for user:', user.id);
+        const userChats = await getConversations(user.id);
+        console.log('MessagesPage: Loaded chats:', userChats.length);
+        setChats(userChats);
+
+        // Handle direct conversation ID
+        if (chatId) {
+          const chat = userChats.find((c: any) => c.id === chatId);
+          if (chat) {
+            setSelectedChat(chat);
+            await loadChatData(chat);
           }
-        } catch (error) {
-          console.error('Error loading chats:', error);
         }
+        
+        // Handle seller ID - create or find conversation
+        if (sellerId && sellerId !== user.id) {
+          console.log('MessagesPage: Creating/finding conversation with seller:', sellerId);
+          try {
+            const conversation = await getOrCreateConversation(user.id, sellerId);
+            console.log('MessagesPage: Got conversation:', conversation.id);
+            
+            // Refresh chats to include the new conversation
+            const updatedChats = await getConversations(user.id);
+            setChats(updatedChats);
+            
+            const newSelectedChat = updatedChats.find((c: any) => c.id === conversation.id);
+            if (newSelectedChat) {
+              setSelectedChat(newSelectedChat);
+              await loadChatData(newSelectedChat);
+            }
+          } catch (error) {
+            console.error('Error creating conversation with seller:', error);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading chats:', error);
       }
       setLoading(false);
     };
 
     loadChats();
-    
-    // Check if we need to create a conversation with a seller
-    const checkSellerConversation = async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const sellerId = urlParams.get('sellerId');
-      
-      if (sellerId && user && sellerId !== user.id) {
-        try {
-          const conversation = await getOrCreateConversation(user.id, sellerId);
-          const updatedChats = await getConversations(user.id);
-          setChats(updatedChats);
-          
-          const newSelectedChat = updatedChats.find((c: any) => c.id === conversation.id);
-          if (newSelectedChat) {
-            setSelectedChat(newSelectedChat);
-            await loadChatData(newSelectedChat);
-          }
-        } catch (error) {
-          console.error('Error creating conversation with seller:', error);
-        }
-      }
-    };
-    
-    if (user) {
-      checkSellerConversation();
-    }
-  }, [user, chatId]);
+  }, [user, chatId, sellerId]);
 
   const loadChatData = async (chat: any) => {
+    console.log('MessagesPage: Loading chat data for:', chat.id);
     try {
       const chatMessages = await getMessages(chat.id);
+      console.log('MessagesPage: Loaded messages:', chatMessages.length);
       setMessages(chatMessages);
 
-      // Use other_user if available from getConversations, otherwise get profile
+      // Use other_user from chat if available, otherwise fetch profile
       if (chat.other_user) {
+        console.log('MessagesPage: Using cached other_user');
         setOtherUser(chat.other_user);
       } else {
+        console.log('MessagesPage: Fetching other user profile');
         const otherUserId = chat.user1_id === user?.id ? chat.user2_id : chat.user1_id;
         const userProfile = await getProfile(otherUserId);
         setOtherUser(userProfile);
       }
 
-      // Note: We'll need to add wasteItemId to conversations table or get it from another way
-      // For now, we'll skip the product loading
+      // Product loading can be added later if needed
       setProduct(null);
     } catch (error) {
       console.error('Error loading chat data:', error);
@@ -185,7 +190,9 @@ export const MessagesPage = ({ onNavigate, chatId }: MessagesPageProps) => {
             ) : (
               <div className="space-y-0">
                 {chats.map((chat) => {
-                  const otherUserId = chat.user1_id === user.id ? chat.user2_id : chat.user1_id;
+                  // Display name from other_user or fallback
+                  const displayName = chat.other_user?.name || chat.other_user?.email || 'Usuário';
+                  const initials = displayName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
                   
                   return (
                     <div
@@ -197,13 +204,13 @@ export const MessagesPage = ({ onNavigate, chatId }: MessagesPageProps) => {
                     >
                       <div className="flex items-center gap-3">
                         <Avatar className="w-10 h-10">
-                          <AvatarImage src="" alt="Usuário" />
-                          <AvatarFallback>
-                            U
+                          <AvatarImage src={chat.other_user?.avatar_url || ""} alt={displayName} />
+                          <AvatarFallback className="bg-eco-green text-white">
+                            {initials}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">Conversa</p>
+                          <p className="font-medium truncate">{displayName}</p>
                           <p className="text-sm text-muted-foreground truncate">
                             {new Date(chat.last_message_at).toLocaleDateString('pt-BR')}
                           </p>
@@ -224,13 +231,13 @@ export const MessagesPage = ({ onNavigate, chatId }: MessagesPageProps) => {
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-3">
                   <Avatar>
-                    <AvatarImage src="" alt={otherUser.name} />
-                    <AvatarFallback>
-                      {otherUser.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    <AvatarImage src={otherUser?.avatar_url || ""} alt={otherUser?.name || 'Usuário'} />
+                    <AvatarFallback className="bg-eco-green text-white">
+                      {otherUser?.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium">{otherUser?.name || 'Usuário'}</p>
+                    <p className="font-medium">{otherUser?.name || otherUser?.email || 'Usuário'}</p>
                     <p className="text-sm text-muted-foreground">Conversa</p>
                   </div>
                 </div>
