@@ -93,10 +93,10 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
   useEffect(() => {
     if (!user || !selectedChat) return;
 
-    console.log('Setting up realtime subscription for chat:', selectedChat.id);
+    console.log('🔥 Setting up realtime subscription for messages in chat:', selectedChat.id);
     
-    const channel = supabase
-      .channel('messages-changes')
+    const messagesChannel = supabase
+      .channel(`messages-${selectedChat.id}`)
       .on(
         'postgres_changes',
         {
@@ -106,50 +106,61 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
           filter: `conversation_id=eq.${selectedChat.id}`
         },
         async (payload) => {
-          console.log('New message received:', payload);
+          console.log('🚀 NEW MESSAGE RECEIVED via realtime:', payload);
           const newMessage = payload.new as any;
           
-          // Add sender profile to the message
-          try {
-            const senderProfile = await getProfile(newMessage.sender_id);
-            const messageWithSender = {
-              ...newMessage,
-              sender: senderProfile
-            };
-            
-            setMessages(prev => {
-              // Check if message already exists to avoid duplicates
-              const exists = prev.some(msg => msg.id === newMessage.id);
-              if (exists) return prev;
-              return [...prev, messageWithSender];
-            });
-          } catch (error) {
-            console.error('Error fetching sender profile:', error);
-            // Add message without sender profile as fallback
-            setMessages(prev => {
-              const exists = prev.some(msg => msg.id === newMessage.id);
-              if (exists) return prev;
-              return [...prev, newMessage];
-            });
+          // Only add if it's not our own message (to avoid duplicates)
+          if (newMessage.sender_id !== user.id) {
+            try {
+              const senderProfile = await getProfile(newMessage.sender_id);
+              const messageWithSender = {
+                ...newMessage,
+                sender: senderProfile
+              };
+              
+              console.log('➕ Adding new message to state:', messageWithSender);
+              setMessages(prev => {
+                // Check if message already exists to avoid duplicates
+                const exists = prev.some(msg => msg.id === newMessage.id);
+                if (exists) {
+                  console.log('⚠️ Message already exists, skipping');
+                  return prev;
+                }
+                console.log('✅ Message added to state');
+                return [...prev, messageWithSender];
+              });
+            } catch (error) {
+              console.error('❌ Error fetching sender profile:', error);
+              // Add message without sender profile as fallback
+              setMessages(prev => {
+                const exists = prev.some(msg => msg.id === newMessage.id);
+                if (exists) return prev;
+                return [...prev, newMessage];
+              });
+            }
+          } else {
+            console.log('👤 Message is from current user, skipping realtime update');
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Messages subscription status:', status);
+      });
 
     return () => {
-      console.log('Cleaning up realtime subscription');
-      supabase.removeChannel(channel);
+      console.log('🧹 Cleaning up messages realtime subscription');
+      supabase.removeChannel(messagesChannel);
     };
-  }, [user, selectedChat]);
+  }, [user, selectedChat?.id]);
 
   // Realtime subscription for conversation updates
   useEffect(() => {
     if (!user) return;
 
-    console.log('Setting up realtime subscription for conversations');
+    console.log('🔥 Setting up realtime subscription for conversations');
     
     const conversationChannel = supabase
-      .channel('conversations-changes')
+      .channel(`conversations-${user.id}`)
       .on(
         'postgres_changes',
         {
@@ -159,20 +170,23 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
           filter: `or(user1_id.eq.${user.id},user2_id.eq.${user.id})`
         },
         async (payload) => {
-          console.log('Conversation updated:', payload);
+          console.log('🔄 Conversation updated via realtime:', payload);
           // Refresh conversations list
           try {
             const updatedChats = await getConversations(user.id);
             setChats(updatedChats);
+            console.log('✅ Conversations refreshed');
           } catch (error) {
-            console.error('Error refreshing conversations:', error);
+            console.error('❌ Error refreshing conversations:', error);
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Conversations subscription status:', status);
+      });
 
     return () => {
-      console.log('Cleaning up conversation subscription');
+      console.log('🧹 Cleaning up conversation subscription');
       supabase.removeChannel(conversationChannel);
     };
   }, [user]);
@@ -293,19 +307,29 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
     setNewMessage(''); // Clear input immediately for better UX
 
     try {
-      console.log('Sending message:', messageContent);
-      const message = await sendMessage(selectedChat.id, user.id, messageContent);
-      console.log('Message sent successfully:', message);
+      console.log('📤 Sending message:', messageContent);
+      const sentMessage = await sendMessage(selectedChat.id, user.id, messageContent);
+      console.log('✅ Message sent successfully:', sentMessage);
       
-      // Add message to state immediately
-      setMessages(prev => [...prev, message]);
+      // Add message to state immediately (our own message)
+      const messageWithSender = {
+        ...sentMessage,
+        sender: {
+          user_id: user.id,
+          name: user.user_metadata?.name || user.email,
+          email: user.email
+        }
+      };
       
-      // Update conversation last_message_at
-      const updatedChats = await getConversations(user.id);
-      setChats(updatedChats);
+      setMessages(prev => {
+        // Check if message already exists to avoid duplicates
+        const exists = prev.some(msg => msg.id === sentMessage.id);
+        if (exists) return prev;
+        return [...prev, messageWithSender];
+      });
       
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('❌ Error sending message:', error);
       // Restore message in input if failed
       setNewMessage(messageContent);
     }
