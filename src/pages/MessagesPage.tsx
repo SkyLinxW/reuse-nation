@@ -31,6 +31,8 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
   const [otherUser, setOtherUser] = useState<any | null>(null);
   const [product, setProduct] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [otherUserOnline, setOtherUserOnline] = useState(false);
+  const [presenceChannel, setPresenceChannel] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   
@@ -175,6 +177,76 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
     };
   }, [user]);
 
+  // User presence tracking
+  useEffect(() => {
+    if (!user) return;
+
+    console.log('Setting up presence tracking for user:', user.id);
+    
+    const channel = supabase.channel('user-presence', {
+      config: {
+        presence: {
+          key: user.id,
+        },
+      },
+    });
+
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const presenceState = channel.presenceState();
+        console.log('Presence sync:', presenceState);
+        
+        if (otherUser) {
+          const isOnline = !!presenceState[otherUser.user_id];
+          console.log(`Other user ${otherUser.user_id} online:`, isOnline);
+          setOtherUserOnline(isOnline);
+        }
+      })
+      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+        console.log('User joined:', key, newPresences);
+        if (otherUser && key === otherUser.user_id) {
+          setOtherUserOnline(true);
+        }
+      })
+      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+        console.log('User left:', key, leftPresences);
+        if (otherUser && key === otherUser.user_id) {
+          setOtherUserOnline(false);
+        }
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('Presence subscription successful');
+          // Track this user's presence
+          await channel.track({
+            user_id: user.id,
+            online_at: new Date().toISOString(),
+          });
+        }
+      });
+
+    setPresenceChannel(channel);
+
+    // Cleanup on unmount
+    return () => {
+      console.log('Cleaning up presence tracking');
+      if (channel) {
+        channel.untrack();
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [user]);
+
+  // Update other user online status when otherUser changes
+  useEffect(() => {
+    if (presenceChannel && otherUser) {
+      const presenceState = presenceChannel.presenceState();
+      const isOnline = !!presenceState[otherUser.user_id];
+      console.log(`Checking if other user ${otherUser.user_id} is online:`, isOnline);
+      setOtherUserOnline(isOnline);
+    }
+  }, [otherUser, presenceChannel]);
+
   // Scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
@@ -317,12 +389,18 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
                         onClick={() => handleChatSelect(chat)}
                       >
                         <div className="flex items-center gap-3">
-                          <Avatar className="w-12 h-12">
-                            <AvatarImage src={chat.other_user?.avatar_url || ""} alt={displayName} />
-                            <AvatarFallback className="bg-eco-green text-white">
-                              {initials}
-                            </AvatarFallback>
-                          </Avatar>
+                          <div className="relative">
+                            <Avatar className="w-12 h-12">
+                              <AvatarImage src={chat.other_user?.avatar_url || ""} alt={displayName} />
+                              <AvatarFallback className="bg-eco-green text-white">
+                                {initials}
+                              </AvatarFallback>
+                            </Avatar>
+                            {/* Online status indicator */}
+                            <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${
+                              presenceChannel?.presenceState()[chat.other_user?.user_id] ? 'bg-green-500' : 'bg-gray-400'
+                            }`} />
+                          </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium truncate">{displayName}</p>
                             <p className="text-sm text-muted-foreground truncate">
@@ -345,16 +423,22 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
                 {/* Header do chat */}
                 <div className="p-4 border-b bg-card">
                   <div className="flex items-center gap-3">
-                    <Avatar className="w-10 h-10">
-                      <AvatarImage src={otherUser?.avatar_url || ""} alt={otherUser?.name || 'Usuário'} />
-                      <AvatarFallback className="bg-eco-green text-white">
-                        {otherUser?.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
+                    <div className="relative">
+                      <Avatar className="w-10 h-10">
+                        <AvatarImage src={otherUser?.avatar_url || ""} alt={otherUser?.name || 'Usuário'} />
+                        <AvatarFallback className="bg-eco-green text-white">
+                          {otherUser?.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      {/* Status indicator */}
+                      <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
+                        otherUserOnline ? 'bg-green-500' : 'bg-gray-400'
+                      }`} />
+                    </div>
                     <div>
                       <p className="font-medium">{otherUser?.name || otherUser?.email || 'Usuário'}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {otherUser?.bio ? otherUser.bio : 'Ativo'}
+                      <p className={`text-sm ${otherUserOnline ? 'text-green-600' : 'text-muted-foreground'}`}>
+                        {otherUserOnline ? 'Online' : 'Offline'}
                       </p>
                     </div>
                   </div>
