@@ -12,6 +12,7 @@ import {
   getWasteItem,
   getOrCreateConversation
 } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Chat, ChatMessage, User, WasteItem } from '@/types';
 import { ArrowLeft, Send, MessageCircle } from 'lucide-react';
@@ -85,6 +86,94 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
 
     loadChats();
   }, [user, chatId, sellerId]);
+
+  // Realtime subscription for new messages
+  useEffect(() => {
+    if (!user || !selectedChat) return;
+
+    console.log('Setting up realtime subscription for chat:', selectedChat.id);
+    
+    const channel = supabase
+      .channel('messages-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${selectedChat.id}`
+        },
+        async (payload) => {
+          console.log('New message received:', payload);
+          const newMessage = payload.new as any;
+          
+          // Add sender profile to the message
+          try {
+            const senderProfile = await getProfile(newMessage.sender_id);
+            const messageWithSender = {
+              ...newMessage,
+              sender: senderProfile
+            };
+            
+            setMessages(prev => {
+              // Check if message already exists to avoid duplicates
+              const exists = prev.some(msg => msg.id === newMessage.id);
+              if (exists) return prev;
+              return [...prev, messageWithSender];
+            });
+          } catch (error) {
+            console.error('Error fetching sender profile:', error);
+            // Add message without sender profile as fallback
+            setMessages(prev => {
+              const exists = prev.some(msg => msg.id === newMessage.id);
+              if (exists) return prev;
+              return [...prev, newMessage];
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('Cleaning up realtime subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [user, selectedChat]);
+
+  // Realtime subscription for conversation updates
+  useEffect(() => {
+    if (!user) return;
+
+    console.log('Setting up realtime subscription for conversations');
+    
+    const conversationChannel = supabase
+      .channel('conversations-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'conversations',
+          filter: `or(user1_id.eq.${user.id},user2_id.eq.${user.id})`
+        },
+        async (payload) => {
+          console.log('Conversation updated:', payload);
+          // Refresh conversations list
+          try {
+            const updatedChats = await getConversations(user.id);
+            setChats(updatedChats);
+          } catch (error) {
+            console.error('Error refreshing conversations:', error);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('Cleaning up conversation subscription');
+      supabase.removeChannel(conversationChannel);
+    };
+  }, [user]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
