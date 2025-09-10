@@ -2,9 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import {
   getConversations,
   getMessages,
@@ -172,17 +172,17 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
                 console.log('⚠️ Message already exists, skipping');
                 return prev;
               }
-            console.log('➕ Adding message to state, total will be:', prev.length + 1);
-            return [...prev, messageWithSender];
-          });
+              console.log('➕ Adding message to state, total will be:', prev.length + 1);
+              return [...prev, messageWithSender];
+            });
 
-          // If message is from another user and we're not the sender, update unread count
-          if (newMessage.sender_id !== user.id) {
-            setChatUnreadCounts(prev => ({
-              ...prev,
-              [selectedChat.id]: (prev[selectedChat.id] || 0) + 1
-            }));
-          }
+            // If message is from another user and we're not the sender, update unread count
+            if (newMessage.sender_id !== user.id) {
+              setChatUnreadCounts(prev => ({
+                ...prev,
+                [selectedChat.id]: (prev[selectedChat.id] || 0) + 1
+              }));
+            }
             
           } catch (error) {
             console.error('❌ Error processing new message:', error);
@@ -529,93 +529,106 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
                     </div>
                     <div>
                       <p className="font-medium">{otherUser?.name || otherUser?.email || 'Usuário'}</p>
-                      <p className={`text-sm ${otherUserOnline ? 'text-green-600' : 'text-muted-foreground'}`}>
+                      <p className="text-sm text-muted-foreground">
                         {otherUserOnline ? 'Online' : 'Offline'}
                       </p>
                     </div>
                   </div>
                 </div>
-                
-                {/* Container de mensagens com scroll */}
+
+                {/* Mensagens */}
                 <div 
                   ref={messagesContainerRef}
-                  className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/20"
-                  style={{ maxHeight: 'calc(100vh - 320px)' }}
+                  className="flex-1 overflow-y-auto p-4 space-y-4"
+                  style={{ maxHeight: 'calc(100vh - 400px)' }}
                 >
                   {messages.length === 0 ? (
-                    <div className="flex items-center justify-center h-32 text-muted-foreground">
-                      <p>Nenhuma mensagem ainda. Comece a conversa!</p>
+                    <div className="text-center text-muted-foreground py-8">
+                      <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>Nenhuma mensagem ainda</p>
+                      <p className="text-sm">Envie a primeira mensagem!</p>
                     </div>
                   ) : (
-                    <>
-                      {messages.map((message) => {
-                        const isMyMessage = message.sender_id === user.id;
-                        const senderName = isMyMessage ? (user.user_metadata?.name || user.email) : (otherUser?.name || 'Usuário');
-                        
-                        return (
-                          <div
-                            key={message.id}
-                            className={`flex gap-3 ${isMyMessage ? 'flex-row-reverse' : ''}`}
-                          >
+                    messages.map((message) => {
+                      const isOwnMessage = message.sender_id === user?.id;
+                      const senderName = message.sender?.name || message.sender?.email || 'Usuário';
+                      
+                      return (
+                        <div
+                          key={message.id}
+                          className={`flex gap-3 ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+                        >
+                          {!isOwnMessage && (
                             <Avatar className="w-8 h-8 flex-shrink-0">
-                              <AvatarImage src="" alt={senderName} />
-                              <AvatarFallback className="text-xs">
-                                {senderName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2) || 'U'}
+                              <AvatarImage src={message.sender?.avatar_url || ""} alt={senderName} />
+                              <AvatarFallback className="bg-eco-green text-white text-xs">
+                                {senderName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
+                          )}
+                          
+                          <div className={`max-w-[70%] ${isOwnMessage ? 'order-first' : ''}`}>
                             <div
-                              className={`max-w-[70%] p-3 rounded-2xl ${
-                                isMyMessage
-                                  ? 'bg-eco-green text-white rounded-br-md'
-                                  : 'bg-white border rounded-bl-md shadow-sm'
+                              className={`p-3 rounded-lg ${
+                                isOwnMessage
+                                  ? 'bg-eco-green text-white'
+                                  : 'bg-muted'
                               }`}
                             >
-                              <p className="text-sm break-words">{message.content}</p>
-                              <p className={`text-xs mt-1 ${
-                                isMyMessage ? 'text-white/70' : 'text-muted-foreground'
-                              }`}>
-                                {new Date(message.created_at).toLocaleTimeString('pt-BR', {
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </p>
+                              <p className="break-words">{message.content}</p>
                             </div>
+                            <p className={`text-xs text-muted-foreground mt-1 ${isOwnMessage ? 'text-right' : 'text-left'}`}>
+                              {new Date(message.created_at).toLocaleTimeString('pt-BR', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
                           </div>
-                        );
-                      })}
-                      <div ref={messagesEndRef} />
-                    </>
+                          
+                          {isOwnMessage && (
+                            <Avatar className="w-8 h-8 flex-shrink-0">
+                              <AvatarImage src="" alt={user?.user_metadata?.name || user?.email || ''} />
+                              <AvatarFallback className="bg-eco-green text-white text-xs">
+                                {(user?.user_metadata?.name || user?.email || 'U').split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                              </AvatarFallback>
+                            </Avatar>
+                          )}
+                        </div>
+                      );
+                    })
                   )}
+                  <div ref={messagesEndRef} />
                 </div>
-                
-                {/* Input de nova mensagem - Fixo na parte inferior */}
-                <div className="p-4 bg-card border-t">
-                  <div className="flex gap-3 items-end">
-                    <div className="flex-1">
-                      <Input
-                        placeholder="Digite uma mensagem..."
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        className="resize-none border-2 rounded-full px-4 py-2 focus:border-eco-green"
-                      />
-                    </div>
-                    <Button
-                      onClick={handleSendMessage}
+
+                {/* Input de mensagem */}
+                <div className="p-4 border-t bg-card">
+                  <div className="flex gap-2">
+                    <Input
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder="Digite sua mensagem..."
+                      className="flex-1"
+                    />
+                    <Button 
+                      onClick={handleSendMessage} 
                       disabled={!newMessage.trim()}
-                      className="rounded-full w-12 h-12 bg-eco-green hover:bg-eco-green/90 flex-shrink-0"
+                      size="sm"
+                      className="px-4"
                     >
-                      <Send className="w-5 h-5" />
+                      <Send className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
               </>
             ) : (
-              <div className="flex-1 flex items-center justify-center bg-muted/20">
-                <div className="text-center text-muted-foreground">
+              <div className="flex-1 flex items-center justify-center text-center">
+                <div>
                   <MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg font-medium mb-2">Selecione uma conversa</p>
-                  <p className="text-sm">Escolha uma conversa da lista para começar a trocar mensagens</p>
+                  <h3 className="text-lg font-medium mb-2">Selecione uma conversa</h3>
+                  <p className="text-muted-foreground">
+                    Escolha uma conversa para começar a trocar mensagens
+                  </p>
                 </div>
               </div>
             )}
