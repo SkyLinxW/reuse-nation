@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
-import { getCartItems, getUnreadNotificationCount } from '@/lib/supabase';
+import { getCartItems, getUnreadNotificationCount, getUnreadMessagesCount } from '@/lib/supabase';
 import ecoLogo from '@/assets/eco-marketplace-logo.png';
 interface HeaderProps {
   onNavigate: (page: string) => void;
@@ -19,6 +19,7 @@ export const Header = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [cartCount, setCartCount] = useState(0);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
   const { user, signOut } = useAuth();
   useEffect(() => {
     const loadCounts = async () => {
@@ -28,12 +29,15 @@ export const Header = ({
           setCartCount(cartItems.length);
           const unreadCount = await getUnreadNotificationCount(user.id);
           setNotificationCount(unreadCount);
+          const unreadMsgCount = await getUnreadMessagesCount(user.id);
+          setUnreadMessagesCount(unreadMsgCount);
         } catch (error) {
           console.error('Error loading counts:', error);
         }
       } else {
         setCartCount(0);
         setNotificationCount(0);
+        setUnreadMessagesCount(0);
       }
     };
     loadCounts();
@@ -92,8 +96,11 @@ export const Header = ({
                   <span className="hidden md:inline ml-2">Favoritos</span>
                 </Button>
 
-                <Button variant="ghost" size="sm" onClick={() => onNavigate('messages')} className={currentPage === 'messages' ? 'bg-eco-green-light' : ''}>
+                <Button variant="ghost" size="sm" onClick={() => onNavigate('messages')} className={`relative ${currentPage === 'messages' ? 'bg-eco-green-light' : ''}`}>
                   <MessageCircle className="w-4 h-4" />
+                  {unreadMessagesCount > 0 && <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                      {unreadMessagesCount}
+                    </Badge>}
                   <span className="hidden md:inline ml-2">Mensagens</span>
                 </Button>
 

@@ -472,6 +472,88 @@ export const sendMessage = async (conversationId: string, senderId: string, cont
   return data;
 };
 
+// Get unread messages count for a user
+export const getUnreadMessagesCount = async (userId: string): Promise<number> => {
+  try {
+    // Get all conversations for the user
+    const { data: conversations, error: convError } = await supabase
+      .from('conversations')
+      .select('id')
+      .or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
+
+    if (convError) {
+      console.error('Error fetching conversations for unread count:', convError);
+      return 0;
+    }
+
+    if (!conversations || conversations.length === 0) return 0;
+
+    const conversationIds = conversations.map(c => c.id);
+
+    // Count unread messages from all conversations where user is not the sender
+    const { count, error } = await supabase
+      .from('messages')
+      .select('*', { count: 'exact', head: true })
+      .in('conversation_id', conversationIds)
+      .neq('sender_id', userId)
+      .eq('read', false);
+
+    if (error) {
+      console.error('Error counting unread messages:', error);
+      return 0;
+    }
+
+    return count || 0;
+  } catch (error) {
+    console.error('Error in getUnreadMessagesCount:', error);
+    return 0;
+  }
+};
+
+// Get unread messages count for a specific conversation
+export const getUnreadMessagesCountForConversation = async (conversationId: string, userId: string): Promise<number> => {
+  try {
+    const { count, error } = await supabase
+      .from('messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('conversation_id', conversationId)
+      .neq('sender_id', userId)
+      .eq('read', false);
+
+    if (error) {
+      console.error('Error counting unread messages for conversation:', error);
+      return 0;
+    }
+
+    return count || 0;
+  } catch (error) {
+    console.error('Error in getUnreadMessagesCountForConversation:', error);
+    return 0;
+  }
+};
+
+// Mark messages as read when user opens a conversation
+export const markMessagesAsRead = async (conversationId: string, userId: string) => {
+  try {
+    const { error } = await supabase
+      .from('messages')
+      .update({ read: true })
+      .eq('conversation_id', conversationId)
+      .neq('sender_id', userId)
+      .eq('read', false);
+
+    if (error) {
+      console.error('Error marking messages as read:', error);
+      throw error;
+    }
+
+    console.log('Messages marked as read for conversation:', conversationId);
+  } catch (error) {
+    console.error('Error in markMessagesAsRead:', error);
+    throw error;
+  }
+};
+
 // Get eco impact stats
 export const getEcoImpact = async () => {
   const { data, error } = await supabase

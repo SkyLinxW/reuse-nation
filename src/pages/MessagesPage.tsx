@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -10,7 +11,9 @@ import {
   sendMessage,
   getProfile,
   getWasteItem,
-  getOrCreateConversation
+  getOrCreateConversation,
+  getUnreadMessagesCountForConversation,
+  markMessagesAsRead
 } from '@/lib/supabase';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -33,6 +36,7 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
   const [loading, setLoading] = useState(true);
   const [otherUserOnline, setOtherUserOnline] = useState(false);
   const [presenceChannel, setPresenceChannel] = useState<any>(null);
+  const [chatUnreadCounts, setChatUnreadCounts] = useState<{[key: string]: number}>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   
@@ -50,6 +54,19 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
         const userChats = await getConversations(user.id);
         console.log('MessagesPage: Loaded chats:', userChats.length);
         setChats(userChats);
+
+        // Load unread counts for each chat
+        const unreadCounts: {[key: string]: number} = {};
+        for (const chat of userChats) {
+          try {
+            const count = await getUnreadMessagesCountForConversation(chat.id, user.id);
+            unreadCounts[chat.id] = count;
+          } catch (error) {
+            console.error('Error loading unread count for chat:', chat.id, error);
+            unreadCounts[chat.id] = 0;
+          }
+        }
+        setChatUnreadCounts(unreadCounts);
 
         // Handle direct conversation ID
         if (chatId) {
@@ -155,9 +172,17 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
                 console.log('⚠️ Message already exists, skipping');
                 return prev;
               }
-              console.log('➕ Adding message to state, total will be:', prev.length + 1);
-              return [...prev, messageWithSender];
-            });
+            console.log('➕ Adding message to state, total will be:', prev.length + 1);
+            return [...prev, messageWithSender];
+          });
+
+          // If message is from another user and we're not the sender, update unread count
+          if (newMessage.sender_id !== user.id) {
+            setChatUnreadCounts(prev => ({
+              ...prev,
+              [selectedChat.id]: (prev[selectedChat.id] || 0) + 1
+            }));
+          }
             
           } catch (error) {
             console.error('❌ Error processing new message:', error);
@@ -302,6 +327,16 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
       const chatMessages = await getMessages(chat.id);
       console.log('MessagesPage: Loaded messages:', chatMessages.length);
       setMessages(chatMessages);
+
+      // Mark messages as read when opening the chat
+      if (user) {
+        await markMessagesAsRead(chat.id, user.id);
+        // Update unread count for this chat
+        setChatUnreadCounts(prev => ({
+          ...prev,
+          [chat.id]: 0
+        }));
+      }
 
       // Use other_user from chat if available, otherwise fetch profile
       if (chat.other_user) {
@@ -452,7 +487,14 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
                             }`} />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">{displayName}</p>
+                            <div className="flex items-center justify-between">
+                              <p className="font-medium truncate">{displayName}</p>
+                              {(chatUnreadCounts[chat.id] || 0) > 0 && (
+                                <Badge variant="destructive" className="h-5 w-5 flex items-center justify-center p-0 text-xs ml-2">
+                                  {chatUnreadCounts[chat.id]}
+                                </Badge>
+                              )}
+                            </div>
                             <p className="text-sm text-muted-foreground truncate">
                               {new Date(chat.last_message_at).toLocaleDateString('pt-BR')}
                             </p>
