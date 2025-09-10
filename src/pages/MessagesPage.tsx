@@ -89,14 +89,22 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
     loadChats();
   }, [user, chatId, sellerId]);
 
-  // Realtime subscription for new messages
+  // Realtime subscription for new messages - IMPROVED VERSION
   useEffect(() => {
-    if (!user || !selectedChat) return;
+    if (!user || !selectedChat) {
+      console.log('⏸️ Skipping realtime setup - missing user or selectedChat');
+      return;
+    }
 
-    console.log('🔥 Setting up realtime subscription for messages in chat:', selectedChat.id);
+    console.log('🔥 SETTING UP REALTIME FOR MESSAGES:', {
+      userId: user.id,
+      chatId: selectedChat.id,
+      timestamp: new Date().toISOString()
+    });
     
+    const channelName = `chat-${selectedChat.id}-${Date.now()}`;
     const messagesChannel = supabase
-      .channel(`messages-${selectedChat.id}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -106,52 +114,70 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
           filter: `conversation_id=eq.${selectedChat.id}`
         },
         async (payload) => {
-          console.log('🚀 NEW MESSAGE RECEIVED via realtime:', payload);
+          console.log('🚀 REALTIME MESSAGE RECEIVED!', {
+            payload,
+            currentUserId: user.id,
+            timestamp: new Date().toISOString()
+          });
+          
           const newMessage = payload.new as any;
           
-          // Only add if it's not our own message (to avoid duplicates)
-          if (newMessage.sender_id !== user.id) {
-            try {
+          // Always add the message but check if it's from current user
+          try {
+            console.log('🔍 Processing new message:', newMessage.id, 'from:', newMessage.sender_id);
+            
+            let messageWithSender;
+            if (newMessage.sender_id === user.id) {
+              // Our own message - use current user data
+              messageWithSender = {
+                ...newMessage,
+                sender: {
+                  user_id: user.id,
+                  name: user.user_metadata?.name || user.email,
+                  email: user.email
+                }
+              };
+              console.log('👤 Message from current user, using cached data');
+            } else {
+              // Other user's message - fetch profile
+              console.log('👥 Message from other user, fetching profile...');
               const senderProfile = await getProfile(newMessage.sender_id);
-              const messageWithSender = {
+              messageWithSender = {
                 ...newMessage,
                 sender: senderProfile
               };
-              
-              console.log('➕ Adding new message to state:', messageWithSender);
-              setMessages(prev => {
-                // Check if message already exists to avoid duplicates
-                const exists = prev.some(msg => msg.id === newMessage.id);
-                if (exists) {
-                  console.log('⚠️ Message already exists, skipping');
-                  return prev;
-                }
-                console.log('✅ Message added to state');
-                return [...prev, messageWithSender];
-              });
-            } catch (error) {
-              console.error('❌ Error fetching sender profile:', error);
-              // Add message without sender profile as fallback
-              setMessages(prev => {
-                const exists = prev.some(msg => msg.id === newMessage.id);
-                if (exists) return prev;
-                return [...prev, newMessage];
-              });
+              console.log('✅ Sender profile fetched:', senderProfile?.name);
             }
-          } else {
-            console.log('👤 Message is from current user, skipping realtime update');
+            
+            setMessages(prev => {
+              const exists = prev.some(msg => msg.id === newMessage.id);
+              if (exists) {
+                console.log('⚠️ Message already exists, skipping');
+                return prev;
+              }
+              console.log('➕ Adding message to state, total will be:', prev.length + 1);
+              return [...prev, messageWithSender];
+            });
+            
+          } catch (error) {
+            console.error('❌ Error processing new message:', error);
           }
         }
       )
-      .subscribe((status) => {
-        console.log('📡 Messages subscription status:', status);
+      .subscribe((status, err) => {
+        console.log('📡 Realtime subscription status changed:', {
+          status,
+          error: err,
+          channelName,
+          timestamp: new Date().toISOString()
+        });
       });
 
     return () => {
-      console.log('🧹 Cleaning up messages realtime subscription');
+      console.log('🧹 Cleaning up realtime subscription:', channelName);
       supabase.removeChannel(messagesChannel);
     };
-  }, [user, selectedChat?.id]);
+  }, [user?.id, selectedChat?.id]); // More specific dependencies
 
   // Realtime subscription for conversation updates
   useEffect(() => {
