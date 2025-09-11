@@ -7,6 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
 import { getCartItems, getUnreadNotificationCount, getUnreadMessagesCount } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import ecoLogo from '@/assets/eco-marketplace-logo.png';
 interface HeaderProps {
   onNavigate: (page: string) => void;
@@ -40,7 +41,36 @@ export const Header = ({
         setUnreadMessagesCount(0);
       }
     };
+    
     loadCounts();
+
+    // Set up real-time subscription to update unread messages count
+    if (user) {
+      const messagesChannel = supabase
+        .channel(`header-messages-${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'messages',
+          },
+          async () => {
+            // Refresh unread messages count when any message changes
+            try {
+              const unreadMsgCount = await getUnreadMessagesCount(user.id);
+              setUnreadMessagesCount(unreadMsgCount);
+            } catch (error) {
+              console.error('Error updating unread messages count:', error);
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(messagesChannel);
+      };
+    }
   }, [user]);
   const handleLogout = async () => {
     await signOut();

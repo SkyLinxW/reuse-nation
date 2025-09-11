@@ -176,12 +176,23 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
               return [...prev, messageWithSender];
             });
 
-            // If message is from another user and we're not the sender, update unread count
+            // If message is from another user and we're currently viewing this chat,
+            // mark it as read immediately. If not viewing, update unread count
             if (newMessage.sender_id !== user.id) {
-              setChatUnreadCounts(prev => ({
-                ...prev,
-                [selectedChat.id]: (prev[selectedChat.id] || 0) + 1
-              }));
+              if (selectedChat?.id === newMessage.conversation_id) {
+                // We're viewing this chat, mark message as read immediately
+                try {
+                  await markMessagesAsRead(newMessage.conversation_id, user.id);
+                } catch (error) {
+                  console.error('Error marking real-time message as read:', error);
+                }
+              } else {
+                // We're not viewing this chat, increment unread count
+                setChatUnreadCounts(prev => ({
+                  ...prev,
+                  [newMessage.conversation_id]: (prev[newMessage.conversation_id] || 0) + 1
+                }));
+              }
             }
             
           } catch (error) {
@@ -220,17 +231,31 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
           table: 'conversations',
           filter: `or(user1_id.eq.${user.id},user2_id.eq.${user.id})`
         },
-        async (payload) => {
-          console.log('🔄 Conversation updated via realtime:', payload);
-          // Refresh conversations list
-          try {
-            const updatedChats = await getConversations(user.id);
-            setChats(updatedChats);
-            console.log('✅ Conversations refreshed');
-          } catch (error) {
-            console.error('❌ Error refreshing conversations:', error);
+          async (payload) => {
+            console.log('🔄 Conversation updated via realtime:', payload);
+            // Refresh conversations list and unread counts
+            try {
+              const updatedChats = await getConversations(user.id);
+              setChats(updatedChats);
+              
+              // Refresh unread counts for all chats
+              const unreadCounts: {[key: string]: number} = {};
+              for (const chat of updatedChats) {
+                try {
+                  const count = await getUnreadMessagesCountForConversation(chat.id, user.id);
+                  unreadCounts[chat.id] = count;
+                } catch (error) {
+                  console.error('Error loading unread count for chat:', chat.id, error);
+                  unreadCounts[chat.id] = 0;
+                }
+              }
+              setChatUnreadCounts(unreadCounts);
+              
+              console.log('✅ Conversations and unread counts refreshed');
+            } catch (error) {
+              console.error('❌ Error refreshing conversations:', error);
+            }
           }
-        }
       )
       .subscribe((status) => {
         console.log('📡 Conversations subscription status:', status);
@@ -331,11 +356,12 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
       // Mark messages as read when opening the chat
       if (user) {
         await markMessagesAsRead(chat.id, user.id);
-        // Update unread count for this chat
+        // Update unread count for this chat to 0
         setChatUnreadCounts(prev => ({
           ...prev,
           [chat.id]: 0
         }));
+        console.log('Messages marked as read for conversation:', chat.id);
       }
 
       // Use other_user from chat if available, otherwise fetch profile
