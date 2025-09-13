@@ -182,14 +182,16 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
               if (selectedChat?.id === newMessage.conversation_id) {
                 // We're viewing this chat, mark message as read immediately
                 try {
-                  await markMessagesAsRead(newMessage.conversation_id, user.id);
+                  console.log('🔄 Marking real-time message as read immediately');
+                  const updatedMessages = await markMessagesAsRead(newMessage.conversation_id, user.id);
+                  console.log('✅ Real-time message marked as read:', updatedMessages?.length || 0);
+                  
                   setChatUnreadCounts(prev => ({
                     ...prev,
                     [newMessage.conversation_id]: 0
                   }));
-                  console.log('✅ Real-time message marked as read immediately');
                 } catch (error) {
-                  console.error('Error marking real-time message as read:', error);
+                  console.error('❌ Error marking real-time message as read:', error);
                 }
               } else {
                 // We're not viewing this chat, increment unread count
@@ -360,13 +362,15 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
 
       // Mark messages as read when opening the chat
       if (user) {
-        await markMessagesAsRead(chat.id, user.id);
+        console.log('🔄 Marking messages as read for chat:', chat.id);
+        const updatedMessages = await markMessagesAsRead(chat.id, user.id);
+        console.log('✅ Messages marked as read:', updatedMessages?.length || 0);
+        
         // Update unread count for this chat to 0
         setChatUnreadCounts(prev => ({
           ...prev,
           [chat.id]: 0
         }));
-        console.log('Messages marked as read for conversation:', chat.id);
       }
 
       // Use other_user from chat if available, otherwise fetch profile
@@ -395,12 +399,14 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
     // Force mark messages as read after selecting
     if (user) {
       try {
-        await markMessagesAsRead(chat.id, user.id);
+        console.log('🔄 Force marking messages as read for chat:', chat.id);
+        const updatedMessages = await markMessagesAsRead(chat.id, user.id);
+        console.log('✅ Force marked messages as read:', updatedMessages?.length || 0);
+        
         setChatUnreadCounts(prev => ({
           ...prev,
           [chat.id]: 0
         }));
-        console.log('✅ Messages marked as read after chat selection');
       } catch (error) {
         console.error('❌ Error marking messages as read on chat select:', error);
       }

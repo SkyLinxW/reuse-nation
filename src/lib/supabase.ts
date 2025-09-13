@@ -535,21 +535,25 @@ export const getUnreadMessagesCountForConversation = async (conversationId: stri
 // Mark messages as read when user opens a conversation
 export const markMessagesAsRead = async (conversationId: string, userId: string) => {
   try {
-    const { error } = await supabase
+    console.log('🔄 Marking messages as read for conversation:', conversationId, 'user:', userId);
+    
+    const { data, error } = await supabase
       .from('messages')
       .update({ read: true })
       .eq('conversation_id', conversationId)
       .neq('sender_id', userId)
-      .eq('read', false);
+      .eq('read', false)
+      .select('id');
 
     if (error) {
-      console.error('Error marking messages as read:', error);
+      console.error('❌ Error marking messages as read:', error);
       throw error;
     }
 
-    console.log('Messages marked as read for conversation:', conversationId);
+    console.log('✅ Messages marked as read:', data?.length || 0, 'messages updated');
+    return data;
   } catch (error) {
-    console.error('Error in markMessagesAsRead:', error);
+    console.error('❌ Error in markMessagesAsRead:', error);
     throw error;
   }
 };
