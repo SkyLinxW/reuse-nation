@@ -196,9 +196,9 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-primary flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-eco-green-light/20 to-eco-brown-light/20 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-eco-green mx-auto mb-4"></div>
           <p className="text-muted-foreground">Carregando materiais...</p>
         </div>
       </div>
@@ -208,7 +208,7 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
   // Error state
   if (hasError) {
     return (
-      <div className="min-h-screen bg-gradient-primary flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-eco-green-light/20 to-eco-brown-light/20 flex items-center justify-center">
         <Card className="max-w-md mx-auto m-4">
           <CardContent className="text-center p-8">
             <div className="text-red-500 mb-4">⚠️</div>
@@ -226,14 +226,14 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-primary">
+    <div className="min-h-screen bg-gradient-to-br from-eco-green-light/20 to-eco-brown-light/20">
       {/* Hero Section */}
       <section className="relative py-20 px-4">
         <div className="container mx-auto text-center">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
-              Transforme <span className="text-primary">Resíduos</span> em{' '}
-              <span className="text-secondary">Recursos</span>
+              Transforme <span className="text-eco-green">Resíduos</span> em{' '}
+              <span className="text-eco-blue">Recursos</span>
             </h1>
             <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
               O marketplace sustentável que conecta quem tem sobras industriais e materiais 
@@ -246,28 +246,27 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Button
                 size="lg"
-                onClick={() => user ? onNavigate('create-listing') : onNavigate('auth')}
-                variant="premium"
-                className="shadow-elegant text-lg px-8 py-6"
+                onClick={() => onNavigate('auth')}
+                className="bg-gradient-eco hover:opacity-90 shadow-eco text-lg px-8 py-6"
               >
-                {user ? 'Criar Anúncio' : 'Começar Agora'}
+                Começar Agora
               </Button>
               <Button
                 size="lg"
                 variant="outline"
-                onClick={() => onNavigate('search')}
-                className="text-lg px-8 py-6 border-primary text-primary hover:bg-accent"
+                onClick={() => onNavigate('about')}
+                className="text-lg px-8 py-6 border-eco-green text-eco-green hover:bg-eco-green-light"
               >
-                {user ? 'Explorar Materiais' : 'Como Funciona'}
+                Como Funciona
               </Button>
             </div>
 
             {/* Impact Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
-              <Card className="bg-card/50 backdrop-blur border-primary/20">
+              <Card className="bg-card/50 backdrop-blur border-eco-green/20">
                 <CardContent className="flex flex-col items-center p-6">
-                  <Recycle className="w-12 h-12 text-primary mb-3" />
-                  <div className="text-2xl font-bold text-primary">
+                  <Recycle className="w-12 h-12 text-eco-green mb-3" />
+                  <div className="text-2xl font-bold text-eco-green">
                     {formatNumber(ecoImpact.totalWasteReused)}kg
                   </div>
                   <div className="text-sm text-muted-foreground text-center">
@@ -276,10 +275,10 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-card/50 backdrop-blur border-secondary/20">
+              <Card className="bg-card/50 backdrop-blur border-eco-blue/20">
                 <CardContent className="flex flex-col items-center p-6">
-                  <Leaf className="w-12 h-12 text-secondary mb-3" />
-                  <div className="text-2xl font-bold text-secondary">
+                  <Leaf className="w-12 h-12 text-eco-blue mb-3" />
+                  <div className="text-2xl font-bold text-eco-blue">
                     {formatNumber(ecoImpact.co2Saved)}kg
                   </div>
                   <div className="text-sm text-muted-foreground text-center">
@@ -288,10 +287,10 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-card/50 backdrop-blur border-accent/20">
+              <Card className="bg-card/50 backdrop-blur border-eco-orange/20">
                 <CardContent className="flex flex-col items-center p-6">
-                  <Users className="w-12 h-12 text-accent mb-3" />
-                  <div className="text-2xl font-bold text-accent">
+                  <Users className="w-12 h-12 text-eco-orange mb-3" />
+                  <div className="text-2xl font-bold text-eco-orange">
                     {formatNumber(ecoImpact.transactionsCount)}
                   </div>
                   <div className="text-sm text-muted-foreground text-center">
@@ -343,7 +342,7 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="bg-accent/20 text-accent border-accent/20">
+                  <Badge variant="secondary" className="bg-eco-green-light text-eco-green">
                     <TrendingUp className="w-3 h-3 mr-1" />
                     Novos materiais diariamente
                   </Badge>
