@@ -63,25 +63,29 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				eco: {
-					green: 'hsl(var(--eco-green))',
-					'green-light': 'hsl(var(--eco-green-light))',
-					'green-dark': 'hsl(var(--eco-green-dark))',
-					brown: 'hsl(var(--eco-brown))',
-					'brown-light': 'hsl(var(--eco-brown-light))',
-					orange: 'hsl(var(--eco-orange))',
-					blue: 'hsl(var(--eco-blue))',
-					light: 'hsl(var(--eco-light))',
-					cream: 'hsl(var(--eco-cream))',
-					dark: 'hsl(var(--eco-dark))'
+					primary: 'hsl(var(--eco-primary))',
+					'primary-light': 'hsl(var(--eco-primary-light))',
+					'primary-dark': 'hsl(var(--eco-primary-dark))',
+					secondary: 'hsl(var(--eco-secondary))',
+					gray: 'hsl(var(--eco-gray))',
+					'gray-light': 'hsl(var(--eco-gray-light))',
+					accent: 'hsl(var(--eco-accent))',
+					surface: 'hsl(var(--eco-surface))',
+					neutral: 'hsl(var(--eco-neutral))'
 				}
 			},
 			backgroundImage: {
-				'gradient-eco': 'var(--gradient-eco)',
-				'gradient-earth': 'var(--gradient-earth)'
+				'gradient-primary': 'var(--gradient-primary)',
+				'gradient-hero': 'var(--gradient-hero)',
+				'gradient-surface': 'var(--gradient-surface)',
+				'gradient-card': 'var(--gradient-card)',
+				'gradient-tech': 'var(--gradient-tech)'
 			},
 			boxShadow: {
-				'eco': 'var(--shadow-eco)',
-				'soft': 'var(--shadow-soft)'
+				'primary': 'var(--shadow-primary)',
+				'card': 'var(--shadow-card)',
+				'floating': 'var(--shadow-floating)',
+				'subtle': 'var(--shadow-subtle)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
