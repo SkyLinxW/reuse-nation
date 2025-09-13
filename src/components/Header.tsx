@@ -92,7 +92,7 @@ export const Header = ({
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => onNavigate('home')}>
             <img src={ecoLogo} alt="EcoMarket" className="w-10 h-10" />
             <div>
-              <h1 className="text-xl font-bold text-eco-green">EcoChain</h1>
+              <h1 className="text-xl font-bold text-primary">EcoChain</h1>
               <p className="text-xs text-muted-foreground">Resíduos Sustentáveis</p>
             </div>
           </div>
@@ -101,14 +101,14 @@ export const Header = ({
           <form onSubmit={handleSearch} className="flex-1 max-w-2xl mx-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input type="text" placeholder="Buscar resíduos, materiais..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10 bg-secondary/50 border-border focus:ring-eco-green" />
+              <Input type="text" placeholder="Buscar resíduos, materiais..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10 bg-secondary/50 border-border focus:ring-primary" />
             </div>
           </form>
 
           {/* Navigation */}
           <div className="flex items-center gap-2">
             {user ? <>
-                <Button variant="ghost" size="sm" onClick={() => onNavigate('cart')} className={`relative ${currentPage === 'cart' ? 'bg-eco-green-light' : ''}`}>
+                <Button variant="ghost" size="sm" onClick={() => onNavigate('cart')} className={`relative ${currentPage === 'cart' ? 'bg-accent text-accent-foreground' : ''}`}>
                   <ShoppingCart className="w-4 h-4" />
                   {cartCount > 0 && <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs">
                       {cartCount}
@@ -116,7 +116,7 @@ export const Header = ({
                   <span className="hidden md:inline ml-2">Carrinho</span>
                 </Button>
 
-                <Button variant="ghost" size="sm" onClick={() => onNavigate('notifications')} className={`relative ${currentPage === 'notifications' ? 'bg-eco-green-light' : ''}`}>
+                <Button variant="ghost" size="sm" onClick={() => onNavigate('notifications')} className={`relative ${currentPage === 'notifications' ? 'bg-accent text-accent-foreground' : ''}`}>
                   <Bell className="w-4 h-4" />
                   {notificationCount > 0 && <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs">
                       {notificationCount}
@@ -124,12 +124,12 @@ export const Header = ({
                   <span className="hidden md:inline ml-2">Notificações</span>
                 </Button>
 
-                <Button variant="ghost" size="sm" onClick={() => onNavigate('favorites')} className={currentPage === 'favorites' ? 'bg-eco-green-light' : ''}>
+                <Button variant="ghost" size="sm" onClick={() => onNavigate('favorites')} className={currentPage === 'favorites' ? 'bg-accent text-accent-foreground' : ''}>
                   <Heart className="w-4 h-4" />
                   <span className="hidden md:inline ml-2">Favoritos</span>
                 </Button>
 
-                <Button variant="ghost" size="sm" onClick={() => onNavigate('messages')} className={`relative ${currentPage === 'messages' ? 'bg-eco-green-light' : ''}`}>
+                <Button variant="ghost" size="sm" onClick={() => onNavigate('messages')} className={`relative ${currentPage === 'messages' ? 'bg-accent text-accent-foreground' : ''}`}>
                   <MessageCircle className="w-4 h-4" />
                   {unreadMessagesCount > 0 && <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs">
                       {unreadMessagesCount}
@@ -137,7 +137,7 @@ export const Header = ({
                   <span className="hidden md:inline ml-2">Mensagens</span>
                 </Button>
 
-                <Button onClick={() => onNavigate('create-listing')} className="bg-gradient-eco hover:opacity-90 shadow-eco">
+                <Button onClick={() => onNavigate('create-listing')} variant="premium" className="shadow-elegant">
                   <Plus className="w-4 h-4" />
                   <span className="hidden md:inline ml-2">Anunciar</span>
                 </Button>
@@ -147,7 +147,7 @@ export const Header = ({
                     <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                       <Avatar className="h-10 w-10">
                         <AvatarImage src="" alt={user?.user_metadata?.name || user?.email || ''} />
-                        <AvatarFallback className="bg-eco-green text-white">
+                        <AvatarFallback className="bg-primary text-primary-foreground">
                           {(user?.user_metadata?.name || user?.email || 'U').split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                         </AvatarFallback>
                       </Avatar>
@@ -185,7 +185,7 @@ export const Header = ({
                 <Button variant="ghost" onClick={() => onNavigate('auth')}>
                   Entrar
                 </Button>
-                <Button onClick={() => onNavigate('auth')} className="bg-gradient-eco hover:opacity-90">
+                <Button onClick={() => onNavigate('auth')} variant="premium">
                   Cadastrar
                 </Button>
               </>}
