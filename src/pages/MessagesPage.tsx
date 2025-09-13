@@ -183,6 +183,11 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
                 // We're viewing this chat, mark message as read immediately
                 try {
                   await markMessagesAsRead(newMessage.conversation_id, user.id);
+                  setChatUnreadCounts(prev => ({
+                    ...prev,
+                    [newMessage.conversation_id]: 0
+                  }));
+                  console.log('✅ Real-time message marked as read immediately');
                 } catch (error) {
                   console.error('Error marking real-time message as read:', error);
                 }
@@ -383,8 +388,23 @@ export const MessagesPage = ({ onNavigate, chatId, sellerId }: MessagesPageProps
   };
 
   const handleChatSelect = async (chat: any) => {
+    console.log('🔄 Selecting chat:', chat.id);
     setSelectedChat(chat);
     await loadChatData(chat);
+    
+    // Force mark messages as read after selecting
+    if (user) {
+      try {
+        await markMessagesAsRead(chat.id, user.id);
+        setChatUnreadCounts(prev => ({
+          ...prev,
+          [chat.id]: 0
+        }));
+        console.log('✅ Messages marked as read after chat selection');
+      } catch (error) {
+        console.error('❌ Error marking messages as read on chat select:', error);
+      }
+    }
   };
 
   const handleSendMessage = async () => {

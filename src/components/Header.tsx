@@ -56,13 +56,16 @@ export const Header = ({
             table: 'messages',
           },
           async () => {
-            // Refresh unread messages count when any message changes
-            try {
-              const unreadMsgCount = await getUnreadMessagesCount(user.id);
-              setUnreadMessagesCount(unreadMsgCount);
-            } catch (error) {
-              console.error('Error updating unread messages count:', error);
-            }
+            // Add delay to ensure database consistency
+            setTimeout(async () => {
+              try {
+                const unreadMsgCount = await getUnreadMessagesCount(user.id);
+                setUnreadMessagesCount(unreadMsgCount);
+                console.log('🔄 Header unread count updated:', unreadMsgCount);
+              } catch (error) {
+                console.error('Error updating unread messages count:', error);
+              }
+            }, 100);
           }
         )
         .subscribe();
