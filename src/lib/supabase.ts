@@ -296,6 +296,18 @@ export const updateTransactionStatus = async (id: string, status: string) => {
   return data;
 };
 
+export const updateTransactionAddress = async (id: string, address: string) => {
+  const { data, error } = await supabase
+    .from('transactions')
+    .update({ delivery_address: address })
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+};
+
 // Notifications
 export const getNotifications = async (userId: string) => {
   const { data, error } = await supabase

@@ -8,6 +8,7 @@ import { Package, Truck, CheckCircle, Clock, MapPin, Phone, MessageCircle, Eye, 
 import { Transaction, User, WasteItem } from '@/types';
 import { calculateDeliveryDetails, updateDeliveryStatus } from '@/utils/deliveryCalculations';
 import { geocodeAddress, SAO_PAULO_COORDINATES, Coordinates } from '@/services/addressService';
+import { updateTransactionAddress } from '@/lib/supabase';
 import { AddressSelector } from './AddressSelector';
 
 interface EnhancedTrackingCardProps {
@@ -179,8 +180,8 @@ export const EnhancedTrackingCard = ({
       
       setShowAddressSelector(false);
       
-      // You would also want to update the transaction in the database here
-      // await updateTransactionAddress(transaction.id, address);
+      // Update the transaction in the database
+      await updateTransactionAddress(transaction.id, address);
       
     } catch (error) {
       console.error('Error updating address:', error);
