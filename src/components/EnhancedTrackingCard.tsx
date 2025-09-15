@@ -42,22 +42,42 @@ export const EnhancedTrackingCard = ({
       try {
         let destination = null;
         
-        // Try to geocode the delivery address if it exists
-        if (transaction.deliveryAddress) {
+        // Priority 1: deliveryAddress from transaction
+        if (transaction.deliveryAddress && transaction.deliveryAddress.trim()) {
           console.log('Geocoding delivery address:', transaction.deliveryAddress);
           destination = await geocodeAddress(transaction.deliveryAddress);
+          if (destination) {
+            console.log('Successfully geocoded delivery address:', { address: transaction.deliveryAddress, coords: destination });
+          }
         }
         
-        // If no valid coordinates, use fallback
+        // Priority 2: product location from props
+        if (!destination && product?.location) {
+          // Check if coordinates already exist
+          if (product.location.coordinates) {
+            console.log('Using existing product coordinates:', product.location.coordinates);
+            destination = product.location.coordinates;
+          } else {
+            // Geocode city and state
+            const locationString = `${product.location.city}, ${product.location.state}`;
+            console.log('Geocoding product location:', locationString);
+            destination = await geocodeAddress(locationString);
+            if (destination) {
+              console.log('Successfully geocoded product location:', { location: locationString, coords: destination });
+            }
+          }
+        }
+        
+        // Priority 4: Use a different city as default instead of same origin
         if (!destination) {
-          console.log('Using fallback coordinates for Rio de Janeiro');
-          destination = { lat: -22.9068, lng: -43.1729 }; // Rio de Janeiro default
+          console.log('Using default destination coordinates (Rio de Janeiro)');
+          destination = { lat: -22.9068, lng: -43.1729 }; // Rio de Janeiro - different from São Paulo origin
         }
         
         console.log('Final destination coordinates:', destination);
         setDestinationCoords(destination);
         
-        // Calculate delivery details using new real calculation
+        // Calculate delivery details using real calculation
         const details = await calculateDeliveryDetails(
           destination,
           transaction.deliveryMethod as 'retirada_local' | 'entrega' | 'transportadora'

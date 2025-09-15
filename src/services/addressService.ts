@@ -118,32 +118,36 @@ export const geocodeAddress = async (address: string): Promise<Coordinates | nul
   }
 };
 
-// Calculate real route using OpenRouteService
+// Calculate real route using OSRM (Open Source Routing Machine)
 export const calculateRealRoute = async (origin: Coordinates, destination: Coordinates): Promise<RouteInfo | null> => {
   try {
     console.log('Calculating real route:', { origin, destination });
     
-    // Using OpenRouteService free tier
+    // Using OSRM free public API
     const response = await fetch(
-      `https://api.openrouteservice.org/v2/directions/driving-car?start=${origin.lng},${origin.lat}&end=${destination.lng},${destination.lat}`,
+      `https://router.project-osrm.org/route/v1/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson`,
       {
         headers: {
-          'Accept': 'application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8'
+          'User-Agent': 'EcoMarketplace/1.0'
         }
       }
     );
     
     if (!response.ok) {
-      // Fallback to simple distance calculation if API fails
-      console.warn('OpenRouteService failed, using fallback calculation');
+      console.warn('OSRM API failed, using fallback calculation');
       return calculateFallbackRoute(origin, destination);
     }
     
     const data = await response.json();
-    const route = data.features[0];
     
-    const distance = route.properties.segments[0].distance / 1000; // Convert to km
-    const duration = route.properties.segments[0].duration / 60; // Convert to minutes
+    if (!data.routes || data.routes.length === 0) {
+      console.warn('No routes found, using fallback calculation');
+      return calculateFallbackRoute(origin, destination);
+    }
+    
+    const route = data.routes[0];
+    const distance = route.distance / 1000; // Convert to km
+    const duration = route.duration / 60; // Convert to minutes
     const coordinates = route.geometry.coordinates.map(([lng, lat]: [number, number]) => ({ lat, lng }));
     
     const result = {
