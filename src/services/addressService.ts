@@ -110,7 +110,7 @@ export const geocodeAddress = async (address: string): Promise<Coordinates | nul
       lng: parseFloat(data[0].lon)
     };
     
-    console.log('Geocoded coordinates:', result);
+    console.log('Geocoded coordinates:', { address, result });
     return result;
   } catch (error) {
     console.error('Error geocoding address:', error);
@@ -121,7 +121,7 @@ export const geocodeAddress = async (address: string): Promise<Coordinates | nul
 // Calculate real route using OSRM (Open Source Routing Machine)
 export const calculateRealRoute = async (origin: Coordinates, destination: Coordinates): Promise<RouteInfo | null> => {
   try {
-    console.log('Calculating real route:', { origin, destination });
+    console.log('Calculating real route using OSRM:', { origin, destination });
     
     // Using OSRM free public API
     const response = await fetch(
@@ -156,10 +156,10 @@ export const calculateRealRoute = async (origin: Coordinates, destination: Coord
       coordinates
     };
     
-    console.log('Real route calculated:', result);
+    console.log('OSRM route calculated successfully:', result);
     return result;
   } catch (error) {
-    console.error('Error calculating real route:', error);
+    console.error('Error calculating real route with OSRM:', error);
     return calculateFallbackRoute(origin, destination);
   }
 };
@@ -187,11 +187,14 @@ const calculateFallbackRoute = (origin: Coordinates, destination: Coordinates): 
   // Generate simple linear route
   const coordinates = generateLinearRoute(origin, destination);
   
-  return {
+  const result = {
     distance,
     duration,
     coordinates
   };
+  
+  console.log('Fallback route calculated:', result);
+  return result;
 };
 
 const generateLinearRoute = (start: Coordinates, end: Coordinates, points = 20): Coordinates[] => {
@@ -211,7 +214,7 @@ const toRadians = (degrees: number): number => {
   return degrees * (Math.PI / 180);
 };
 
-// São Paulo default coordinates
+// São Paulo default coordinates (origin)
 export const SAO_PAULO_COORDINATES: Coordinates = {
   lat: -23.5505,
   lng: -46.6333

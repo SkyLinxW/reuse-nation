@@ -7,7 +7,7 @@ import { DeliveryMap } from './DeliveryMap';
 import { Package, Truck, CheckCircle, Clock, MapPin, Phone, MessageCircle, Eye, EyeOff, Settings } from 'lucide-react';
 import { Transaction, User, WasteItem } from '@/types';
 import { calculateDeliveryDetails, updateDeliveryStatus } from '@/utils/deliveryCalculations';
-import { geocodeAddress, SAO_PAULO_COORDINATES } from '@/services/addressService';
+import { geocodeAddress, SAO_PAULO_COORDINATES, Coordinates } from '@/services/addressService';
 import { AddressSelector } from './AddressSelector';
 
 interface EnhancedTrackingCardProps {
@@ -68,10 +68,10 @@ export const EnhancedTrackingCard = ({
           }
         }
         
-        // Priority 4: Use a different city as default instead of same origin
+        // Priority 3: Use default coordinates as last resort
         if (!destination) {
-          console.log('Using default destination coordinates (Rio de Janeiro)');
-          destination = { lat: -22.9068, lng: -43.1729 }; // Rio de Janeiro - different from São Paulo origin
+          console.log('Using default destination coordinates (Brasília)');
+          destination = { lat: -15.8267, lng: -47.9218 }; // Brasília - central Brazil location
         }
         
         console.log('Final destination coordinates:', destination);
@@ -118,9 +118,16 @@ export const EnhancedTrackingCard = ({
     return transaction.status === 'pendente' || transaction.status === 'confirmado';
   };
 
-  const handleAddressUpdate = async (address: string, coordinates: any) => {
+  const handleAddressUpdate = async (address: string, coordinates: Coordinates) => {
     try {
       console.log('Updating delivery address:', { address, coordinates });
+      
+      // Ensure we have valid coordinates
+      if (!coordinates || typeof coordinates.lat !== 'number' || typeof coordinates.lng !== 'number') {
+        console.error('Invalid coordinates provided:', coordinates);
+        return;
+      }
+      
       setDestinationCoords(coordinates);
       
       // Recalculate delivery details with new address
