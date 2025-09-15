@@ -1,13 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { Coordinates, generateRoute } from '@/utils/distanceCalculator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Truck, MapPin, Package } from 'lucide-react';
 
-// For demo purposes - in production, this should come from environment variables
-const MAPBOX_TOKEN = 'pk.eyJ1IjoibG92YWJsZS1kZW1vIiwiYSI6ImNsdjN4d2RmMDBhd2sycnBiZ3duZ3VmNzIifQ.ZnOGriPPQ9wLljTxMUSnNw';
+// Fix default markers
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 interface DeliveryMapProps {
   origin: Coordinates;
@@ -29,88 +34,89 @@ export const DeliveryMap = ({
   distance 
 }: DeliveryMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
+  const map = useRef<L.Map | null>(null);
   const [currentPosition, setCurrentPosition] = useState<number>(0);
   const [route, setRoute] = useState<Coordinates[]>([]);
+  const markersRef = useRef<L.Marker[]>([]);
+  const routeLayerRef = useRef<L.Polyline | null>(null);
+  const productMarkerRef = useRef<L.Marker | null>(null);
 
   useEffect(() => {
     if (!mapContainer.current) return;
 
-    mapboxgl.accessToken = MAPBOX_TOKEN;
-    
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/light-v11',
-      center: [origin.lng, origin.lat],
-      zoom: 9,
+    // Initialize Leaflet map
+    map.current = L.map(mapContainer.current).setView([origin.lat, origin.lng], 9);
+
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map.current);
+
+    // Create custom icons
+    const originIcon = L.divIcon({
+      html: '<div style="background-color: #22c55e; width: 24px; height: 24px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>',
+      className: 'custom-marker',
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
+    });
+
+    const destinationIcon = L.divIcon({
+      html: '<div style="background-color: #3b82f6; width: 24px; height: 24px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>',
+      className: 'custom-marker',
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
     });
 
     // Add origin marker
-    new mapboxgl.Marker({ color: '#22c55e' })
-      .setLngLat([origin.lng, origin.lat])
-      .setPopup(new mapboxgl.Popup().setHTML(`
+    const originMarker = L.marker([origin.lat, origin.lng], { icon: originIcon })
+      .bindPopup(`
         <div class="p-2">
           <strong>Origem</strong><br/>
           Local do vendedor
         </div>
-      `))
+      `)
       .addTo(map.current);
 
     // Add destination marker
-    new mapboxgl.Marker({ color: '#3b82f6' })
-      .setLngLat([destination.lng, destination.lat])
-      .setPopup(new mapboxgl.Popup().setHTML(`
+    const destinationMarker = L.marker([destination.lat, destination.lng], { icon: destinationIcon })
+      .bindPopup(`
         <div class="p-2">
           <strong>Destino</strong><br/>
           Local de entrega
         </div>
-      `))
+      `)
       .addTo(map.current);
+
+    markersRef.current = [originMarker, destinationMarker];
 
     // Generate route for animation
     const routePoints = generateRoute(origin, destination, 100);
     setRoute(routePoints);
 
+    // Add route polyline
+    if (routePoints.length > 0) {
+      const routeCoords: [number, number][] = routePoints.map(point => [point.lat, point.lng]);
+      const routeLine = L.polyline(routeCoords, {
+        color: '#22c55e',
+        weight: 4,
+        opacity: 0.6
+      }).addTo(map.current);
+
+      routeLayerRef.current = routeLine;
+    }
+
     // Fit map to show both points
-    const bounds = new mapboxgl.LngLatBounds();
-    bounds.extend([origin.lng, origin.lat]);
-    bounds.extend([destination.lng, destination.lat]);
-    map.current.fitBounds(bounds, { padding: 50 });
-
-    // Add route line
-    map.current.on('load', () => {
-      if (!map.current) return;
-
-      map.current.addSource('route', {
-        'type': 'geojson',
-        'data': {
-          'type': 'Feature',
-          'properties': {},
-          'geometry': {
-            'type': 'LineString',
-            'coordinates': routePoints.map(point => [point.lng, point.lat])
-          }
-        }
-      });
-
-      map.current.addLayer({
-        'id': 'route',
-        'type': 'line',
-        'source': 'route',
-        'layout': {
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        'paint': {
-          'line-color': '#22c55e',
-          'line-width': 4,
-          'line-opacity': 0.6
-        }
-      });
-    });
+    const group = new L.FeatureGroup([originMarker, destinationMarker]);
+    map.current.fitBounds(group.getBounds(), { padding: [20, 20] });
 
     return () => {
-      map.current?.remove();
+      if (map.current) {
+        markersRef.current.forEach(marker => marker.remove());
+        if (routeLayerRef.current) routeLayerRef.current.remove();
+        if (productMarkerRef.current) productMarkerRef.current.remove();
+        map.current.remove();
+        map.current = null;
+      }
     };
   }, [origin, destination]);
 
@@ -164,32 +170,53 @@ export const DeliveryMap = ({
   useEffect(() => {
     if (!map.current || route.length === 0 || deliveryMethod === 'retirada_local') return;
 
-    const existingMarker = document.querySelector('.product-marker');
-    if (existingMarker) {
-      existingMarker.remove();
+    // Remove previous product marker
+    if (productMarkerRef.current) {
+      productMarkerRef.current.remove();
     }
 
     if (currentPosition < route.length) {
       const currentPoint = route[currentPosition];
       
-      const el = document.createElement('div');
-      el.className = 'product-marker';
-      el.innerHTML = `
-        <div class="w-8 h-8 bg-eco-green rounded-full border-2 border-white shadow-lg flex items-center justify-center animate-pulse">
-          <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
-          </svg>
-        </div>
-      `;
+      // Create product marker icon with animation
+      const productIcon = L.divIcon({
+        html: `
+          <div style="
+            width: 32px;
+            height: 32px;
+            background: #22c55e;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: bounce 2s infinite;
+          ">
+            <svg style="width: 16px; height: 16px; color: white;" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+            </svg>
+          </div>
+          <style>
+            @keyframes bounce {
+              0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+              40% { transform: translateY(-10px); }
+              60% { transform: translateY(-5px); }
+            }
+          </style>
+        `,
+        className: 'product-marker',
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+      });
 
-      new mapboxgl.Marker(el)
-        .setLngLat([currentPoint.lng, currentPoint.lat])
-        .setPopup(new mapboxgl.Popup().setHTML(`
+      productMarkerRef.current = L.marker([currentPoint.lat, currentPoint.lng], { icon: productIcon })
+        .bindPopup(`
           <div class="p-2">
             <strong>${productTitle}</strong><br/>
             ${getStatusMessage()}
           </div>
-        `))
+        `)
         .addTo(map.current);
     }
   }, [currentPosition, route, productTitle]);
