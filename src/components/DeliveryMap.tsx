@@ -42,7 +42,16 @@ export const DeliveryMap = ({
   const productMarkerRef = useRef<L.Marker | null>(null);
 
   useEffect(() => {
-    if (!mapContainer.current) return;
+    if (!mapContainer.current || !origin || !destination) return;
+
+    // Clean up existing map
+    if (map.current) {
+      markersRef.current.forEach(marker => marker.remove());
+      if (routeLayerRef.current) routeLayerRef.current.remove();
+      if (productMarkerRef.current) productMarkerRef.current.remove();
+      map.current.remove();
+      map.current = null;
+    }
 
     // Initialize Leaflet map
     map.current = L.map(mapContainer.current).setView([origin.lat, origin.lng], 9);
@@ -105,9 +114,17 @@ export const DeliveryMap = ({
       routeLayerRef.current = routeLine;
     }
 
-    // Fit map to show both points
-    const group = new L.FeatureGroup([originMarker, destinationMarker]);
-    map.current.fitBounds(group.getBounds(), { padding: [20, 20] });
+    // Fit map to show both points with padding
+    try {
+      const group = new L.FeatureGroup([originMarker, destinationMarker]);
+      map.current.fitBounds(group.getBounds(), { padding: [20, 20] });
+    } catch (error) {
+      console.error('Error fitting map bounds:', error);
+      // Fallback to center between points
+      const centerLat = (origin.lat + destination.lat) / 2;
+      const centerLng = (origin.lng + destination.lng) / 2;
+      map.current.setView([centerLat, centerLng], 8);
+    }
 
     return () => {
       if (map.current) {
