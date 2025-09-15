@@ -85,6 +85,12 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Create transactions for each item
+      console.log('Creating transaction with delivery data:', {
+        selectedAddress,
+        deliveryData,
+        finalAddress: selectedAddress || deliveryData.fullAddress || deliveryData.address
+      });
+      
       for (const cartItem of cartItems) {
         await createTransaction({
           buyer_id: user.id,
@@ -94,7 +100,7 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
           total_price: (cartItem.waste_items?.price || 0) * cartItem.quantity,
           payment_method: paymentMethod,
           delivery_method: deliveryMethod,
-          delivery_address: selectedAddress || deliveryData.fullAddress,
+          delivery_address: selectedAddress || deliveryData.fullAddress || deliveryData.address,
           status: 'pendente'
         });
       }

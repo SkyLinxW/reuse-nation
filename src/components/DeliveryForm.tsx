@@ -56,6 +56,7 @@ export const DeliveryForm = ({
   }, [deliveryMethod, deliveryData.coordinates]);
 
   const handleAddressSelected = (address: string, coordinates: Coordinates) => {
+    console.log('DeliveryForm - Address selected:', { address, coordinates });
     const updated = { 
       ...deliveryData, 
       address,
