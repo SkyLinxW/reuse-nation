@@ -27,6 +27,16 @@ export const calculateDeliveryDetails = (
   destination: Coordinates,
   deliveryMethod: 'retirada_local' | 'entrega' | 'transportadora'
 ): DeliveryCalculation => {
+  // Ensure valid coordinates before calculating distance
+  if (!origin.lat || !origin.lng || !destination.lat || !destination.lng) {
+    return {
+      distance: 0,
+      estimatedTime: 'Não disponível',
+      cost: 0,
+      steps: []
+    };
+  }
+
   const distance = calculateDistance(origin, destination);
   
   let baseCost = 0;
@@ -154,9 +164,11 @@ export const calculateDeliveryDetails = (
 
   const estimatedTime = deliveryMethod === 'retirada_local' 
     ? 'Disponível imediatamente'
-    : baseTimeHours < 24 
-      ? `${Math.ceil(baseTimeHours)} horas`
-      : `${Math.ceil(baseTimeHours / 24)} dias`;
+    : baseTimeHours < 1
+      ? '1 hora'
+      : baseTimeHours < 24 
+        ? `${Math.ceil(baseTimeHours)} horas`
+        : `${Math.ceil(baseTimeHours / 24)} dias`;
 
   return {
     distance: Math.round(distance * 100) / 100,

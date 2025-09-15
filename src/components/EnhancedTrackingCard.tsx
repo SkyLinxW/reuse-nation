@@ -29,18 +29,37 @@ export const EnhancedTrackingCard = ({
 
   useEffect(() => {
     // Calculate delivery details
-    const origin = getCoordinatesFromAddress(otherUser.address?.city + ', ' + otherUser.address?.state || 'São Paulo, SP');
-    const destination = getCoordinatesFromAddress('Rio de Janeiro, RJ'); // Using default destination for now
+    const originAddress = otherUser.address 
+      ? `${otherUser.address.city}, ${otherUser.address.state}` 
+      : 'São Paulo, SP';
     
-    const details = calculateDeliveryDetails(origin, destination, transaction.deliveryMethod);
-    const updatedSteps = updateDeliveryStatus(details.steps, transaction.status);
+    // Get user's current location or use default for destination
+    const destinationAddress = 'Rio de Janeiro, RJ'; // In production, this would be the buyer's address
     
-    setDeliveryDetails({
-      ...details,
-      steps: updatedSteps,
-      origin,
-      destination
-    });
+    const origin = getCoordinatesFromAddress(originAddress);
+    const destination = getCoordinatesFromAddress(destinationAddress);
+    
+    if (origin && destination) {
+      const details = calculateDeliveryDetails(origin, destination, transaction.deliveryMethod);
+      const updatedSteps = updateDeliveryStatus(details.steps, transaction.status);
+      
+      setDeliveryDetails({
+        ...details,
+        steps: updatedSteps,
+        origin,
+        destination
+      });
+    } else {
+      // Fallback for invalid coordinates
+      setDeliveryDetails({
+        distance: 0,
+        estimatedTime: 'Não disponível',
+        cost: 0,
+        steps: [],
+        origin: { lat: 0, lng: 0 },
+        destination: { lat: 0, lng: 0 }
+      });
+    }
   }, [transaction, otherUser]);
 
   const formatPrice = (price: number) => {

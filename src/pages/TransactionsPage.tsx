@@ -219,10 +219,18 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
                     const details = transactionDetails[transaction.id];
                     if (!details?.otherUser || !details?.product) return null;
 
+                    // Convert database transaction to expected format
+                    const formattedTransaction = {
+                      ...transaction,
+                      deliveryMethod: transaction.delivery_method || 'retirada_local',
+                      createdAt: transaction.created_at,
+                      totalPrice: transaction.total_price
+                    };
+
                     return (
                       <EnhancedTrackingCard
                         key={transaction.id}
-                        transaction={transaction}
+                        transaction={formattedTransaction}
                         otherUser={details.otherUser}
                         product={details.product}
                         onContactSeller={handleContactSeller}
@@ -237,10 +245,18 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
                     const details = transactionDetails[transaction.id];
                     if (!details?.otherUser || !details?.product) return null;
 
+                    // Convert database transaction to expected format
+                    const formattedTransaction = {
+                      ...transaction,
+                      deliveryMethod: transaction.delivery_method || 'retirada_local',
+                      createdAt: transaction.created_at,
+                      totalPrice: transaction.total_price
+                    };
+
                     return (
                       <EnhancedTrackingCard
                         key={transaction.id}
-                        transaction={transaction}
+                        transaction={formattedTransaction}
                         otherUser={details.otherUser}
                         product={details.product}
                         onContactSeller={handleContactSeller}
