@@ -26,6 +26,7 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'boleto' | 'cartao' | 'dinheiro'>('pix');
   const [deliveryMethod, setDeliveryMethod] = useState<'retirada_local' | 'entrega' | 'transportadora'>('retirada_local');
   const [deliveryData, setDeliveryData] = useState<any>({});
+  const [selectedAddress, setSelectedAddress] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState<'cart' | 'delivery' | 'payment' | 'summary'>('cart');
   const { user } = useAuth();
@@ -93,7 +94,7 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
           total_price: (cartItem.waste_items?.price || 0) * cartItem.quantity,
           payment_method: paymentMethod,
           delivery_method: deliveryMethod,
-          delivery_address: deliveryMethod === 'entrega' ? deliveryData.address : null,
+          delivery_address: selectedAddress || deliveryData.fullAddress,
           status: 'pendente'
         });
       }
@@ -293,6 +294,7 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
                 deliveryMethod={deliveryMethod}
                 onDeliveryMethodChange={setDeliveryMethod}
                 onDeliveryDataChange={setDeliveryData}
+                onAddressSelected={(address, coordinates) => setSelectedAddress(address)}
                 sellerAddress={sellerAddress}
               />
             </div>

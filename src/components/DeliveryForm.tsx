@@ -9,12 +9,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { MapPin, Truck, Building2, Calendar, Clock, Calculator } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { calculateDeliveryDetails } from '@/utils/deliveryCalculations';
-import { getCoordinatesFromAddress } from '@/utils/distanceCalculator';
+import { AddressSelector } from './AddressSelector';
+import { Coordinates } from '@/services/addressService';
 
 interface DeliveryFormProps {
   deliveryMethod: 'retirada_local' | 'entrega' | 'transportadora';
   onDeliveryMethodChange: (method: 'retirada_local' | 'entrega' | 'transportadora') => void;
   onDeliveryDataChange: (data: any) => void;
+  onAddressSelected?: (address: string, coordinates: Coordinates) => void;
   sellerAddress: string;
 }
 
@@ -22,10 +24,13 @@ export const DeliveryForm = ({
   deliveryMethod, 
   onDeliveryMethodChange, 
   onDeliveryDataChange,
+  onAddressSelected,
   sellerAddress 
 }: DeliveryFormProps) => {
   const [deliveryData, setDeliveryData] = useState({
     address: '',
+    fullAddress: '',
+    coordinates: null as Coordinates | null,
     complement: '',
     preferredDate: '',
     preferredTime: '',
@@ -37,11 +42,9 @@ export const DeliveryForm = ({
 
   useEffect(() => {
     const updateCalculation = async () => {
-      if (deliveryData.address || sellerAddress) {
-        const destination = getCoordinatesFromAddress(deliveryData.address || 'Rio de Janeiro, RJ');
-        
+      if (deliveryData.coordinates) {
         try {
-          const calculation = await calculateDeliveryDetails(destination, deliveryMethod);
+          const calculation = await calculateDeliveryDetails(deliveryData.coordinates, deliveryMethod);
           setDeliveryCalculation(calculation);
         } catch (error) {
           console.error('Error calculating delivery:', error);
@@ -50,7 +53,22 @@ export const DeliveryForm = ({
     };
     
     updateCalculation();
-  }, [deliveryMethod, deliveryData.address, sellerAddress]);
+  }, [deliveryMethod, deliveryData.coordinates]);
+
+  const handleAddressSelected = (address: string, coordinates: Coordinates) => {
+    const updated = { 
+      ...deliveryData, 
+      address,
+      fullAddress: address,
+      coordinates 
+    };
+    setDeliveryData(updated);
+    onDeliveryDataChange(updated);
+    
+    if (onAddressSelected) {
+      onAddressSelected(address, coordinates);
+    }
+  };
 
   const handleDataChange = (newData: any) => {
     const updated = { ...deliveryData, ...newData };
@@ -204,58 +222,56 @@ export const DeliveryForm = ({
                 Entrega em até 24 horas na região metropolitana.
               </p>
               
-              <div className="space-y-3">
-                <div>
-                  <Label htmlFor="deliveryAddress">Endereço de Entrega</Label>
-                  <Input
-                    id="deliveryAddress"
-                    placeholder="Rua, número, bairro"
-                    value={deliveryData.address}
-                    onChange={(e) => handleDataChange({ address: e.target.value })}
-                  />
+                <div className="space-y-4">
+                  <div>
+                    <Label>Endereço de Entrega</Label>
+                    <AddressSelector 
+                      onAddressSelected={handleAddressSelected}
+                      defaultAddress={deliveryData.fullAddress}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="complement">Complemento</Label>
+                    <Input
+                      id="complement"
+                      placeholder="Apartamento, casa, referência..."
+                      value={deliveryData.complement}
+                      onChange={(e) => handleDataChange({ complement: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="deliveryDate">Data Preferida</Label>
+                    <Input
+                      id="deliveryDate"
+                      type="date"
+                      value={deliveryData.preferredDate}
+                      onChange={(e) => handleDataChange({ preferredDate: e.target.value })}
+                      min={new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="deliveryTime">Período Preferido</Label>
+                    <Select value={deliveryData.preferredTime} onValueChange={(value) => handleDataChange({ preferredTime: value })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o período" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="manha">Manhã (08:00 - 12:00)</SelectItem>
+                        <SelectItem value="tarde">Tarde (13:00 - 17:00)</SelectItem>
+                        <SelectItem value="noite">Noite (18:00 - 20:00)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="deliveryInstructions">Instruções de Entrega</Label>
+                    <Textarea
+                      id="deliveryInstructions"
+                      placeholder="Informações para o entregador..."
+                      value={deliveryData.instructions}
+                      onChange={(e) => handleDataChange({ instructions: e.target.value })}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="complement">Complemento</Label>
-                  <Input
-                    id="complement"
-                    placeholder="Apartamento, casa, referência..."
-                    value={deliveryData.complement}
-                    onChange={(e) => handleDataChange({ complement: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="deliveryDate">Data Preferida</Label>
-                  <Input
-                    id="deliveryDate"
-                    type="date"
-                    value={deliveryData.preferredDate}
-                    onChange={(e) => handleDataChange({ preferredDate: e.target.value })}
-                    min={new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="deliveryTime">Período Preferido</Label>
-                  <Select value={deliveryData.preferredTime} onValueChange={(value) => handleDataChange({ preferredTime: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o período" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="manha">Manhã (08:00 - 12:00)</SelectItem>
-                      <SelectItem value="tarde">Tarde (13:00 - 17:00)</SelectItem>
-                      <SelectItem value="noite">Noite (18:00 - 20:00)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="deliveryInstructions">Instruções de Entrega</Label>
-                  <Textarea
-                    id="deliveryInstructions"
-                    placeholder="Informações para o entregador..."
-                    value={deliveryData.instructions}
-                    onChange={(e) => handleDataChange({ instructions: e.target.value })}
-                  />
-                </div>
-              </div>
               <Badge className="mt-3 bg-eco-blue text-white">
                 <Clock className="w-3 h-3 mr-1" />
                 Entrega em até 24h
@@ -289,24 +305,24 @@ export const DeliveryForm = ({
                   </Select>
                 </div>
                 
-                <div>
-                  <Label htmlFor="shippingAddress">Endereço de Entrega</Label>
-                  <Input
-                    id="shippingAddress"
-                    placeholder="Endereço completo com CEP"
-                    value={deliveryData.address}
-                    onChange={(e) => handleDataChange({ address: e.target.value })}
-                  />
-                </div>
+                <div className="space-y-4">
+                  <div>
+                    <Label>Endereço de Entrega</Label>
+                    <AddressSelector 
+                      onAddressSelected={handleAddressSelected}
+                      defaultAddress={deliveryData.fullAddress}
+                    />
+                  </div>
                 
-                <div>
-                  <Label htmlFor="shippingInstructions">Observações</Label>
-                  <Textarea
-                    id="shippingInstructions"
-                    placeholder="Informações importantes sobre o envio..."
-                    value={deliveryData.instructions}
-                    onChange={(e) => handleDataChange({ instructions: e.target.value })}
-                  />
+                  <div>
+                    <Label htmlFor="shippingInstructions">Observações</Label>
+                    <Textarea
+                      id="shippingInstructions"
+                      placeholder="Informações importantes sobre o envio..."
+                      value={deliveryData.instructions}
+                      onChange={(e) => handleDataChange({ instructions: e.target.value })}
+                    />
+                  </div>
                 </div>
               </div>
               

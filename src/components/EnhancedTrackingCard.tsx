@@ -91,6 +91,13 @@ export const EnhancedTrackingCard = ({
     calculateAndSetDeliveryDetails();
   }, [transaction, otherUser]);
 
+  // Function to check if address can be changed
+  const canChangeAddress = () => {
+    // Allow address changes only for pending and confirmed statuses
+    // Once it's in transport or delivered, address cannot be changed
+    return transaction.status === 'pendente' || transaction.status === 'confirmado';
+  };
+
   const handleAddressUpdate = async (address: string, coordinates: any) => {
     try {
       console.log('Updating delivery address:', { address, coordinates });
@@ -259,15 +266,17 @@ export const EnhancedTrackingCard = ({
           <div className="flex justify-between items-center">
             <h4 className="font-medium">Etapas da Entrega</h4>
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowAddressSelector(!showAddressSelector)}
-                className="flex items-center gap-2"
-              >
-                <Settings className="w-3 h-3" />
-                Endereço
-              </Button>
+              {canChangeAddress() && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAddressSelector(!showAddressSelector)}
+                  className="flex items-center gap-2"
+                >
+                  <Settings className="w-3 h-3" />
+                  Alterar Endereço
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -280,14 +289,14 @@ export const EnhancedTrackingCard = ({
             </div>
           </div>
           
-          {/* Address Selector */}
-          {showAddressSelector && (
+          {/* Address Selector - Only show if transaction status allows changes */}
+          {showAddressSelector && canChangeAddress() && (
             <AddressSelector
               onAddressSelected={handleAddressUpdate}
               defaultAddress={transaction.deliveryAddress || ''}
             />
           )}
-          
+
           <div className="space-y-3">
             {deliveryDetails.steps.map((step: any, index: number) => {
               const isCompleted = step.status === 'completed';
