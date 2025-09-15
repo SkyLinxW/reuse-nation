@@ -92,6 +92,16 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
       });
       
       for (const cartItem of cartItems) {
+        // Ensure delivery address is properly saved
+        const finalDeliveryAddress = selectedAddress || deliveryData.fullAddress || deliveryData.address || '';
+        
+        console.log('Creating transaction with delivery address:', {
+          selectedAddress,
+          deliveryDataFullAddress: deliveryData.fullAddress,
+          deliveryDataAddress: deliveryData.address,
+          finalDeliveryAddress
+        });
+
         await createTransaction({
           buyer_id: user.id,
           seller_id: cartItem.waste_items?.user_id,
@@ -100,7 +110,7 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
           total_price: (cartItem.waste_items?.price || 0) * cartItem.quantity,
           payment_method: paymentMethod,
           delivery_method: deliveryMethod,
-          delivery_address: selectedAddress || deliveryData.fullAddress || deliveryData.address,
+          delivery_address: finalDeliveryAddress,
           status: 'pendente'
         });
       }
@@ -300,7 +310,10 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
                 deliveryMethod={deliveryMethod}
                 onDeliveryMethodChange={setDeliveryMethod}
                 onDeliveryDataChange={setDeliveryData}
-                onAddressSelected={(address, coordinates) => setSelectedAddress(address)}
+                onAddressSelected={(address, coordinates) => {
+                  console.log('CartPage - Address selected callback:', { address, coordinates });
+                  setSelectedAddress(address);
+                }}
                 sellerAddress={sellerAddress}
               />
             </div>
