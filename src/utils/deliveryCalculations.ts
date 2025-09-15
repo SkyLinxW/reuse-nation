@@ -138,7 +138,7 @@ const getDefaultSteps = (deliveryMethod: 'retirada_local' | 'entrega' | 'transpo
           id: 'ready',
           title: 'Pronto para Retirada',
           description: 'Produto disponível no local do vendedor',
-          estimatedTime: 'Imediato',
+          estimatedTime: 'Após confirmação',
           status: 'pending',
           icon: 'check-circle'
         }
@@ -149,7 +149,7 @@ const getDefaultSteps = (deliveryMethod: 'retirada_local' | 'entrega' | 'transpo
         {
           id: 'preparation',
           title: 'Preparação do Produto',
-          description: 'Produto sendo preparado para envio',
+          description: 'Vendedor preparando seu produto para coleta',
           estimatedTime: '1-2 horas',
           status: 'pending',
           icon: 'package'
@@ -157,24 +157,24 @@ const getDefaultSteps = (deliveryMethod: 'retirada_local' | 'entrega' | 'transpo
         {
           id: 'pickup',
           title: 'Coleta Realizada',
-          description: 'Entregador coletou o produto',
-          estimatedTime: '2-4 horas',
+          description: 'Entregador coletou o produto do vendedor',
+          estimatedTime: 'Até 1.5h após confirmação',
           status: 'pending',
           icon: 'truck'
         },
         {
           id: 'in_transit',
           title: 'Em Transporte',
-          description: 'Produto a caminho do destino',
-          estimatedTime: 'Calculando...',
+          description: 'Produto sendo transportado para seu endereço',
+          estimatedTime: '30min - 2h após coleta',
           status: 'pending',
           icon: 'map-pin'
         },
         {
           id: 'delivered',
           title: 'Entregue',
-          description: 'Produto entregue no destino',
-          estimatedTime: 'Concluído',
+          description: 'Produto entregue em seu endereço',
+          estimatedTime: 'Até 3h após confirmação',
           status: 'pending',
           icon: 'check-circle'
         }
@@ -185,7 +185,7 @@ const getDefaultSteps = (deliveryMethod: 'retirada_local' | 'entrega' | 'transpo
         {
           id: 'preparation',
           title: 'Preparação para Envio',
-          description: 'Produto sendo embalado e etiquetado',
+          description: 'Vendedor preparando embalagem e etiqueta',
           estimatedTime: '4-8 horas',
           status: 'pending',
           icon: 'package'
@@ -194,39 +194,39 @@ const getDefaultSteps = (deliveryMethod: 'retirada_local' | 'entrega' | 'transpo
           id: 'collection',
           title: 'Coleta da Transportadora',
           description: 'Transportadora coletou o produto',
-          estimatedTime: '8-24 horas',
+          estimatedTime: 'Até 8h após confirmação',
           status: 'pending',
           icon: 'truck'
         },
         {
           id: 'sorting',
           title: 'Centro de Distribuição',
-          description: 'Produto em centro de triagem',
-          estimatedTime: '1-2 dias',
+          description: 'Produto processado no centro de triagem',
+          estimatedTime: '1-2 dias após coleta',
           status: 'pending',
           icon: 'building-2'
         },
         {
           id: 'in_transit',
           title: 'Em Transporte',
-          description: 'Produto a caminho do destino final',
-          estimatedTime: 'Calculando...',
+          description: 'Produto sendo transportado para sua região',
+          estimatedTime: 'Varia por distância',
           status: 'pending',
           icon: 'map-pin'
         },
         {
           id: 'out_for_delivery',
           title: 'Saiu para Entrega',
-          description: 'Produto saiu para entrega final',
-          estimatedTime: '4-8 horas',
+          description: 'Produto na unidade local para entrega final',
+          estimatedTime: 'Mesmo dia',
           status: 'pending',
           icon: 'truck'
         },
         {
           id: 'delivered',
           title: 'Entregue',
-          description: 'Produto entregue no destino',
-          estimatedTime: 'Concluído',
+          description: 'Produto entregue em seu endereço',
+          estimatedTime: 'Até 2 dias úteis',
           status: 'pending',
           icon: 'check-circle'
         }
@@ -244,8 +244,8 @@ export const updateDeliveryStatus = (
   const statusMap: Record<string, string[]> = {
     'pendente': [],
     'confirmado': ['preparation'],
-    'em_transporte': ['preparation', 'pickup', 'collection'],
-    'entregue': ['preparation', 'pickup', 'collection', 'sorting', 'in_transit', 'out_for_delivery', 'delivered']
+    'em_transporte': ['preparation', 'pickup', 'collection', 'sorting'],
+    'entregue': ['preparation', 'pickup', 'collection', 'sorting', 'in_transit', 'out_for_delivery', 'delivered', 'ready']
   };
 
   const completedSteps = statusMap[currentStatus] || [];
