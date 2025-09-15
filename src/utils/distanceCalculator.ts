@@ -6,6 +6,16 @@ export interface Coordinates {
 
 // Haversine formula to calculate distance between two coordinates
 export const calculateDistance = (coord1: Coordinates, coord2: Coordinates): number => {
+  console.log('calculateDistance called with:', { coord1, coord2 });
+  
+  // Validate coordinates
+  if (!coord1 || !coord2 || 
+      typeof coord1.lat !== 'number' || typeof coord1.lng !== 'number' ||
+      typeof coord2.lat !== 'number' || typeof coord2.lng !== 'number') {
+    console.error('Invalid coordinates provided:', { coord1, coord2 });
+    return 0;
+  }
+
   const R = 6371; // Earth's radius in kilometers
   const dLat = toRadians(coord2.lat - coord1.lat);
   const dLng = toRadians(coord2.lng - coord1.lng);
@@ -18,6 +28,7 @@ export const calculateDistance = (coord1: Coordinates, coord2: Coordinates): num
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const distance = R * c;
   
+  console.log('Calculated distance:', distance);
   return distance;
 };
 
@@ -54,6 +65,13 @@ export const cityCoordinates: Record<string, Coordinates> = {
 };
 
 export const getCoordinatesFromAddress = (address: string): Coordinates => {
+  console.log('getCoordinatesFromAddress called with:', address);
+  
+  if (!address || typeof address !== 'string') {
+    console.error('Invalid address provided:', address);
+    return { lat: -23.5505, lng: -46.6333 }; // Default São Paulo
+  }
+
   // Simple mock implementation - in real app, use geocoding API
   const city = Object.keys(cityCoordinates).find(city => 
     address.toLowerCase().includes(city.toLowerCase())
@@ -62,15 +80,19 @@ export const getCoordinatesFromAddress = (address: string): Coordinates => {
   if (city) {
     // Add some random offset to simulate exact address
     const baseCoord = cityCoordinates[city];
-    return {
+    const result = {
       lat: baseCoord.lat + (Math.random() - 0.5) * 0.1,
       lng: baseCoord.lng + (Math.random() - 0.5) * 0.1
     };
+    console.log('Found city coordinates:', { city, result });
+    return result;
   }
   
   // Default to São Paulo if no match
-  return {
+  const defaultCoords = {
     lat: -23.5505 + (Math.random() - 0.5) * 0.1,
     lng: -46.6333 + (Math.random() - 0.5) * 0.1
   };
+  console.log('Using default São Paulo coordinates:', defaultCoords);
+  return defaultCoords;
 };

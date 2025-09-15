@@ -28,6 +28,8 @@ export const EnhancedTrackingCard = ({
   const [deliveryDetails, setDeliveryDetails] = useState<any>(null);
 
   useEffect(() => {
+    console.log('EnhancedTrackingCard useEffect called with:', { transaction, otherUser });
+    
     // Calculate delivery details
     const originAddress = otherUser.address 
       ? `${otherUser.address.city}, ${otherUser.address.state}` 
@@ -36,12 +38,18 @@ export const EnhancedTrackingCard = ({
     // Get user's current location or use default for destination
     const destinationAddress = 'Rio de Janeiro, RJ'; // In production, this would be the buyer's address
     
+    console.log('Addresses:', { originAddress, destinationAddress });
+    
     const origin = getCoordinatesFromAddress(originAddress);
     const destination = getCoordinatesFromAddress(destinationAddress);
     
-    if (origin && destination) {
+    console.log('Generated coordinates:', { origin, destination });
+    
+    if (origin && destination && origin.lat && origin.lng && destination.lat && destination.lng) {
       const details = calculateDeliveryDetails(origin, destination, transaction.deliveryMethod);
       const updatedSteps = updateDeliveryStatus(details.steps, transaction.status);
+      
+      console.log('Setting delivery details:', details);
       
       setDeliveryDetails({
         ...details,
@@ -50,6 +58,7 @@ export const EnhancedTrackingCard = ({
         destination
       });
     } else {
+      console.error('Invalid coordinates generated, using fallback');
       // Fallback for invalid coordinates
       setDeliveryDetails({
         distance: 0,

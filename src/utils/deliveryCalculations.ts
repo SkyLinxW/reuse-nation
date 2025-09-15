@@ -27,8 +27,11 @@ export const calculateDeliveryDetails = (
   destination: Coordinates,
   deliveryMethod: 'retirada_local' | 'entrega' | 'transportadora'
 ): DeliveryCalculation => {
+  console.log('calculateDeliveryDetails called with:', { origin, destination, deliveryMethod });
+  
   // Ensure valid coordinates before calculating distance
-  if (!origin.lat || !origin.lng || !destination.lat || !destination.lng) {
+  if (!origin || !destination || !origin.lat || !origin.lng || !destination.lat || !destination.lng) {
+    console.error('Invalid coordinates provided to calculateDeliveryDetails:', { origin, destination });
     return {
       distance: 0,
       estimatedTime: 'Não disponível',
@@ -38,6 +41,7 @@ export const calculateDeliveryDetails = (
   }
 
   const distance = calculateDistance(origin, destination);
+  console.log('Distance calculated:', distance);
   
   let baseCost = 0;
   let baseTimeHours = 0;
@@ -169,6 +173,8 @@ export const calculateDeliveryDetails = (
       : baseTimeHours < 24 
         ? `${Math.ceil(baseTimeHours)} horas`
         : `${Math.ceil(baseTimeHours / 24)} dias`;
+
+  console.log('Final delivery details:', { distance, estimatedTime, cost: baseCost, deliveryMethod });
 
   return {
     distance: Math.round(distance * 100) / 100,
