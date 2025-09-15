@@ -36,13 +36,20 @@ export const DeliveryForm = ({
   const [deliveryCalculation, setDeliveryCalculation] = useState<any>(null);
 
   useEffect(() => {
-    if (deliveryData.address || sellerAddress) {
-      const origin = getCoordinatesFromAddress(sellerAddress || 'São Paulo, SP');
-      const destination = getCoordinatesFromAddress(deliveryData.address || 'Rio de Janeiro, RJ');
-      
-      const calculation = calculateDeliveryDetails(origin, destination, deliveryMethod);
-      setDeliveryCalculation(calculation);
-    }
+    const updateCalculation = async () => {
+      if (deliveryData.address || sellerAddress) {
+        const destination = getCoordinatesFromAddress(deliveryData.address || 'Rio de Janeiro, RJ');
+        
+        try {
+          const calculation = await calculateDeliveryDetails(destination, deliveryMethod);
+          setDeliveryCalculation(calculation);
+        } catch (error) {
+          console.error('Error calculating delivery:', error);
+        }
+      }
+    };
+    
+    updateCalculation();
   }, [deliveryMethod, deliveryData.address, sellerAddress]);
 
   const handleDataChange = (newData: any) => {

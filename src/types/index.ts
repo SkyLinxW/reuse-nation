@@ -72,6 +72,7 @@ export interface Transaction {
   status: 'pendente' | 'confirmado' | 'em_transporte' | 'entregue' | 'cancelado';
   paymentMethod: 'pix' | 'boleto' | 'cartao' | 'dinheiro';
   deliveryMethod: 'retirada_local' | 'entrega' | 'transportadora';
+  deliveryAddress?: string;
   createdAt: string;
   completedAt?: string;
 }

@@ -4,10 +4,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { DeliveryMap } from './DeliveryMap';
-import { Package, Truck, CheckCircle, Clock, MapPin, Phone, MessageCircle, Eye, EyeOff } from 'lucide-react';
+import { Package, Truck, CheckCircle, Clock, MapPin, Phone, MessageCircle, Eye, EyeOff, Settings } from 'lucide-react';
 import { Transaction, User, WasteItem } from '@/types';
 import { calculateDeliveryDetails, updateDeliveryStatus } from '@/utils/deliveryCalculations';
-import { getCoordinatesFromAddress } from '@/utils/distanceCalculator';
+import { geocodeAddress, SAO_PAULO_COORDINATES } from '@/services/addressService';
+import { AddressSelector } from './AddressSelector';
 
 interface EnhancedTrackingCardProps {
   transaction: Transaction;
@@ -25,51 +26,100 @@ export const EnhancedTrackingCard = ({
   onRateTransaction 
 }: EnhancedTrackingCardProps) => {
   const [showMap, setShowMap] = useState(false);
+  const [showAddressSelector, setShowAddressSelector] = useState(false);
   const [deliveryDetails, setDeliveryDetails] = useState<any>(null);
+  const [destinationCoords, setDestinationCoords] = useState<any>(null);
 
   useEffect(() => {
     console.log('EnhancedTrackingCard useEffect called with:', { transaction, otherUser });
     
-    // Calculate delivery details
-    const originAddress = otherUser.address 
-      ? `${otherUser.address.city}, ${otherUser.address.state}` 
-      : 'São Paulo, SP';
-    
-    // Get user's current location or use default for destination
-    const destinationAddress = 'Rio de Janeiro, RJ'; // In production, this would be the buyer's address
-    
-    console.log('Addresses:', { originAddress, destinationAddress });
-    
-    const origin = getCoordinatesFromAddress(originAddress);
-    const destination = getCoordinatesFromAddress(destinationAddress);
-    
-    console.log('Generated coordinates:', { origin, destination });
-    
-    if (origin && destination && origin.lat && origin.lng && destination.lat && destination.lng) {
-      const details = calculateDeliveryDetails(origin, destination, transaction.deliveryMethod);
-      const updatedSteps = updateDeliveryStatus(details.steps, transaction.status);
+    if (!transaction || !otherUser) {
+      console.log('Missing transaction or otherUser data');
+      return;
+    }
+
+    const calculateAndSetDeliveryDetails = async () => {
+      try {
+        let destination = null;
+        
+        // Try to geocode the delivery address if it exists
+        if (transaction.deliveryAddress) {
+          console.log('Geocoding delivery address:', transaction.deliveryAddress);
+          destination = await geocodeAddress(transaction.deliveryAddress);
+        }
+        
+        // If no valid coordinates, use fallback
+        if (!destination) {
+          console.log('Using fallback coordinates for Rio de Janeiro');
+          destination = { lat: -22.9068, lng: -43.1729 }; // Rio de Janeiro default
+        }
+        
+        console.log('Final destination coordinates:', destination);
+        setDestinationCoords(destination);
+        
+        // Calculate delivery details using new real calculation
+        const details = await calculateDeliveryDetails(
+          destination,
+          transaction.deliveryMethod as 'retirada_local' | 'entrega' | 'transportadora'
+        );
+        
+        console.log('Real delivery details calculated:', details);
+        
+        // Update step statuses based on transaction status
+        const stepsWithStatus = updateDeliveryStatus(details.steps, transaction.status);
+        
+        setDeliveryDetails({
+          ...details,
+          steps: stepsWithStatus,
+          origin: SAO_PAULO_COORDINATES,
+          destination
+        });
+        
+      } catch (error) {
+        console.error('Error calculating real delivery details:', error);
+        setDeliveryDetails({
+          distance: 0,
+          estimatedTime: 'Erro no cálculo',
+          cost: 0,
+          steps: [],
+          origin: SAO_PAULO_COORDINATES,
+          destination: { lat: -22.9068, lng: -43.1729 }
+        });
+      }
+    };
+
+    calculateAndSetDeliveryDetails();
+  }, [transaction, otherUser]);
+
+  const handleAddressUpdate = async (address: string, coordinates: any) => {
+    try {
+      console.log('Updating delivery address:', { address, coordinates });
+      setDestinationCoords(coordinates);
       
-      console.log('Setting delivery details:', details);
+      // Recalculate delivery details with new address
+      const details = await calculateDeliveryDetails(
+        coordinates,
+        transaction.deliveryMethod as 'retirada_local' | 'entrega' | 'transportadora'
+      );
+      
+      const stepsWithStatus = updateDeliveryStatus(details.steps, transaction.status);
       
       setDeliveryDetails({
         ...details,
-        steps: updatedSteps,
-        origin,
-        destination
+        steps: stepsWithStatus,
+        origin: SAO_PAULO_COORDINATES,
+        destination: coordinates
       });
-    } else {
-      console.error('Invalid coordinates generated, using fallback');
-      // Fallback for invalid coordinates
-      setDeliveryDetails({
-        distance: 0,
-        estimatedTime: 'Não disponível',
-        cost: 0,
-        steps: [],
-        origin: { lat: 0, lng: 0 },
-        destination: { lat: 0, lng: 0 }
-      });
+      
+      setShowAddressSelector(false);
+      
+      // You would also want to update the transaction in the database here
+      // await updateTransactionAddress(transaction.id, address);
+      
+    } catch (error) {
+      console.error('Error updating address:', error);
     }
-  }, [transaction, otherUser]);
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -208,16 +258,35 @@ export const EnhancedTrackingCard = ({
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h4 className="font-medium">Etapas da Entrega</h4>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowMap(!showMap)}
-              className="flex items-center gap-2"
-            >
-              {showMap ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-              {showMap ? 'Ocultar Mapa' : 'Ver no Mapa'}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAddressSelector(!showAddressSelector)}
+                className="flex items-center gap-2"
+              >
+                <Settings className="w-3 h-3" />
+                Endereço
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowMap(!showMap)}
+                className="flex items-center gap-2"
+              >
+                {showMap ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                {showMap ? 'Ocultar Mapa' : 'Ver no Mapa'}
+              </Button>
+            </div>
           </div>
+          
+          {/* Address Selector */}
+          {showAddressSelector && (
+            <AddressSelector
+              onAddressSelected={handleAddressUpdate}
+              defaultAddress={transaction.deliveryAddress || ''}
+            />
+          )}
           
           <div className="space-y-3">
             {deliveryDetails.steps.map((step: any, index: number) => {

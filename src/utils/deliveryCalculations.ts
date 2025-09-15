@@ -1,5 +1,9 @@
-// Utility functions for delivery calculations
-import { calculateDistance } from './distanceCalculator';
+// Real delivery calculations using address services
+import { 
+  calculateRealRoute, 
+  SAO_PAULO_COORDINATES,
+  Coordinates
+} from '@/services/addressService';
 
 export interface DeliveryCalculation {
   distance: number;
@@ -17,41 +21,111 @@ export interface DeliveryStep {
   icon: string;
 }
 
-export interface Coordinates {
-  lat: number;
-  lng: number;
-}
+// Coordinates interface is now imported from addressService
 
-export const calculateDeliveryDetails = (
-  origin: Coordinates,
-  destination: Coordinates,
+// Real delivery calculation using route APIs
+export const calculateDeliveryDetails = async (
+  destination: Coordinates, 
   deliveryMethod: 'retirada_local' | 'entrega' | 'transportadora'
-): DeliveryCalculation => {
-  console.log('calculateDeliveryDetails called with:', { origin, destination, deliveryMethod });
+): Promise<DeliveryCalculation> => {
+  console.log('calculateRealDeliveryDetails called with:', { destination, deliveryMethod });
   
-  // Ensure valid coordinates before calculating distance
-  if (!origin || !destination || !origin.lat || !origin.lng || !destination.lat || !destination.lng) {
-    console.error('Invalid coordinates provided to calculateDeliveryDetails:', { origin, destination });
+  // Always use São Paulo as origin
+  const origin = SAO_PAULO_COORDINATES;
+  
+  // Validate destination coordinates
+  if (!destination || 
+      typeof destination.lat !== 'number' || typeof destination.lng !== 'number') {
+    console.error('Invalid destination coordinates:', destination);
+    
     return {
       distance: 0,
-      estimatedTime: 'Não disponível',
+      estimatedTime: 'Não calculado',
       cost: 0,
-      steps: []
+      steps: getDefaultSteps(deliveryMethod)
     };
   }
 
-  const distance = calculateDistance(origin, destination);
-  console.log('Distance calculated:', distance);
+  let distance = 0;
+  let estimatedTime = '';
+  let cost = 0;
+  let duration = 0; // in minutes
   
-  let baseCost = 0;
-  let baseTimeHours = 0;
-  let steps: DeliveryStep[] = [];
+  if (deliveryMethod === 'retirada_local') {
+    // For local pickup, calculate distance for reference only
+    try {
+      const routeInfo = await calculateRealRoute(origin, destination);
+      if (routeInfo) {
+        distance = routeInfo.distance;
+      }
+    } catch (error) {
+      console.error('Error calculating route for pickup:', error);
+    }
+    
+    estimatedTime = 'Disponível imediatamente';
+    cost = 0;
+  } else {
+    // Calculate real route for delivery
+    try {
+      const routeInfo = await calculateRealRoute(origin, destination);
+      
+      if (routeInfo) {
+        distance = routeInfo.distance;
+        duration = routeInfo.duration;
+        
+        console.log('Real route calculated:', { distance, duration });
+        
+        // Calculate time and cost based on delivery method
+        if (deliveryMethod === 'entrega') {
+          // Local delivery service - use real duration + processing time
+          const totalHours = Math.max(2, Math.ceil(duration / 60) + 1); // Add 1 hour processing
+          estimatedTime = `${totalHours} hora${totalHours > 1 ? 's' : ''}`;
+          cost = Math.max(15, distance * 0.8); // Minimum R$ 15, then R$ 0.80 per km
+        } else if (deliveryMethod === 'transportadora') {
+          // Shipping company - convert to days
+          const totalDays = Math.max(1, Math.ceil(duration / (60 * 8))); // 8 hours driving per day
+          estimatedTime = `${totalDays} dia${totalDays > 1 ? 's' : ''}`;
+          cost = Math.max(25, distance * 0.5); // Minimum R$ 25, then R$ 0.50 per km
+        }
+      } else {
+        throw new Error('Failed to calculate route');
+      }
+    } catch (error) {
+      console.error('Error calculating real route, using fallback:', error);
+      
+      // Fallback to simple calculation
+      distance = Math.sqrt(
+        Math.pow(destination.lat - origin.lat, 2) + 
+        Math.pow(destination.lng - origin.lng, 2)
+      ) * 111; // Rough km conversion
+      
+      if (deliveryMethod === 'entrega') {
+        const hours = Math.max(2, Math.floor(distance / 50)); // 50 km/h average
+        estimatedTime = `${hours} hora${hours > 1 ? 's' : ''}`;
+        cost = Math.max(15, distance * 0.8);
+      } else {
+        const days = Math.max(1, Math.ceil(distance / 400)); // 400 km per day
+        estimatedTime = `${days} dia${days > 1 ? 's' : ''}`;
+        cost = Math.max(25, distance * 0.5);
+      }
+    }
+  }
 
+  console.log('Final real delivery details:', { distance, estimatedTime, cost, deliveryMethod });
+
+  return {
+    distance: Math.round(distance * 100) / 100, // Round to 2 decimal places
+    estimatedTime,
+    cost: Math.round(cost * 100) / 100, // Round to 2 decimal places
+    steps: getDefaultSteps(deliveryMethod)
+  };
+};
+
+// Helper function to get default steps for each delivery method
+const getDefaultSteps = (deliveryMethod: 'retirada_local' | 'entrega' | 'transportadora'): DeliveryStep[] => {
   switch (deliveryMethod) {
     case 'retirada_local':
-      baseCost = 0;
-      baseTimeHours = 0;
-      steps = [
+      return [
         {
           id: 'preparation',
           title: 'Preparação do Produto',
@@ -69,12 +143,9 @@ export const calculateDeliveryDetails = (
           icon: 'check-circle'
         }
       ];
-      break;
 
     case 'entrega':
-      baseCost = 15 + (distance * 0.8);
-      baseTimeHours = Math.max(2, distance / 25); // 25 km/h average speed
-      steps = [
+      return [
         {
           id: 'preparation',
           title: 'Preparação do Produto',
@@ -95,7 +166,7 @@ export const calculateDeliveryDetails = (
           id: 'in_transit',
           title: 'Em Transporte',
           description: 'Produto a caminho do destino',
-          estimatedTime: `${Math.ceil(baseTimeHours)}h`,
+          estimatedTime: 'Calculando...',
           status: 'pending',
           icon: 'map-pin'
         },
@@ -108,12 +179,9 @@ export const calculateDeliveryDetails = (
           icon: 'check-circle'
         }
       ];
-      break;
 
     case 'transportadora':
-      baseCost = 25 + (distance * 0.5);
-      baseTimeHours = Math.max(24, distance / 15); // 15 km/h average for transport companies
-      steps = [
+      return [
         {
           id: 'preparation',
           title: 'Preparação para Envio',
@@ -142,7 +210,7 @@ export const calculateDeliveryDetails = (
           id: 'in_transit',
           title: 'Em Transporte',
           description: 'Produto a caminho do destino final',
-          estimatedTime: `${Math.ceil(baseTimeHours / 24)} dias`,
+          estimatedTime: 'Calculando...',
           status: 'pending',
           icon: 'map-pin'
         },
@@ -163,25 +231,10 @@ export const calculateDeliveryDetails = (
           icon: 'check-circle'
         }
       ];
-      break;
+
+    default:
+      return [];
   }
-
-  const estimatedTime = deliveryMethod === 'retirada_local' 
-    ? 'Disponível imediatamente'
-    : baseTimeHours < 1
-      ? '1 hora'
-      : baseTimeHours < 24 
-        ? `${Math.ceil(baseTimeHours)} horas`
-        : `${Math.ceil(baseTimeHours / 24)} dias`;
-
-  console.log('Final delivery details:', { distance, estimatedTime, cost: baseCost, deliveryMethod });
-
-  return {
-    distance: Math.round(distance * 100) / 100,
-    estimatedTime,
-    cost: Math.round(baseCost * 100) / 100,
-    steps
-  };
 };
 
 export const updateDeliveryStatus = (
