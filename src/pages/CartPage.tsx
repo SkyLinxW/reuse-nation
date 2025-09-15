@@ -80,6 +80,24 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
     
     setIsProcessing(true);
     
+    console.log('handlePaymentProcess - Starting with method and data:', {
+      deliveryMethod,
+      selectedAddress,
+      deliveryData,
+      cartItems: cartItems.length
+    });
+    
+    // If delivery method is 'entrega' but no address selected, show error
+    if (deliveryMethod === 'entrega' && !selectedAddress && !deliveryData.fullAddress && !deliveryData.address) {
+      toast({
+        title: "Endereço necessário",
+        description: "Para entrega, é necessário selecionar um endereço de entrega.",
+        variant: "destructive",
+      });
+      setIsProcessing(false);
+      return;
+    }
+    
     try {
       // Simular processamento de pagamento
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -313,6 +331,8 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
                 onAddressSelected={(address, coordinates) => {
                   console.log('CartPage - Address selected callback:', { address, coordinates });
                   setSelectedAddress(address);
+                  // Also update deliveryData to ensure we have the address
+                  setDeliveryData(prev => ({ ...prev, fullAddress: address, address }));
                 }}
                 sellerAddress={sellerAddress}
               />

@@ -154,6 +154,7 @@ export const AddressSelector = ({ onAddressSelected, defaultAddress }: AddressSe
       const coordinates = await geocodeAddress(fullAddress);
       
       if (coordinates) {
+        console.log('AddressSelector - Calling onAddressSelected with:', { fullAddress, coordinates });
         onAddressSelected(fullAddress, coordinates);
         toast({
           title: "Endereço confirmado",
