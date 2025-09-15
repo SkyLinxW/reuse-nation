@@ -223,6 +223,7 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
                     const formattedTransaction = {
                       ...transaction,
                       deliveryMethod: transaction.delivery_method || 'retirada_local',
+                      deliveryAddress: transaction.delivery_address,
                       createdAt: transaction.created_at,
                       totalPrice: transaction.total_price
                     };
@@ -249,6 +250,7 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
                     const formattedTransaction = {
                       ...transaction,
                       deliveryMethod: transaction.delivery_method || 'retirada_local',
+                      deliveryAddress: transaction.delivery_address,
                       createdAt: transaction.created_at,
                       totalPrice: transaction.total_price
                     };

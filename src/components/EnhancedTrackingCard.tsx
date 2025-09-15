@@ -31,7 +31,17 @@ export const EnhancedTrackingCard = ({
   const [destinationCoords, setDestinationCoords] = useState<any>(null);
 
   useEffect(() => {
-    console.log('EnhancedTrackingCard useEffect called with:', { transaction, otherUser });
+    console.log('EnhancedTrackingCard useEffect called with:', { 
+      transaction: {
+        id: transaction?.id,
+        deliveryAddress: transaction?.deliveryAddress,
+        deliveryMethod: transaction?.deliveryMethod
+      }, 
+      product: {
+        location: product?.location
+      },
+      otherUser: otherUser?.name 
+    });
     
     if (!transaction || !otherUser) {
       console.log('Missing transaction or otherUser data');
@@ -48,6 +58,8 @@ export const EnhancedTrackingCard = ({
           destination = await geocodeAddress(transaction.deliveryAddress);
           if (destination) {
             console.log('Successfully geocoded delivery address:', { address: transaction.deliveryAddress, coords: destination });
+          } else {
+            console.log('Failed to geocode delivery address:', transaction.deliveryAddress);
           }
         }
         
@@ -57,20 +69,34 @@ export const EnhancedTrackingCard = ({
           if (product.location.coordinates) {
             console.log('Using existing product coordinates:', product.location.coordinates);
             destination = product.location.coordinates;
-          } else {
+          } else if (product.location.city && product.location.state) {
             // Geocode city and state
-            const locationString = `${product.location.city}, ${product.location.state}`;
+            const locationString = `${product.location.city}, ${product.location.state}, Brasil`;
             console.log('Geocoding product location:', locationString);
             destination = await geocodeAddress(locationString);
             if (destination) {
               console.log('Successfully geocoded product location:', { location: locationString, coords: destination });
+            } else {
+              console.log('Failed to geocode product location:', locationString);
             }
           }
         }
         
-        // Priority 3: Use default coordinates as last resort
+        // Priority 3: Try otherUser address if available
+        if (!destination && otherUser?.address) {
+          const userAddress = `${otherUser.address.city}, ${otherUser.address.state}, Brasil`;
+          console.log('Geocoding user address:', userAddress);
+          destination = await geocodeAddress(userAddress);
+          if (destination) {
+            console.log('Successfully geocoded user address:', { address: userAddress, coords: destination });
+          } else {
+            console.log('Failed to geocode user address:', userAddress);
+          }
+        }
+        
+        // Priority 4: Use default coordinates as last resort
         if (!destination) {
-          console.log('Using default destination coordinates (Brasília)');
+          console.log('No valid address found, using default destination coordinates (Brasília)');
           destination = { lat: -15.8267, lng: -47.9218 }; // Brasília - central Brazil location
         }
         
