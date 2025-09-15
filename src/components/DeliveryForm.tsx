@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,8 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { MapPin, Truck, Building2, Calendar, Clock } from 'lucide-react';
+import { MapPin, Truck, Building2, Calendar, Clock, Calculator } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { calculateDeliveryDetails } from '@/utils/deliveryCalculations';
+import { getCoordinatesFromAddress } from '@/utils/distanceCalculator';
 
 interface DeliveryFormProps {
   deliveryMethod: 'retirada_local' | 'entrega' | 'transportadora';
@@ -31,16 +33,35 @@ export const DeliveryForm = ({
     transportadora: 'correios'
   });
 
+  const [deliveryCalculation, setDeliveryCalculation] = useState<any>(null);
+
+  useEffect(() => {
+    if (deliveryData.address || sellerAddress) {
+      const origin = getCoordinatesFromAddress(sellerAddress || 'São Paulo, SP');
+      const destination = getCoordinatesFromAddress(deliveryData.address || 'Rio de Janeiro, RJ');
+      
+      const calculation = calculateDeliveryDetails(origin, destination, deliveryMethod);
+      setDeliveryCalculation(calculation);
+    }
+  }, [deliveryMethod, deliveryData.address, sellerAddress]);
+
   const handleDataChange = (newData: any) => {
     const updated = { ...deliveryData, ...newData };
     setDeliveryData(updated);
     onDeliveryDataChange(updated);
   };
 
-  const deliveryCosts = {
-    retirada_local: 0,
-    entrega: 25.90,
-    transportadora: 45.00
+  const getDeliveryCost = () => {
+    if (deliveryCalculation) {
+      return deliveryCalculation.cost;
+    }
+    
+    const baseCosts = {
+      retirada_local: 0,
+      entrega: 25.90,
+      transportadora: 45.00
+    };
+    return baseCosts[deliveryMethod];
   };
 
   const formatPrice = (price: number) => {
@@ -75,11 +96,43 @@ export const DeliveryForm = ({
             </TabsTrigger>
           </TabsList>
 
-          <div className="mt-4">
-            <div className="flex justify-between items-center p-3 bg-muted rounded-lg mb-4">
-              <span className="font-medium">Custo da entrega:</span>
+          <div className="mt-4 space-y-3">
+            {deliveryCalculation && (
+              <div className="grid grid-cols-3 gap-3 p-3 bg-card border rounded-lg">
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <Calculator className="w-3 h-3 text-eco-green" />
+                    <span className="text-xs font-medium">Distância</span>
+                  </div>
+                  <span className="text-sm font-bold text-eco-green">
+                    {deliveryCalculation.distance} km
+                  </span>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <Clock className="w-3 h-3 text-eco-blue" />
+                    <span className="text-xs font-medium">Tempo</span>
+                  </div>
+                  <span className="text-sm font-bold text-eco-blue">
+                    {deliveryCalculation.estimatedTime}
+                  </span>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <Truck className="w-3 h-3 text-eco-brown" />
+                    <span className="text-xs font-medium">Custo</span>
+                  </div>
+                  <span className="text-sm font-bold text-eco-brown">
+                    {getDeliveryCost() === 0 ? 'Grátis' : formatPrice(getDeliveryCost())}
+                  </span>
+                </div>
+              </div>
+            )}
+            
+            <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
+              <span className="font-medium">Custo total da entrega:</span>
               <span className="font-bold text-eco-green">
-                {deliveryCosts[deliveryMethod] === 0 ? 'Grátis' : formatPrice(deliveryCosts[deliveryMethod])}
+                {getDeliveryCost() === 0 ? 'Grátis' : formatPrice(getDeliveryCost())}
               </span>
             </div>
           </div>

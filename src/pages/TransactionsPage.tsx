@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TrackingCard } from '@/components/TrackingCard';
+import { EnhancedTrackingCard } from '@/components/EnhancedTrackingCard';
 import { getTransactions, updateTransactionStatus, getProfile, getWasteItem } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { ArrowLeft, Package, TrendingUp, ShoppingBag, Clock, CheckCircle, Truck, XCircle } from 'lucide-react';
@@ -220,7 +220,7 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
                     if (!details?.otherUser || !details?.product) return null;
 
                     return (
-                      <TrackingCard
+                      <EnhancedTrackingCard
                         key={transaction.id}
                         transaction={transaction}
                         otherUser={details.otherUser}
@@ -238,7 +238,7 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
                     if (!details?.otherUser || !details?.product) return null;
 
                     return (
-                      <TrackingCard
+                      <EnhancedTrackingCard
                         key={transaction.id}
                         transaction={transaction}
                         otherUser={details.otherUser}

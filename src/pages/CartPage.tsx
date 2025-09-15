@@ -119,6 +119,8 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
   };
 
   const getDeliveryCost = () => {
+    // This will be calculated dynamically by the DeliveryForm component
+    // For now, keeping the base costs for order summary
     const costs = {
       retirada_local: 0,
       entrega: 25.90,
