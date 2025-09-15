@@ -98,58 +98,88 @@ const serve_handler = async (req: Request): Promise<Response> => {
 async function processTransaction(supabaseClient: any, transaction: Transaction) {
   const now = new Date();
   const createdAt = new Date(transaction.created_at);
-  const hoursSinceCreated = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+  const minutesSinceCreated = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+  const hoursSinceCreated = minutesSinceCreated / 60;
 
-  console.log(`Processando transação ${transaction.id}, criada há ${hoursSinceCreated.toFixed(1)} horas`);
+  console.log(`Processando transação ${transaction.id}, criada há ${hoursSinceCreated.toFixed(1)} horas (${minutesSinceCreated.toFixed(0)} minutos)`);
 
   let newStatus = transaction.status;
-  let notification = null;
+  let buyerNotification = null;
+  let sellerNotification = null;
 
-  // Lógica para entrega local
+  // Lógica para entrega local (mais realista e gradual)
   if (transaction.delivery_method === 'entrega') {
-    if (transaction.status === 'confirmado' && hoursSinceCreated >= 1.5) {
-      // Após 1.5h: coleta realizada
+    if (transaction.status === 'confirmado' && minutesSinceCreated >= 90) {
+      // Após 1.5h (90 min): coleta realizada
       newStatus = 'em_transporte';
-      notification = {
+      buyerNotification = {
         user_id: transaction.buyer_id,
         type: 'delivery_update',
         title: 'Produto Coletado!',
-        message: `Seu produto "${transaction.waste_items?.title}" foi coletado pelo entregador e está a caminho!`,
+        message: `Seu produto "${transaction.waste_items?.title}" foi coletado pelo entregador e está a caminho do seu endereço!`,
         read: false
       };
-    } else if (transaction.status === 'em_transporte' && hoursSinceCreated >= 3) {
-      // Após 3h total: entregue
+      sellerNotification = {
+        user_id: transaction.seller_id,
+        type: 'sale_update',
+        title: 'Produto Coletado!',
+        message: `Seu produto "${transaction.waste_items?.title}" foi coletado pelo entregador!`,
+        read: false
+      };
+    } else if (transaction.status === 'em_transporte' && minutesSinceCreated >= 180) {
+      // Após 3h total (180 min): entregue
       newStatus = 'entregue';
-      notification = {
+      buyerNotification = {
         user_id: transaction.buyer_id,
         type: 'delivery_complete',
         title: 'Produto Entregue!',
         message: `Seu produto "${transaction.waste_items?.title}" foi entregue com sucesso! Que tal avaliar sua experiência?`,
         read: false
       };
+      sellerNotification = {
+        user_id: transaction.seller_id,
+        type: 'sale_complete',
+        title: 'Venda Concluída!',
+        message: `Sua venda do produto "${transaction.waste_items?.title}" foi concluída com sucesso!`,
+        read: false
+      };
     }
   }
   
-  // Lógica para transportadora
+  // Lógica para transportadora (tempos mais realistas)
   else if (transaction.delivery_method === 'transportadora') {
     if (transaction.status === 'confirmado' && hoursSinceCreated >= 8) {
-      // Após 8h: em transporte
+      // Após 8h: coleta pela transportadora
       newStatus = 'em_transporte';
-      notification = {
+      buyerNotification = {
         user_id: transaction.buyer_id,
         type: 'delivery_update',
         title: 'Produto Coletado pela Transportadora!',
-        message: `Seu produto "${transaction.waste_items?.title}" foi coletado pela transportadora e está em trânsito!`,
+        message: `Seu produto "${transaction.waste_items?.title}" foi coletado pela transportadora e está sendo processado no centro de distribuição!`,
+        read: false
+      };
+      sellerNotification = {
+        user_id: transaction.seller_id,
+        type: 'sale_update',
+        title: 'Produto Coletado!',
+        message: `Seu produto "${transaction.waste_items?.title}" foi coletado pela transportadora!`,
         read: false
       };
     } else if (transaction.status === 'em_transporte' && hoursSinceCreated >= 48) {
       // Após 48h total: entregue
       newStatus = 'entregue';
-      notification = {
+      buyerNotification = {
         user_id: transaction.buyer_id,
         type: 'delivery_complete',
         title: 'Produto Entregue!',
         message: `Seu produto "${transaction.waste_items?.title}" foi entregue pela transportadora! Que tal avaliar sua experiência?`,
+        read: false
+      };
+      sellerNotification = {
+        user_id: transaction.seller_id,
+        type: 'sale_complete',
+        title: 'Venda Concluída!',
+        message: `Sua venda do produto "${transaction.waste_items?.title}" foi concluída com sucesso!`,
         read: false
       };
     }
@@ -173,35 +203,28 @@ async function processTransaction(supabaseClient: any, transaction: Transaction)
     console.log(`Transação ${transaction.id} atualizada para status: ${newStatus}`);
   }
 
-  // Criar notificação se necessário
-  if (notification) {
-    const { error: notificationError } = await supabaseClient
+  // Criar notificações se necessário
+  if (buyerNotification) {
+    const { error: buyerNotificationError } = await supabaseClient
       .from('notifications')
-      .insert(notification);
+      .insert(buyerNotification);
 
-    if (notificationError) {
-      console.error(`Erro ao criar notificação para transação ${transaction.id}:`, notificationError);
+    if (buyerNotificationError) {
+      console.error(`Erro ao criar notificação do comprador para transação ${transaction.id}:`, buyerNotificationError);
     } else {
-      console.log(`Notificação criada para usuário ${notification.user_id}`);
+      console.log(`Notificação do comprador criada para usuário ${buyerNotification.user_id}`);
     }
+  }
 
-    // Notificar vendedor também
-    const sellerNotification = {
-      user_id: transaction.seller_id,
-      type: 'sale_update',
-      title: newStatus === 'em_transporte' ? 'Produto Coletado!' : 'Venda Concluída!',
-      message: newStatus === 'em_transporte' 
-        ? `Seu produto "${transaction.waste_items?.title}" foi coletado e está sendo entregue!`
-        : `Sua venda do produto "${transaction.waste_items?.title}" foi concluída com sucesso!`,
-      read: false
-    };
-
+  if (sellerNotification) {
     const { error: sellerNotificationError } = await supabaseClient
       .from('notifications')
       .insert(sellerNotification);
 
     if (sellerNotificationError) {
-      console.error(`Erro ao criar notificação do vendedor:`, sellerNotificationError);
+      console.error(`Erro ao criar notificação do vendedor para transação ${transaction.id}:`, sellerNotificationError);
+    } else {
+      console.log(`Notificação do vendedor criada para usuário ${sellerNotification.user_id}`);
     }
   }
 }
