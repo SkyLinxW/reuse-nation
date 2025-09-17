@@ -32,6 +32,8 @@ export const ListingAddressSelector = ({ onAddressSelected, defaultAddress }: Li
   const [cep, setCep] = useState('');
   const [loading, setLoading] = useState(false);
   const [addressInfo, setAddressInfo] = useState<AddressInfo | null>(null);
+  const [hasConfirmed, setHasConfirmed] = useState(false);
+  const [lastConfirmedAddress, setLastConfirmedAddress] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -76,6 +78,8 @@ export const ListingAddressSelector = ({ onAddressSelected, defaultAddress }: Li
 
   const handleStateChange = (stateId: string) => {
     setSelectedState(stateId);
+    setHasConfirmed(false);
+    setLastConfirmedAddress('');
     loadCities(stateId);
   };
 
@@ -107,7 +111,9 @@ export const ListingAddressSelector = ({ onAddressSelected, defaultAddress }: Li
           // Set city after cities are loaded and auto-confirm
           setTimeout(async () => {
             setSelectedCity(address.localidade);
-            // Auto-confirm after CEP search
+            // Reset confirmation state and auto-confirm after CEP search
+            setHasConfirmed(false);
+            setLastConfirmedAddress('');
             setTimeout(() => {
               handleConfirmAddress();
             }, 500);
@@ -141,11 +147,16 @@ export const ListingAddressSelector = ({ onAddressSelected, defaultAddress }: Li
       return;
     }
 
+    const stateName = states.find(s => s.id.toString() === selectedState)?.nome || '';
+    const fullAddress = `${street}${neighborhood ? ', ' + neighborhood : ''}, ${selectedCity}, ${stateName}`;
+    
+    // Evita confirmar o mesmo endereço repetidamente
+    if (lastConfirmedAddress === fullAddress) {
+      return;
+    }
+
     try {
       setLoading(true);
-      
-      const stateName = states.find(s => s.id.toString() === selectedState)?.nome || '';
-      const fullAddress = `${street}${neighborhood ? ', ' + neighborhood : ''}, ${selectedCity}, ${stateName}`;
       
       console.log('Attempting to geocode:', fullAddress);
       
@@ -153,9 +164,11 @@ export const ListingAddressSelector = ({ onAddressSelected, defaultAddress }: Li
       
       if (coordinates) {
         console.log('ListingAddressSelector - Calling onAddressSelected with:', { fullAddress, coordinates });
+        setLastConfirmedAddress(fullAddress);
+        setHasConfirmed(true);
         onAddressSelected(fullAddress, coordinates);
         toast({
-          title: "Localização confirmada automaticamente",
+          title: "Localização confirmada",
           description: fullAddress,
         });
       } else {
@@ -179,11 +192,18 @@ export const ListingAddressSelector = ({ onAddressSelected, defaultAddress }: Li
   // Auto-confirm address when all required fields are filled
   useEffect(() => {
     if (selectedState && selectedCity && street.trim()) {
-      const timeoutId = setTimeout(() => {
-        handleConfirmAddress();
-      }, 1000); // Wait 1 second after user stops typing
+      const stateName = states.find(s => s.id.toString() === selectedState)?.nome || '';
+      const currentAddress = `${street}${neighborhood ? ', ' + neighborhood : ''}, ${selectedCity}, ${stateName}`;
       
-      return () => clearTimeout(timeoutId);
+      // Só confirma se o endereço mudou
+      if (currentAddress !== lastConfirmedAddress) {
+        setHasConfirmed(false);
+        const timeoutId = setTimeout(() => {
+          handleConfirmAddress();
+        }, 1000); // Wait 1 second after user stops typing
+        
+        return () => clearTimeout(timeoutId);
+      }
     }
   }, [selectedState, selectedCity, street, neighborhood]);
 
