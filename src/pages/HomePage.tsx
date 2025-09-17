@@ -228,72 +228,80 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-eco-green-light/20 to-eco-brown-light/20">
       {/* Hero Section */}
-      <section className="relative py-20 px-4">
+      <section className="relative py-24 px-4 bg-gradient-to-br from-eco-light/30 via-background to-eco-cream/20">
         <div className="container mx-auto text-center">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
-              Transforme <span className="text-eco-green">Resíduos</span> em{' '}
-              <span className="text-eco-blue">Recursos</span>
-            </h1>
-            <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-              O marketplace sustentável que conecta quem tem sobras industriais e materiais 
-              recicláveis com quem precisa. Reduza desperdício, economize dinheiro e 
-              ajude o meio ambiente.
-            </p>
+          <div className="max-w-5xl mx-auto">
+            <div className="mb-8">
+              <h1 className="text-5xl md:text-7xl font-bold text-foreground mb-6 leading-tight">
+                Transforme <span className="text-eco-green bg-gradient-to-r from-eco-green to-eco-green-dark bg-clip-text text-transparent">Resíduos</span> em{' '}
+                <span className="text-eco-blue bg-gradient-to-r from-eco-blue to-eco-green bg-clip-text text-transparent">Recursos</span>
+              </h1>
+              <p className="text-xl md:text-2xl text-muted-foreground mb-10 leading-relaxed max-w-4xl mx-auto font-light">
+                O marketplace sustentável que conecta quem tem sobras industriais e materiais 
+                recicláveis com quem precisa. Reduza desperdício, economize dinheiro e 
+                ajude o meio ambiente.
+              </p>
+            </div>
             
-            {/* Search Bar - Removed from home, moved to header */}
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
               <Button
                 size="lg"
                 onClick={() => onNavigate('auth')}
-                className="bg-gradient-eco hover:opacity-90 shadow-eco text-lg px-8 py-6"
+                className="bg-gradient-eco hover:opacity-90 shadow-eco text-lg px-10 py-7 rounded-2xl font-semibold text-white transition-all duration-300 hover:shadow-xl hover:scale-105"
               >
+                <TrendingUp className="w-5 h-5 mr-2" />
                 Começar Agora
               </Button>
               <Button
                 size="lg"
                 variant="outline"
                 onClick={() => onNavigate('about')}
-                className="text-lg px-8 py-6 border-eco-green text-eco-green hover:bg-eco-green-light"
+                className="text-lg px-10 py-7 rounded-2xl border-2 border-eco-green text-eco-green hover:bg-eco-green-light font-semibold transition-all duration-300 hover:shadow-lg"
               >
+                <Search className="w-5 h-5 mr-2" />
                 Como Funciona
               </Button>
             </div>
 
-            {/* Impact Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
-              <Card className="bg-card/50 backdrop-blur border-eco-green/20">
-                <CardContent className="flex flex-col items-center p-6">
-                  <Recycle className="w-12 h-12 text-eco-green mb-3" />
-                  <div className="text-2xl font-bold text-eco-green">
+            {/* Enhanced Impact Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+              <Card className="bg-card/80 backdrop-blur-sm border-eco-green/30 rounded-3xl shadow-soft hover:shadow-eco transition-all duration-300 hover:scale-105 group">
+                <CardContent className="flex flex-col items-center p-8">
+                  <div className="p-4 bg-eco-green-light rounded-2xl mb-4 group-hover:bg-eco-green-light/80 transition-colors">
+                    <Recycle className="w-8 h-8 text-eco-green" />
+                  </div>
+                  <div className="text-3xl font-bold text-eco-green mb-2">
                     {formatNumber(ecoImpact.totalWasteReused)}kg
                   </div>
-                  <div className="text-sm text-muted-foreground text-center">
+                  <div className="text-sm text-muted-foreground text-center font-medium">
                     Resíduos Reaproveitados
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-card/50 backdrop-blur border-eco-blue/20">
-                <CardContent className="flex flex-col items-center p-6">
-                  <Leaf className="w-12 h-12 text-eco-blue mb-3" />
-                  <div className="text-2xl font-bold text-eco-blue">
+              <Card className="bg-card/80 backdrop-blur-sm border-eco-blue/30 rounded-3xl shadow-soft hover:shadow-eco transition-all duration-300 hover:scale-105 group">
+                <CardContent className="flex flex-col items-center p-8">
+                  <div className="p-4 bg-eco-blue/20 rounded-2xl mb-4 group-hover:bg-eco-blue/30 transition-colors">
+                    <Leaf className="w-8 h-8 text-eco-blue" />
+                  </div>
+                  <div className="text-3xl font-bold text-eco-blue mb-2">
                     {formatNumber(ecoImpact.co2Saved)}kg
                   </div>
-                  <div className="text-sm text-muted-foreground text-center">
+                  <div className="text-sm text-muted-foreground text-center font-medium">
                     CO₂ Economizado
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-card/50 backdrop-blur border-eco-orange/20">
-                <CardContent className="flex flex-col items-center p-6">
-                  <Users className="w-12 h-12 text-eco-orange mb-3" />
-                  <div className="text-2xl font-bold text-eco-orange">
+              <Card className="bg-card/80 backdrop-blur-sm border-eco-orange/30 rounded-3xl shadow-soft hover:shadow-eco transition-all duration-300 hover:scale-105 group">
+                <CardContent className="flex flex-col items-center p-8">
+                  <div className="p-4 bg-eco-orange/20 rounded-2xl mb-4 group-hover:bg-eco-orange/30 transition-colors">
+                    <Users className="w-8 h-8 text-eco-orange" />
+                  </div>
+                  <div className="text-3xl font-bold text-eco-orange mb-2">
                     {formatNumber(ecoImpact.transactionsCount)}
                   </div>
-                  <div className="text-sm text-muted-foreground text-center">
+                  <div className="text-sm text-muted-foreground text-center font-medium">
                     Transações Realizadas
                   </div>
                 </CardContent>
@@ -304,19 +312,19 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
       </section>
 
       {/* Products Section */}
-      <section className="py-16 px-4 bg-background/80 backdrop-blur">
+      <section className="py-20 px-4 bg-eco-cream/30">
         <div className="container mx-auto">
-          <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex flex-col lg:flex-row gap-10">
             {/* Filters */}
             <div className="lg:w-80 flex-shrink-0">
-              <div className="lg:hidden mb-4">
+              <div className="lg:hidden mb-6">
                 <Button
                   onClick={() => setShowFilters(true)}
                   variant="outline"
-                  className="w-full"
+                  className="w-full h-12 rounded-xl border-eco-green/30 text-eco-green hover:bg-eco-green-light"
                 >
-                  <Filter className="w-4 h-4 mr-2" />
-                  Filtros
+                  <Filter className="w-5 h-5 mr-2" />
+                  Filtros Avançados
                 </Button>
               </div>
               
@@ -331,19 +339,19 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
 
             {/* Products Grid */}
             <div className="flex-1">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h2 className="text-2xl font-bold text-foreground mb-2">
+                  <h2 className="text-3xl font-bold text-foreground mb-3">
                     Materiais Disponíveis
                   </h2>
-                  <p className="text-muted-foreground">
-                    {formatNumber(filteredItems.length)} materiais encontrados
+                  <p className="text-lg text-muted-foreground">
+                    {formatNumber(filteredItems.length)} materiais sustentáveis encontrados
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="bg-eco-green-light text-eco-green">
-                    <TrendingUp className="w-3 h-3 mr-1" />
+                <div className="flex items-center gap-3">
+                  <Badge variant="secondary" className="bg-eco-green-light text-eco-green px-4 py-2 rounded-full font-medium">
+                    <TrendingUp className="w-4 h-4 mr-2" />
                     Novos materiais diariamente
                   </Badge>
                 </div>

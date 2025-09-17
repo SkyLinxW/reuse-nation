@@ -86,87 +86,108 @@ export const Header = ({
     }
   };
   return (
-    <header className="bg-card border-b border-border shadow-soft sticky top-0 z-50">
+    <header className="bg-card/95 backdrop-blur-md border-b border-border/50 shadow-soft sticky top-0 z-50">
       <div className="container mx-auto px-4">
-        <div className="flex items-center h-16 gap-6">
-          {/* Logo Section */}
+        <div className="flex items-center h-20 gap-8">
+          {/* Logo Section - Enhanced */}
           <div 
-            className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" 
+            className="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-all duration-300" 
             onClick={() => onNavigate('home')}
           >
-            <img src={ecoLogo} alt="EcoChain" className="w-10 h-10" />
+            <div className="relative">
+              <img src={ecoLogo} alt="EcoChain" className="w-12 h-12 drop-shadow-sm" />
+            </div>
             <div className="hidden sm:block">
-              <h1 className="text-xl font-bold text-eco-green leading-tight">EcoChain</h1>
-              <p className="text-xs text-muted-foreground leading-tight">Resíduos Sustentáveis</p>
+              <h1 className="text-2xl font-bold text-eco-green leading-none tracking-tight">EcoChain</h1>
+              <p className="text-sm text-eco-green/70 leading-none font-medium">Marketplace Sustentável</p>
             </div>
           </div>
 
-          {/* Search Bar - Central */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-xl mx-4">
+          {/* Navigation Menu - Institutional */}
+          <nav className="hidden lg:flex items-center gap-1 px-4">
+            <div className="flex items-center gap-1 border-r border-border/50 pr-4 mr-4">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => onNavigate('about')}
+                className={`h-10 px-4 text-sm font-medium transition-all duration-200 ${
+                  currentPage === 'about' 
+                    ? 'bg-eco-green-light text-eco-green border-b-2 border-eco-green rounded-b-none' 
+                    : 'hover:bg-eco-green-light/50 hover:text-eco-green'
+                }`}
+              >
+                Sobre Nós
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => onNavigate('services')}
+                className={`h-10 px-4 text-sm font-medium transition-all duration-200 ${
+                  currentPage === 'services' 
+                    ? 'bg-eco-green-light text-eco-green border-b-2 border-eco-green rounded-b-none' 
+                    : 'hover:bg-eco-green-light/50 hover:text-eco-green'
+                }`}
+              >
+                Serviços
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => onNavigate('news')}
+                className={`h-10 px-4 text-sm font-medium transition-all duration-200 ${
+                  currentPage === 'news' 
+                    ? 'bg-eco-green-light text-eco-green border-b-2 border-eco-green rounded-b-none' 
+                    : 'hover:bg-eco-green-light/50 hover:text-eco-green'
+                }`}
+              >
+                Impacto
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => onNavigate('announcements')}
+                className={`h-10 px-4 text-sm font-medium transition-all duration-200 ${
+                  currentPage === 'announcements' 
+                    ? 'bg-eco-green-light text-eco-green border-b-2 border-eco-green rounded-b-none' 
+                    : 'hover:bg-eco-green-light/50 hover:text-eco-green'
+                }`}
+              >
+                Parcerias
+              </Button>
+            </div>
+          </nav>
+
+          {/* Search Bar - Enhanced */}
+          <form onSubmit={handleSearch} className="flex-1 max-w-lg mx-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-eco-green/60 w-5 h-5" />
               <Input 
                 type="text" 
-                placeholder="Buscar resíduos, materiais..." 
+                placeholder="Buscar materiais, resíduos, produtos..." 
                 value={searchTerm} 
                 onChange={(e) => setSearchTerm(e.target.value)} 
-                className="pl-10 h-10 bg-secondary/50 border-border focus:ring-eco-green focus:border-eco-green transition-all" 
+                className="pl-12 pr-4 h-12 bg-eco-light/50 border-eco-green/20 rounded-full text-sm focus:ring-2 focus:ring-eco-green/30 focus:border-eco-green transition-all duration-200 placeholder:text-eco-green/50" 
               />
             </div>
           </form>
 
-          {/* Navigation Links - Desktop Only */}
-          <nav className="hidden xl:flex items-center gap-1">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => onNavigate('about')}
-              className={`h-9 px-3 ${currentPage === 'about' ? 'bg-eco-green-light text-eco-green' : 'hover:bg-muted'}`}
-            >
-              Sobre
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => onNavigate('services')}
-              className={`h-9 px-3 ${currentPage === 'services' ? 'bg-eco-green-light text-eco-green' : 'hover:bg-muted'}`}
-            >
-              Serviços
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => onNavigate('news')}
-              className={`h-9 px-3 ${currentPage === 'news' ? 'bg-eco-green-light text-eco-green' : 'hover:bg-muted'}`}
-            >
-              Impacto
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => onNavigate('announcements')}
-              className={`h-9 px-3 ${currentPage === 'announcements' ? 'bg-eco-green-light text-eco-green' : 'hover:bg-muted'}`}
-            >
-              Parcerias
-            </Button>
-          </nav>
-
-          {/* User Actions */}
-          <div className="flex items-center gap-2">
+          {/* User Area Actions */}
+          <div className="flex items-center gap-3">
             {user ? (
               <>
-                {/* Action Buttons */}
-                <div className="hidden md:flex items-center gap-1">
+                {/* User Action Icons */}
+                <div className="hidden md:flex items-center gap-2">
                   <Button 
                     variant="ghost" 
                     size="sm" 
                     onClick={() => onNavigate('cart')} 
-                    className={`relative h-9 px-3 ${currentPage === 'cart' ? 'bg-eco-green-light text-eco-green' : 'hover:bg-muted'}`}
+                    className={`relative h-11 w-11 rounded-xl hover:bg-eco-green-light/50 transition-colors ${
+                      currentPage === 'cart' ? 'bg-eco-green-light text-eco-green' : 'text-eco-green/70 hover:text-eco-green'
+                    }`}
                   >
-                    <ShoppingCart className="w-4 h-4" />
-                    <span className="hidden lg:inline ml-2">Carrinho</span>
+                    <ShoppingCart className="w-5 h-5" />
                     {cartCount > 0 && (
-                      <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                      <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-eco-orange">
                         {cartCount}
                       </Badge>
                     )}
@@ -176,22 +197,24 @@ export const Header = ({
                     variant="ghost" 
                     size="sm" 
                     onClick={() => onNavigate('favorites')} 
-                    className={`h-9 px-3 ${currentPage === 'favorites' ? 'bg-eco-green-light text-eco-green' : 'hover:bg-muted'}`}
+                    className={`h-11 w-11 rounded-xl hover:bg-eco-green-light/50 transition-colors ${
+                      currentPage === 'favorites' ? 'bg-eco-green-light text-eco-green' : 'text-eco-green/70 hover:text-eco-green'
+                    }`}
                   >
-                    <Heart className="w-4 h-4" />
-                    <span className="hidden lg:inline ml-2">Favoritos</span>
+                    <Heart className="w-5 h-5" />
                   </Button>
 
                   <Button 
                     variant="ghost" 
                     size="sm" 
                     onClick={() => onNavigate('messages')} 
-                    className={`relative h-9 px-3 ${currentPage === 'messages' ? 'bg-eco-green-light text-eco-green' : 'hover:bg-muted'}`}
+                    className={`relative h-11 w-11 rounded-xl hover:bg-eco-green-light/50 transition-colors ${
+                      currentPage === 'messages' ? 'bg-eco-green-light text-eco-green' : 'text-eco-green/70 hover:text-eco-green'
+                    }`}
                   >
-                    <MessageCircle className="w-4 h-4" />
-                    <span className="hidden lg:inline ml-2">Mensagens</span>
+                    <MessageCircle className="w-5 h-5" />
                     {unreadMessagesCount > 0 && (
-                      <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                      <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-eco-orange">
                         {unreadMessagesCount}
                       </Badge>
                     )}
@@ -201,34 +224,35 @@ export const Header = ({
                     variant="ghost" 
                     size="sm" 
                     onClick={() => onNavigate('notifications')} 
-                    className={`relative h-9 px-3 ${currentPage === 'notifications' ? 'bg-eco-green-light text-eco-green' : 'hover:bg-muted'}`}
+                    className={`relative h-11 w-11 rounded-xl hover:bg-eco-green-light/50 transition-colors ${
+                      currentPage === 'notifications' ? 'bg-eco-green-light text-eco-green' : 'text-eco-green/70 hover:text-eco-green'
+                    }`}
                   >
-                    <Bell className="w-4 h-4" />
-                    <span className="hidden lg:inline ml-2">Notificações</span>
+                    <Bell className="w-5 h-5" />
                     {notificationCount > 0 && (
-                      <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                      <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-eco-orange">
                         {notificationCount}
                       </Badge>
                     )}
                   </Button>
                 </div>
 
-                {/* Primary CTA */}
+                {/* Primary CTA Button */}
                 <Button 
                   onClick={() => onNavigate('create-listing')} 
-                  className="bg-gradient-eco hover:opacity-90 shadow-eco h-9 px-4"
+                  className="bg-gradient-eco hover:opacity-90 shadow-eco h-12 px-6 rounded-xl font-medium text-white transition-all duration-200 hover:shadow-lg hover:scale-105"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-5 h-5" />
                   <span className="hidden sm:inline ml-2">Anunciar</span>
                 </Button>
 
-                {/* User Menu */}
+                {/* User Avatar Menu */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-muted">
-                      <Avatar className="h-8 w-8">
+                    <Button variant="ghost" className="relative h-12 w-12 rounded-xl hover:bg-eco-green-light/50 transition-colors border-2 border-eco-green/20">
+                      <Avatar className="h-10 w-10">
                         <AvatarImage src="" alt={user?.user_metadata?.name || user?.email || ''} />
-                        <AvatarFallback className="bg-eco-green text-white text-sm">
+                        <AvatarFallback className="bg-eco-green text-white text-sm font-semibold">
                           {(user?.user_metadata?.name || user?.email || 'U').split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                         </AvatarFallback>
                       </Avatar>
@@ -302,18 +326,18 @@ export const Header = ({
                 </DropdownMenu>
               </>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   onClick={() => onNavigate('auth')}
-                  className="h-9 px-4 hover:bg-muted"
+                  className="h-11 px-6 rounded-xl hover:bg-eco-green-light/50 text-eco-green font-medium transition-all duration-200"
                 >
                   Entrar
                 </Button>
                 <Button 
                   onClick={() => onNavigate('auth')} 
-                  className="bg-gradient-eco hover:opacity-90 h-9 px-4"
+                  className="bg-gradient-eco hover:opacity-90 h-11 px-6 rounded-xl font-medium text-white shadow-eco transition-all duration-200 hover:shadow-lg hover:scale-105"
                 >
                   Cadastrar
                 </Button>
