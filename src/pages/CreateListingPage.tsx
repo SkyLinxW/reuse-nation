@@ -9,7 +9,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { createWasteItem } from '@/lib/supabase';
 import { WasteItem, WasteCategory } from '@/types';
-import { ArrowLeft, Upload } from 'lucide-react';
+import { ArrowLeft, Upload, MapPin } from 'lucide-react';
+import { ListingAddressSelector } from '@/components/ListingAddressSelector';
+import { Coordinates } from '@/services/addressService';
 
 interface CreateListingPageProps {
   onNavigate: (page: string) => void;
@@ -26,8 +28,8 @@ export const CreateListingPage = ({ onNavigate }: CreateListingPageProps) => {
     quantityUnit: 'kg' as 'kg' | 'm3' | 'unidades' | 'toneladas',
     condition: '' as 'novo' | 'usado' | 'sobras_limpas' | 'contaminado',
     price: '',
-    city: '',
-    state: '',
+    location: '',
+    coordinates: null as Coordinates | null,
     plasticType: '',
     purity: '',
     composition: ''
@@ -64,6 +66,14 @@ export const CreateListingPage = ({ onNavigate }: CreateListingPageProps) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleAddressSelected = (address: string, coordinates: Coordinates) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      location: address,
+      coordinates: coordinates
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -90,7 +100,7 @@ export const CreateListingPage = ({ onNavigate }: CreateListingPageProps) => {
         }),
         condition: formData.condition,
         price: parseFloat(formData.price),
-        location: `${formData.city}, ${formData.state}`,
+        location: formData.location,
         availability: true
       };
 
@@ -111,8 +121,8 @@ export const CreateListingPage = ({ onNavigate }: CreateListingPageProps) => {
         quantityUnit: 'kg' as 'kg' | 'm3' | 'unidades' | 'toneladas',
         condition: '' as 'novo' | 'usado' | 'sobras_limpas' | 'contaminado',
         price: '',
-        city: '',
-        state: '',
+        location: '',
+        coordinates: null,
         plasticType: '',
         purity: '',
         composition: ''
@@ -273,24 +283,31 @@ export const CreateListingPage = ({ onNavigate }: CreateListingPageProps) => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="city">Cidade</Label>
-                <Input
-                  id="city"
-                  value={formData.city}
-                  onChange={(e) => handleInputChange('city', e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="state">Estado</Label>
-                <Input
-                  id="state"
-                  value={formData.state}
-                  onChange={(e) => handleInputChange('state', e.target.value)}
-                  required
-                />
+              {/* Localização Section */}
+              <div className="md:col-span-2 space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <MapPin className="w-5 h-5 text-eco-green" />
+                  <Label className="text-lg font-semibold">Localização do Material</Label>
+                </div>
+                <div className="p-4 border rounded-lg bg-muted/50">
+                  <ListingAddressSelector 
+                    onAddressSelected={handleAddressSelected}
+                    defaultAddress={formData.location}
+                  />
+                </div>
+                {formData.location && (
+                  <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+                    <MapPin className="w-4 h-4 text-green-600" />
+                    <div>
+                      <Label className="text-sm font-medium text-green-800 dark:text-green-200">
+                        Localização Selecionada:
+                      </Label>
+                      <p className="text-sm text-green-700 dark:text-green-300">
+                        {formData.location}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {formData.category === 'plasticos' && (
@@ -341,10 +358,16 @@ export const CreateListingPage = ({ onNavigate }: CreateListingPageProps) => {
             <Button 
               type="submit" 
               className="w-full bg-gradient-eco hover:opacity-90"
-              disabled={loading}
+              disabled={loading || !formData.location}
             >
               {loading ? 'Criando Anúncio...' : 'Criar Anúncio'}
             </Button>
+            
+            {!formData.location && (
+              <p className="text-sm text-muted-foreground text-center">
+                Selecione uma localização para continuar
+              </p>
+            )}
           </form>
         </CardContent>
       </Card>
