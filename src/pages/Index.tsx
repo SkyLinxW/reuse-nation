@@ -14,6 +14,10 @@ import { TransactionsPage } from '@/pages/TransactionsPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { SellerProfilePage } from '@/pages/SellerProfilePage';
 import { SearchPage } from '@/pages/SearchPage';
+import { AboutPage } from '@/pages/AboutPage';
+import { ServicesPage } from '@/pages/ServicesPage';
+import { NewsPage } from '@/pages/NewsPage';
+import { AnnouncementsPage } from '@/pages/AnnouncementsPage';
 
 const Index = () => {
   const [currentPage, setCurrentPage] = useState('home');
@@ -91,6 +95,14 @@ const Index = () => {
         return <SellerProfilePage onNavigate={handleNavigate} sellerId={pageParams.id || ''} />;
       case 'search':
         return <SearchPage onNavigate={handleNavigate} />;
+      case 'about':
+        return <AboutPage onNavigate={handleNavigate} />;
+      case 'services':
+        return <ServicesPage onNavigate={handleNavigate} />;
+      case 'news':
+        return <NewsPage onNavigate={handleNavigate} />;
+      case 'announcements':
+        return <AnnouncementsPage onNavigate={handleNavigate} />;
       default:
         return <HomePage onNavigate={handleNavigate} />;
     }

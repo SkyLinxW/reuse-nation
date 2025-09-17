@@ -105,7 +105,43 @@ export const Header = ({
             </div>
           </form>
 
-          {/* Navigation */}
+          {/* Main Navigation */}
+          <nav className="hidden lg:flex items-center gap-1 mr-4">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => onNavigate('about')}
+              className={currentPage === 'about' ? 'bg-eco-green-light' : ''}
+            >
+              Sobre
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => onNavigate('services')}
+              className={currentPage === 'services' ? 'bg-eco-green-light' : ''}
+            >
+              Serviços
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => onNavigate('news')}
+              className={currentPage === 'news' ? 'bg-eco-green-light' : ''}
+            >
+              Impacto
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => onNavigate('announcements')}
+              className={currentPage === 'announcements' ? 'bg-eco-green-light' : ''}
+            >
+              Parcerias
+            </Button>
+          </nav>
+
+          {/* User Navigation */}
           <div className="flex items-center gap-2">
             {user ? <>
                 <Button variant="ghost" size="sm" onClick={() => onNavigate('cart')} className={`relative ${currentPage === 'cart' ? 'bg-eco-green-light' : ''}`}>
