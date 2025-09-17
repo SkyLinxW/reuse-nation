@@ -161,11 +161,17 @@ export const EnhancedTrackingCard = ({
     calculateAndSetDeliveryDetails();
   }, [transaction, otherUser, product]);
 
-  // Function to check if address can be changed
+  // Function to check if address can be changed based on delivery method and status
   const canChangeAddress = () => {
-    // Allow address changes only for pending and confirmed statuses
-    // Once it's in transport or delivered, address cannot be changed
-    return transaction.status === 'pendente' || transaction.status === 'confirmado';
+    // Retirada local: Não permite alterar endereço (é no local do vendedor)
+    if (transaction.deliveryMethod === 'retirada_local') {
+      return false;
+    }
+    
+    // Entrega e Transportadora: Permite alterar apenas quando pendente ou confirmado
+    // Uma vez em transporte ou entregue, não pode mais alterar
+    return (transaction.deliveryMethod === 'entrega' || transaction.deliveryMethod === 'transportadora') &&
+           (transaction.status === 'pendente' || transaction.status === 'confirmado');
   };
 
   const handleAddressUpdate = async (address: string, coordinates: Coordinates) => {
@@ -367,7 +373,9 @@ export const EnhancedTrackingCard = ({
                   className="flex items-center gap-2"
                 >
                   <Settings className="w-3 h-3" />
-                  Alterar Endereço
+                  {transaction.deliveryMethod === 'transportadora' 
+                    ? 'Alterar Endereço de Entrega' 
+                    : 'Alterar Endereço'}
                 </Button>
               )}
               <Button
@@ -382,12 +390,19 @@ export const EnhancedTrackingCard = ({
             </div>
           </div>
           
-          {/* Address Selector - Only show if transaction status allows changes */}
+          {/* Address Selector - Only show for delivery methods that allow address changes */}
           {showAddressSelector && canChangeAddress() && (
-            <AddressSelector
-              onAddressSelected={handleAddressUpdate}
-              defaultAddress={transaction.deliveryAddress || ''}
-            />
+            <div className="space-y-2">
+              <h5 className="text-sm font-medium text-muted-foreground">
+                {transaction.deliveryMethod === 'transportadora' 
+                  ? 'Endereço de Entrega via Transportadora' 
+                  : 'Endereço de Entrega Local'}
+              </h5>
+              <AddressSelector
+                onAddressSelected={handleAddressUpdate}
+                defaultAddress={transaction.deliveryAddress || ''}
+              />
+            </div>
           )}
 
           <div className="space-y-3">
@@ -448,13 +463,31 @@ export const EnhancedTrackingCard = ({
         <div className="grid grid-cols-2 gap-4 p-4 bg-card border rounded-lg">
           <div>
             <p className="text-sm font-medium">Método de Entrega</p>
-            <p className="text-sm text-muted-foreground">{getDeliveryMethodLabel()}</p>
+            <p className="text-sm text-muted-foreground">
+              {transaction.deliveryMethod === 'retirada_local' && 'Retirada no Local'}
+              {transaction.deliveryMethod === 'entrega' && 'Entrega Local'}
+              {transaction.deliveryMethod === 'transportadora' && 'Entrega via Transportadora'}
+            </p>
+            {transaction.deliveryMethod === 'retirada_local' && (
+              <p className="text-xs text-amber-600 mt-1">
+                ⚠️ Endereço fixo - retirada no local do vendedor
+              </p>
+            )}
           </div>
           <div>
-            <p className="text-sm font-medium">Previsão de Entrega</p>
-            <p className="text-sm text-muted-foreground">
-              {transaction.deliveryMethod === 'retirada_local' ? 'Disponível para retirada' : deliveryDetails.estimatedTime}
+            <p className="text-sm font-medium">
+              {transaction.deliveryMethod === 'retirada_local' ? 'Local de Retirada' : 'Endereço de Entrega'}
             </p>
+            <p className="text-sm text-muted-foreground">
+              {transaction.deliveryMethod === 'retirada_local' 
+                ? (typeof product?.location === 'string' ? product.location : product?.location?.city + ', ' + product?.location?.state || 'Local do vendedor')
+                : (transaction.deliveryAddress || 'Endereço não definido')}
+            </p>
+            {!transaction.deliveryAddress && transaction.deliveryMethod !== 'retirada_local' && (
+              <p className="text-xs text-red-600 mt-1">
+                ⚠️ Endereço de entrega não definido
+              </p>
+            )}
           </div>
         </div>
 
