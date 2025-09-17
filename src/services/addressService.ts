@@ -118,8 +118,8 @@ export const geocodeAddress = async (address: string): Promise<Coordinates | nul
   }
 };
 
-// Calculate real route using OSRM (Open Source Routing Machine)
-export const calculateRealRoute = async (origin: Coordinates, destination: Coordinates): Promise<RouteInfo | null> => {
+// Calculate real route using OSRM (Open Source Routing Machine) 
+export const calculateRealRoute = async (origin: Coordinates, destination: Coordinates): Promise<{ distance: number; duration: number; coordinates?: Coordinates[] } | null> => {
   try {
     console.log('Calculating real route using OSRM:', { origin, destination });
     
@@ -135,19 +135,29 @@ export const calculateRealRoute = async (origin: Coordinates, destination: Coord
     
     if (!response.ok) {
       console.warn('OSRM API failed, using fallback calculation');
-      return calculateFallbackRoute(origin, destination);
+      const fallback = calculateFallbackRoute(origin, destination);
+      return {
+        distance: fallback.distance,
+        duration: fallback.duration,
+        coordinates: fallback.coordinates
+      };
     }
     
     const data = await response.json();
     
     if (!data.routes || data.routes.length === 0) {
       console.warn('No routes found, using fallback calculation');
-      return calculateFallbackRoute(origin, destination);
+      const fallback = calculateFallbackRoute(origin, destination);
+      return {
+        distance: fallback.distance,
+        duration: fallback.duration,
+        coordinates: fallback.coordinates
+      };
     }
     
     const route = data.routes[0];
     const distance = route.distance / 1000; // Convert to km
-    const duration = route.duration / 60; // Convert to minutes
+    const duration = route.duration; // Keep in seconds for compatibility
     const coordinates = route.geometry.coordinates.map(([lng, lat]: [number, number]) => ({ lat, lng }));
     
     const result = {
@@ -160,7 +170,12 @@ export const calculateRealRoute = async (origin: Coordinates, destination: Coord
     return result;
   } catch (error) {
     console.error('Error calculating real route with OSRM:', error);
-    return calculateFallbackRoute(origin, destination);
+    const fallback = calculateFallbackRoute(origin, destination);
+    return {
+      distance: fallback.distance,
+      duration: fallback.duration * 60, // Convert minutes to seconds for compatibility
+      coordinates: fallback.coordinates
+    };
   }
 };
 
@@ -212,6 +227,50 @@ const generateLinearRoute = (start: Coordinates, end: Coordinates, points = 20):
 
 const toRadians = (degrees: number): number => {
   return degrees * (Math.PI / 180);
+};
+
+// Mock function to get coordinates from address (for compatibility)
+export const getAddressCoordinates = async (address: string): Promise<Coordinates> => {
+  // First try geocoding
+  const geocoded = await geocodeAddress(address);
+  if (geocoded) {
+    return geocoded;
+  }
+  
+  // Fallback to city matching
+  const mockCities: Record<string, Coordinates> = {
+    'são paulo': { lat: -23.5505, lng: -46.6333 },
+    'rio de janeiro': { lat: -22.9068, lng: -43.1729 },
+    'belo horizonte': { lat: -19.9167, lng: -43.9345 },
+    'brasília': { lat: -15.8267, lng: -47.9218 },
+    'salvador': { lat: -12.9714, lng: -38.5014 },
+    'fortaleza': { lat: -3.7319, lng: -38.5267 },
+    'recife': { lat: -8.0476, lng: -34.8770 },
+    'porto alegre': { lat: -30.0346, lng: -51.2177 },
+    'curitiba': { lat: -25.4284, lng: -49.2733 },
+    'goiânia': { lat: -16.6864, lng: -49.2643 },
+    'campinas': { lat: -22.9099, lng: -47.0626 },
+    'santos': { lat: -23.9609, lng: -46.3335 },
+    'lucas do rio verde': { lat: -13.0583, lng: -55.9167 }
+  };
+  
+  const addressLower = address.toLowerCase();
+  
+  for (const [city, coords] of Object.entries(mockCities)) {
+    if (addressLower.includes(city)) {
+      // Add some random offset to simulate exact address
+      return {
+        lat: coords.lat + (Math.random() - 0.5) * 0.02,
+        lng: coords.lng + (Math.random() - 0.5) * 0.02
+      };
+    }
+  }
+  
+  // Default to São Paulo with random offset
+  return {
+    lat: SAO_PAULO_COORDINATES.lat + (Math.random() - 0.5) * 0.02,
+    lng: SAO_PAULO_COORDINATES.lng + (Math.random() - 0.5) * 0.02
+  };
 };
 
 // São Paulo default coordinates (origin)

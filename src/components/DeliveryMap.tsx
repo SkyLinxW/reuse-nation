@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Coordinates, generateRoute } from '@/utils/distanceCalculator';
+import { Coordinates, generateRealRoute, generateRoute } from '@/utils/distanceCalculator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Truck, MapPin, Package } from 'lucide-react';
@@ -98,21 +98,46 @@ export const DeliveryMap = ({
 
     markersRef.current = [originMarker, destinationMarker];
 
-    // Generate route for animation
-    const routePoints = generateRoute(origin, destination, 100);
-    setRoute(routePoints);
+    // Generate real route for animation
+    const generateAndSetRoute = async () => {
+      try {
+        const routePoints = await generateRealRoute(origin, destination);
+        setRoute(routePoints);
 
-    // Add route polyline
-    if (routePoints.length > 0) {
-      const routeCoords: [number, number][] = routePoints.map(point => [point.lat, point.lng]);
-      const routeLine = L.polyline(routeCoords, {
-        color: '#22c55e',
-        weight: 4,
-        opacity: 0.6
-      }).addTo(map.current);
+        // Add route polyline with real road coordinates
+        if (routePoints.length > 0) {
+          const routeCoords: [number, number][] = routePoints.map(point => [point.lat, point.lng]);
+          const routeLine = L.polyline(routeCoords, {
+            color: '#22c55e',
+            weight: 4,
+            opacity: 0.7,
+            smoothFactor: 1
+          }).addTo(map.current!);
 
-      routeLayerRef.current = routeLine;
-    }
+          routeLayerRef.current = routeLine;
+          
+          console.log('Real route displayed with', routePoints.length, 'coordinate points');
+        }
+      } catch (error) {
+        console.error('Error generating route:', error);
+        // Fallback to simple route if real route fails
+        const fallbackRoute = generateRoute(origin, destination, 50);
+        setRoute(fallbackRoute);
+        
+        if (fallbackRoute.length > 0) {
+          const routeCoords: [number, number][] = fallbackRoute.map(point => [point.lat, point.lng]);
+          const routeLine = L.polyline(routeCoords, {
+            color: '#22c55e',
+            weight: 4,
+            opacity: 0.6
+          }).addTo(map.current!);
+
+          routeLayerRef.current = routeLine;
+        }
+      }
+    };
+
+    generateAndSetRoute();
 
     // Fit map to show both points with padding
     try {

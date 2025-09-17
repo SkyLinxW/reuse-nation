@@ -36,7 +36,7 @@ const toRadians = (degrees: number): number => {
   return degrees * (Math.PI / 180);
 };
 
-// Generate intermediate points for animation
+// Generate intermediate points for animation (fallback - straight line)
 export const generateRoute = (start: Coordinates, end: Coordinates, points: number = 50): Coordinates[] => {
   const route: Coordinates[] = [];
   
@@ -48,6 +48,30 @@ export const generateRoute = (start: Coordinates, end: Coordinates, points: numb
   }
   
   return route;
+};
+
+// Generate real route with actual road data
+export const generateRealRoute = async (start: Coordinates, end: Coordinates): Promise<Coordinates[]> => {
+  try {
+    // Import routing service to avoid circular dependency
+    const { calculateRealRoute, calculateFallbackRoute } = await import('@/services/routingService');
+    
+    // Try to get real route first
+    const routeInfo = await calculateRealRoute(start, end);
+    
+    if (routeInfo && routeInfo.coordinates.length > 0) {
+      console.log('Using real route with', routeInfo.coordinates.length, 'points');
+      return routeInfo.coordinates;
+    }
+    
+    // Fallback to curve-enhanced straight line
+    console.log('Using fallback route');
+    const fallbackRoute = calculateFallbackRoute(start, end, 100);
+    return fallbackRoute.coordinates;
+  } catch (error) {
+    console.error('Error generating real route, using simple fallback:', error);
+    return generateRoute(start, end, 50);
+  }
 };
 
 // Mock coordinates for major Brazilian cities
