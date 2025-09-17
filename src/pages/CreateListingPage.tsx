@@ -159,222 +159,247 @@ export const CreateListingPage = ({ onNavigate }: CreateListingPageProps) => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Button
-        variant="ghost"
-        onClick={() => onNavigate('home')}
-        className="mb-4"
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Voltar
-      </Button>
+    <div className="min-h-screen bg-gradient-to-br from-eco-light/20 to-eco-cream/30 relative overflow-hidden">
+      <div className="absolute inset-0 opacity-40">
+        <div className="w-full h-full bg-eco-green/5 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-eco-green/10 via-transparent to-transparent"></div>
+      </div>
+      
+      <div className="relative z-10 container mx-auto px-4 py-8">
+        <Button
+          variant="ghost"
+          onClick={() => onNavigate('home')}
+          className="mb-6 hover:bg-white/20 backdrop-blur-sm"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Voltar
+        </Button>
 
-      <Card className="max-w-4xl mx-auto">
-        <CardHeader>
-          <CardTitle className="text-eco-green">Criar Novo Anúncio</CardTitle>
-          <CardDescription>
-            Anuncie seus resíduos e contribua para a economia circular
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2 space-y-2">
-                <Label htmlFor="title">Título do Anúncio</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => handleInputChange('title', e.target.value)}
-                  placeholder="Ex: Sobras de Plástico PET"
-                  required
-                />
-              </div>
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl md:text-5xl font-bold text-eco-dark mb-4">
+              Criar Novo Anúncio
+            </h1>
+            <p className="text-xl text-muted-foreground">
+              Anuncie seus resíduos e contribua para a economia circular
+            </p>
+          </div>
 
-              <div className="md:col-span-2 space-y-2">
-                <Label htmlFor="description">Descrição</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  placeholder="Descreva detalhadamente o material..."
-                  rows={4}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="category">Categoria</Label>
-                <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map(cat => (
-                      <SelectItem key={cat.value} value={cat.value}>
-                        {cat.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="subcategory">Subcategoria</Label>
-                <Input
-                  id="subcategory"
-                  value={formData.subcategory}
-                  onChange={(e) => handleInputChange('subcategory', e.target.value)}
-                  placeholder="Ex: PET, Alumínio, etc."
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="quantityValue">Quantidade</Label>
-                <Input
-                  id="quantityValue"
-                  type="number"
-                  step="0.01"
-                  value={formData.quantityValue}
-                  onChange={(e) => handleInputChange('quantityValue', e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="quantityUnit">Unidade</Label>
-                <Select value={formData.quantityUnit} onValueChange={(value) => handleInputChange('quantityUnit', value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {units.map(unit => (
-                      <SelectItem key={unit.value} value={unit.value}>
-                        {unit.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="condition">Condição</Label>
-                <Select value={formData.condition} onValueChange={(value) => handleInputChange('condition', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a condição" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {conditions.map(cond => (
-                      <SelectItem key={cond.value} value={cond.value}>
-                        {cond.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="price">Preço por unidade (R$)</Label>
-                <Input
-                  id="price"
-                  type="number"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={(e) => handleInputChange('price', e.target.value)}
-                  required
-                />
-              </div>
-
-              {/* Localização Section */}
-              <div className="md:col-span-2 space-y-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <MapPin className="w-5 h-5 text-eco-green" />
-                  <Label className="text-lg font-semibold">Localização do Material</Label>
-                </div>
-                <div className="p-4 border rounded-lg bg-muted/50">
-                  <ListingAddressSelector 
-                    onAddressSelected={handleAddressSelected}
-                    defaultAddress={formData.location}
-                  />
-                </div>
-                {formData.location && (
-                  <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
-                    <MapPin className="w-4 h-4 text-green-600" />
-                    <div>
-                      <Label className="text-sm font-medium text-green-800 dark:text-green-200">
-                        Localização Selecionada:
-                      </Label>
-                      <p className="text-sm text-green-700 dark:text-green-300">
-                        {formData.location}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {formData.category === 'plasticos' && (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="plasticType">Tipo de Plástico</Label>
+          <Card className="shadow-xl bg-white/95 backdrop-blur-sm border-0">
+            <CardContent className="p-8">
+              <form onSubmit={handleSubmit} className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="md:col-span-2 space-y-2">
+                    <Label htmlFor="title" className="text-sm font-medium">Título do Anúncio</Label>
                     <Input
-                      id="plasticType"
-                      value={formData.plasticType}
-                      onChange={(e) => handleInputChange('plasticType', e.target.value)}
-                      placeholder="Ex: PET, HDPE, PVC"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="purity">Pureza</Label>
-                    <Input
-                      id="purity"
-                      value={formData.purity}
-                      onChange={(e) => handleInputChange('purity', e.target.value)}
-                      placeholder="Ex: 98%"
+                      id="title"
+                      value={formData.title}
+                      onChange={(e) => handleInputChange('title', e.target.value)}
+                      placeholder="Ex: Sobras de Plástico PET"
+                      className="h-12 bg-background/50 border-border/50 focus:bg-background focus:border-eco-green"
+                      required
                     />
                   </div>
 
                   <div className="md:col-span-2 space-y-2">
-                    <Label htmlFor="composition">Composição</Label>
-                    <Input
-                      id="composition"
-                      value={formData.composition}
-                      onChange={(e) => handleInputChange('composition', e.target.value)}
-                      placeholder="Ex: Politereftalato de etileno"
+                    <Label htmlFor="description" className="text-sm font-medium">Descrição</Label>
+                    <Textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) => handleInputChange('description', e.target.value)}
+                      placeholder="Descreva detalhadamente o material..."
+                      rows={4}
+                      className="bg-background/50 border-border/50 focus:bg-background focus:border-eco-green resize-none"
+                      required
                     />
                   </div>
-                </>
-              )}
 
-              <div className="md:col-span-2 space-y-2">
-                <Label>Imagens</Label>
-                <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-                  <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground">
-                    Clique para adicionar imagens (em breve)
-                  </p>
+                  <div className="space-y-2">
+                    <Label htmlFor="category" className="text-sm font-medium">Categoria</Label>
+                    <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
+                      <SelectTrigger className="h-12 bg-background/50 border-border/50 focus:bg-background focus:border-eco-green">
+                        <SelectValue placeholder="Selecione a categoria" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map(cat => (
+                          <SelectItem key={cat.value} value={cat.value}>
+                            {cat.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="subcategory" className="text-sm font-medium">Subcategoria</Label>
+                    <Input
+                      id="subcategory"
+                      value={formData.subcategory}
+                      onChange={(e) => handleInputChange('subcategory', e.target.value)}
+                      placeholder="Ex: PET, Alumínio, etc."
+                      className="h-12 bg-background/50 border-border/50 focus:bg-background focus:border-eco-green"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="quantityValue" className="text-sm font-medium">Quantidade</Label>
+                    <Input
+                      id="quantityValue"
+                      type="number"
+                      step="0.01"
+                      value={formData.quantityValue}
+                      onChange={(e) => handleInputChange('quantityValue', e.target.value)}
+                      className="h-12 bg-background/50 border-border/50 focus:bg-background focus:border-eco-green"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="quantityUnit" className="text-sm font-medium">Unidade</Label>
+                    <Select value={formData.quantityUnit} onValueChange={(value) => handleInputChange('quantityUnit', value)}>
+                      <SelectTrigger className="h-12 bg-background/50 border-border/50 focus:bg-background focus:border-eco-green">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {units.map(unit => (
+                          <SelectItem key={unit.value} value={unit.value}>
+                            {unit.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="condition" className="text-sm font-medium">Condição</Label>
+                    <Select value={formData.condition} onValueChange={(value) => handleInputChange('condition', value)}>
+                      <SelectTrigger className="h-12 bg-background/50 border-border/50 focus:bg-background focus:border-eco-green">
+                        <SelectValue placeholder="Selecione a condição" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {conditions.map(cond => (
+                          <SelectItem key={cond.value} value={cond.value}>
+                            {cond.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="price" className="text-sm font-medium">Preço por unidade (R$)</Label>
+                    <Input
+                      id="price"
+                      type="number"
+                      step="0.01"
+                      value={formData.price}
+                      onChange={(e) => handleInputChange('price', e.target.value)}
+                      className="h-12 bg-background/50 border-border/50 focus:bg-background focus:border-eco-green"
+                      required
+                    />
+                  </div>
+
+                  {/* Localização Section */}
+                  <div className="md:col-span-2 space-y-4">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-8 h-8 bg-eco-green/10 rounded-full flex items-center justify-center">
+                        <MapPin className="w-4 h-4 text-eco-green" />
+                      </div>
+                      <Label className="text-lg font-semibold text-eco-dark">Localização do Material</Label>
+                    </div>
+                    <div className="p-6 border rounded-xl bg-eco-light/20 border-eco-green/20">
+                      <ListingAddressSelector 
+                        onAddressSelected={handleAddressSelected}
+                        defaultAddress={formData.location}
+                      />
+                    </div>
+                    {formData.location && (
+                      <div className="flex items-center gap-3 p-4 bg-eco-green/10 rounded-xl border border-eco-green/20">
+                        <div className="w-8 h-8 bg-eco-green/20 rounded-full flex items-center justify-center">
+                          <MapPin className="w-4 h-4 text-eco-green" />
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium text-eco-green">
+                            Localização Selecionada:
+                          </Label>
+                          <p className="text-sm text-eco-dark">
+                            {formData.location}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {formData.category === 'plasticos' && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="plasticType" className="text-sm font-medium">Tipo de Plástico</Label>
+                        <Input
+                          id="plasticType"
+                          value={formData.plasticType}
+                          onChange={(e) => handleInputChange('plasticType', e.target.value)}
+                          placeholder="Ex: PET, HDPE, PVC"
+                          className="h-12 bg-background/50 border-border/50 focus:bg-background focus:border-eco-green"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="purity" className="text-sm font-medium">Pureza</Label>
+                        <Input
+                          id="purity"
+                          value={formData.purity}
+                          onChange={(e) => handleInputChange('purity', e.target.value)}
+                          placeholder="Ex: 98%"
+                          className="h-12 bg-background/50 border-border/50 focus:bg-background focus:border-eco-green"
+                        />
+                      </div>
+
+                      <div className="md:col-span-2 space-y-2">
+                        <Label htmlFor="composition" className="text-sm font-medium">Composição</Label>
+                        <Input
+                          id="composition"
+                          value={formData.composition}
+                          onChange={(e) => handleInputChange('composition', e.target.value)}
+                          placeholder="Ex: Politereftalato de etileno"
+                          className="h-12 bg-background/50 border-border/50 focus:bg-background focus:border-eco-green"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  <div className="md:col-span-2 space-y-4">
+                    <Label className="text-sm font-medium">Imagens</Label>
+                    <div className="border-2 border-dashed border-eco-green/30 rounded-xl p-12 text-center bg-eco-light/10 hover:bg-eco-light/20 transition-colors">
+                      <div className="w-16 h-16 bg-eco-green/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Upload className="w-8 h-8 text-eco-green" />
+                      </div>
+                      <p className="text-muted-foreground">
+                        Clique para adicionar imagens (em breve)
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <Button 
-              type="submit" 
-              className="w-full bg-gradient-eco hover:opacity-90"
-              disabled={loading || !formData.location}
-            >
-              {loading ? 'Criando Anúncio...' : 'Criar Anúncio'}
-            </Button>
-            
-            {!formData.location && (
-              <p className="text-sm text-muted-foreground text-center">
-                 Selecione uma localização para continuar
-               </p>
-             )}
-           </form>
-         </CardContent>
-       </Card>
-     </div>
-   </div>
- </div>
-);
+                <div className="border-t pt-6">
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-gradient-eco hover:opacity-90 shadow-eco h-12 text-lg font-semibold rounded-xl"
+                    disabled={loading || !formData.location}
+                  >
+                    {loading ? 'Criando Anúncio...' : 'Criar Anúncio'}
+                  </Button>
+                  
+                  {!formData.location && (
+                    <p className="text-sm text-muted-foreground text-center mt-4">
+                      Selecione uma localização para continuar
+                    </p>
+                  )}
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
 };
