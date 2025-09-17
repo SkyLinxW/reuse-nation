@@ -15,7 +15,8 @@ import {
   addToFavorites,
   removeFromFavorites,
   createTransaction,
-  getOrCreateConversation
+  getOrCreateConversation,
+  incrementWasteItemViews
 } from '@/lib/supabase';
 import { WasteItem, User, Transaction, Chat } from '@/types';
 import { 
@@ -56,6 +57,9 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
             ...item.public_profiles,
             user_id: item.user_id
           });
+          
+          // Increment views count for this product
+          await incrementWasteItemViews(productId);
           
           if (user) {
             const favorited = await isFavorite(user.id, productId);
@@ -272,7 +276,7 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Eye className="w-4 h-4" />
-                  0 visualizações
+                  {product.views || 0} visualizações
                 </div>
                 <div className="flex items-center gap-1">
                   <Heart className="w-4 h-4" />
@@ -297,13 +301,20 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
                 <div>
                   <h4 className="font-medium">Quantidade</h4>
                   <p className="text-muted-foreground">
-                    {product.quantity?.value || 'N/A'} {product.quantity?.unit || ''}
+                    {typeof product.quantity === 'string' 
+                      ? JSON.parse(product.quantity).value + ' ' + JSON.parse(product.quantity).unit
+                      : `${product.quantity?.value || 'N/A'} ${product.quantity?.unit || ''}`
+                    }
                   </p>
                 </div>
                 <div>
                   <h4 className="font-medium">Preço unitário</h4>
                   <p className="text-muted-foreground">
-                    R$ {Number(product.price).toFixed(2)} por {product.quantity?.unit || 'unidade'}
+                    R$ {Number(product.price).toFixed(2)} por {
+                      typeof product.quantity === 'string' 
+                        ? JSON.parse(product.quantity).unit
+                        : product.quantity?.unit || 'unidade'
+                    }
                   </p>
                 </div>
               </div>

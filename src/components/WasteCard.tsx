@@ -162,12 +162,19 @@ export const WasteCard = ({ waste, onNavigate, onItemClick, onContactSeller, sho
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">Quantidade:</span>
             <span className="text-sm font-medium">
-              {waste.quantity.value} {waste.quantity.unit}
+              {typeof waste.quantity === 'string' 
+                ? JSON.parse(waste.quantity).value + ' ' + JSON.parse(waste.quantity).unit
+                : `${waste.quantity.value} ${waste.quantity.unit}`
+              }
             </span>
           </div>
           
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Preço por {waste.quantity.unit}:</span>
+            <span className="text-sm text-muted-foreground">Preço por {
+              typeof waste.quantity === 'string' 
+                ? JSON.parse(waste.quantity).unit
+                : waste.quantity.unit
+            }:</span>
             <span className="text-lg font-bold text-eco-green">
               {formatPrice(waste.price)}
             </span>

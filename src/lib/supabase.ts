@@ -116,6 +116,17 @@ export const createWasteItem = async (wasteItem: any) => {
   return data;
 };
 
+// Function to increment waste item views
+export const incrementWasteItemViews = async (itemId: string) => {
+  const { error } = await supabase.rpc('increment_waste_item_views', {
+    item_id: itemId
+  });
+  
+  if (error) {
+    console.error('Error incrementing views:', error);
+  }
+};
+
 export const updateWasteItem = async (id: string, updates: any) => {
   const { data, error } = await supabase
     .from('waste_items')
