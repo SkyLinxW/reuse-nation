@@ -522,6 +522,7 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string
+          views: number | null
         }
         Insert: {
           availability?: boolean
@@ -538,6 +539,7 @@ export type Database = {
           title: string
           updated_at?: string
           user_id: string
+          views?: number | null
         }
         Update: {
           availability?: boolean
@@ -554,6 +556,7 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+          views?: number | null
         }
         Relationships: [
           {
@@ -600,7 +603,10 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      increment_waste_item_views: {
+        Args: { item_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
