@@ -177,9 +177,9 @@ export const OrderSummary = ({
 
         {/* Estimativa de Prazo */}
         <div className="text-center text-xs text-muted-foreground">
-          {deliveryMethod === 'retirada_local' && 'Disponível para retirada imediatamente'}
-          {deliveryMethod === 'entrega' && 'Entrega em até 24 horas'}
-          {deliveryMethod === 'transportadora' && 'Entrega em 3-7 dias úteis'}
+          {deliveryMethod === 'retirada_local' && 'Disponível para retirada após preparação'}
+          {deliveryMethod === 'entrega' && 'Produto entra em preparação em até 24 horas'}
+          {deliveryMethod === 'transportadora' && 'Produto entra em preparação em até 24 horas'}
         </div>
       </CardContent>
     </Card>

@@ -225,7 +225,7 @@ export const DeliveryForm = ({
                 Entrega Expressa
               </h4>
               <p className="text-sm text-muted-foreground mb-3">
-                Entrega em até 24 horas na região metropolitana.
+                Produto entra em preparação em até 24 horas após confirmação.
               </p>
               
                 <div className="space-y-4">
