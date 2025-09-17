@@ -104,9 +104,13 @@ export const ListingAddressSelector = ({ onAddressSelected, defaultAddress }: Li
           setSelectedState(state.id.toString());
           await loadCities(state.id.toString());
           
-          // Set city after cities are loaded
-          setTimeout(() => {
+          // Set city after cities are loaded and auto-confirm
+          setTimeout(async () => {
             setSelectedCity(address.localidade);
+            // Auto-confirm after CEP search
+            setTimeout(() => {
+              handleConfirmAddress();
+            }, 500);
           }, 100);
         }
         
@@ -134,11 +138,6 @@ export const ListingAddressSelector = ({ onAddressSelected, defaultAddress }: Li
 
   const handleConfirmAddress = async () => {
     if (!selectedState || !selectedCity || !street) {
-      toast({
-        title: "Dados incompletos",
-        description: "Preencha pelo menos estado, cidade e rua",
-        variant: "destructive"
-      });
       return;
     }
 
@@ -156,7 +155,7 @@ export const ListingAddressSelector = ({ onAddressSelected, defaultAddress }: Li
         console.log('ListingAddressSelector - Calling onAddressSelected with:', { fullAddress, coordinates });
         onAddressSelected(fullAddress, coordinates);
         toast({
-          title: "Localização confirmada",
+          title: "Localização confirmada automaticamente",
           description: fullAddress,
         });
       } else {
@@ -176,6 +175,17 @@ export const ListingAddressSelector = ({ onAddressSelected, defaultAddress }: Li
       setLoading(false);
     }
   };
+
+  // Auto-confirm address when all required fields are filled
+  useEffect(() => {
+    if (selectedState && selectedCity && street.trim()) {
+      const timeoutId = setTimeout(() => {
+        handleConfirmAddress();
+      }, 1000); // Wait 1 second after user stops typing
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [selectedState, selectedCity, street, neighborhood]);
 
   const formatCep = (value: string) => {
     const numbers = value.replace(/\D/g, '');
@@ -293,23 +303,28 @@ export const ListingAddressSelector = ({ onAddressSelected, defaultAddress }: Li
         </div>
       )}
 
-      <Button 
-        onClick={handleConfirmAddress} 
-        disabled={!selectedState || !selectedCity || !street || loading}
-        className="w-full"
-      >
-        {loading ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin mr-2" />
-            Localizando...
-          </>
-        ) : (
-          <>
-            <MapPin className="w-4 h-4 mr-2" />
-            Confirmar Localização
-          </>
-        )}
-      </Button>
+      {/* Status indicator */}
+      {selectedState && selectedCity && street && (
+        <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+          <div className="flex items-center gap-2">
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-green-600" />
+                <Label className="text-sm font-medium text-green-800 dark:text-green-200">
+                  Confirmando localização...
+                </Label>
+              </>
+            ) : (
+              <>
+                <MapPin className="w-4 h-4 text-green-600" />
+                <Label className="text-sm font-medium text-green-800 dark:text-green-200">
+                  Localização confirmada automaticamente
+                </Label>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
