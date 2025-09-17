@@ -79,12 +79,14 @@ export const calculateDeliveryDetails = async (
         // Calculate time and cost based on delivery method
         if (deliveryMethod === 'entrega') {
           // Local delivery service - use real duration + processing time
-          const totalHours = Math.max(2, Math.ceil(duration / 60) + 1); // Add 1 hour processing
+          const durationInMinutes = duration / 60; // Convert seconds to minutes
+          const totalHours = Math.max(2, Math.ceil(durationInMinutes / 60) + 1); // Add 1 hour processing
           estimatedTime = `${totalHours} hora${totalHours > 1 ? 's' : ''}`;
           cost = Math.max(15, distance * 0.8); // Minimum R$ 15, then R$ 0.80 per km
         } else if (deliveryMethod === 'transportadora') {
           // Shipping company - convert to days
-          const totalDays = Math.max(1, Math.ceil(duration / (60 * 8))); // 8 hours driving per day
+          const durationInHours = duration / 3600; // Convert seconds to hours
+          const totalDays = Math.max(1, Math.ceil(durationInHours / 8)); // 8 hours driving per day
           estimatedTime = `${totalDays} dia${totalDays > 1 ? 's' : ''}`;
           cost = Math.max(25, distance * 0.5); // Minimum R$ 25, then R$ 0.50 per km
         }
