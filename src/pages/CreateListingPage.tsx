@@ -142,13 +142,14 @@ export const CreateListingPage = ({ onNavigate }: CreateListingPageProps) => {
 
   if (!user) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <Card>
+      <div className="min-h-screen bg-gradient-to-br from-eco-light/20 to-eco-cream/30 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full shadow-xl bg-white/95 backdrop-blur-sm border-0">
           <CardContent className="text-center py-8">
+            <Upload className="w-16 h-16 mx-auto mb-4 text-eco-green" />
             <p className="text-muted-foreground mb-4">
               Você precisa estar logado para criar um anúncio.
             </p>
-            <Button onClick={() => onNavigate('login')}>
+            <Button onClick={() => onNavigate('login')} className="bg-eco-green hover:bg-eco-green/90">
               Fazer Login
             </Button>
           </CardContent>
@@ -366,12 +367,14 @@ export const CreateListingPage = ({ onNavigate }: CreateListingPageProps) => {
             
             {!formData.location && (
               <p className="text-sm text-muted-foreground text-center">
-                Selecione uma localização para continuar
-              </p>
-            )}
-          </form>
-        </CardContent>
-      </Card>
-    </div>
-  );
+                 Selecione uma localização para continuar
+               </p>
+             )}
+           </form>
+         </CardContent>
+       </Card>
+     </div>
+   </div>
+ </div>
+);
 };

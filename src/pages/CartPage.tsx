@@ -190,14 +190,14 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
 
   if (!user) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <Card>
+      <div className="min-h-screen bg-gradient-to-br from-eco-light/20 to-eco-cream/30 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full shadow-xl bg-white/95 backdrop-blur-sm border-0">
           <CardContent className="text-center py-8">
-            <ShoppingCart className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+            <ShoppingCart className="w-16 h-16 mx-auto mb-4 text-eco-green" />
             <p className="text-muted-foreground mb-4">
               Você precisa estar logado para acessar o carrinho.
             </p>
-            <Button onClick={() => onNavigate('login')}>
+            <Button onClick={() => onNavigate('login')} className="bg-eco-green hover:bg-eco-green/90">
               Fazer Login
             </Button>
           </CardContent>
@@ -383,81 +383,92 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <Button
-        variant="ghost"
-        onClick={() => {
-          if (currentStep === 'cart') {
-            onNavigate('home');
-          } else if (currentStep === 'delivery') {
-            setCurrentStep('cart');
-          } else if (currentStep === 'payment') {
-            setCurrentStep('delivery');
-          }
-        }}
-        className="mb-6"
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        {currentStep === 'cart' ? 'Voltar às Compras' : 'Voltar'}
-      </Button>
+    <div className="min-h-screen bg-gradient-to-br from-eco-light/20 to-eco-cream/30 relative overflow-hidden">
+      <div className="absolute inset-0 opacity-40">
+        <div className="w-full h-full bg-eco-green/5 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-eco-green/10 via-transparent to-transparent"></div>
+      </div>
+      
+      <div className="relative z-10 container mx-auto px-4 py-8 max-w-6xl">
+        <Button
+          variant="ghost"
+          onClick={() => {
+            if (currentStep === 'cart') {
+              onNavigate('home');
+            } else if (currentStep === 'delivery') {
+              setCurrentStep('cart');
+            } else if (currentStep === 'payment') {
+              setCurrentStep('delivery');
+            }
+          }}
+          className="mb-6 hover:bg-white/20 backdrop-blur-sm"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          {currentStep === 'cart' ? 'Voltar às Compras' : 'Voltar'}
+        </Button>
 
-      {/* Steps Navigation */}
-      {cartItems.length > 0 && (
-        <div className="flex items-center justify-center mb-8">
-          <div className="flex items-center gap-4">
-            <div className={`flex items-center gap-2 ${currentStep === 'cart' ? 'text-eco-green font-bold' : 'text-muted-foreground'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep === 'cart' ? 'bg-eco-green text-white' : 'bg-muted'}`}>
-                1
+        {/* Steps Navigation */}
+        {cartItems.length > 0 && (
+          <Card className="mb-8 bg-white/95 backdrop-blur-sm shadow-soft border-0">
+            <CardContent className="py-6">
+              <div className="flex items-center justify-center">
+                <div className="flex items-center gap-4">
+                  <div className={`flex items-center gap-3 ${currentStep === 'cart' ? 'text-eco-green font-bold' : 'text-muted-foreground'}`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${currentStep === 'cart' ? 'bg-eco-green text-white shadow-eco' : 'bg-muted'}`}>
+                      1
+                    </div>
+                    <span className="text-sm font-medium">Carrinho</span>
+                  </div>
+                  
+                  <div className="w-16 h-0.5 bg-border rounded-full"></div>
+                  
+                  <div className={`flex items-center gap-3 ${currentStep === 'delivery' ? 'text-eco-green font-bold' : 'text-muted-foreground'}`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${currentStep === 'delivery' ? 'bg-eco-green text-white shadow-eco' : 'bg-muted'}`}>
+                      2
+                    </div>
+                    <span className="text-sm font-medium">Entrega</span>
+                  </div>
+                  
+                  <div className="w-16 h-0.5 bg-border rounded-full"></div>
+                  
+                  <div className={`flex items-center gap-3 ${currentStep === 'payment' ? 'text-eco-green font-bold' : 'text-muted-foreground'}`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${currentStep === 'payment' ? 'bg-eco-green text-white shadow-eco' : 'bg-muted'}`}>
+                      3
+                    </div>
+                    <span className="text-sm font-medium">Pagamento</span>
+                  </div>
+                </div>
               </div>
-              <span>Carrinho</span>
-            </div>
-            
-            <div className="w-12 h-0.5 bg-border"></div>
-            
-            <div className={`flex items-center gap-2 ${currentStep === 'delivery' ? 'text-eco-green font-bold' : 'text-muted-foreground'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep === 'delivery' ? 'bg-eco-green text-white' : 'bg-muted'}`}>
-                2
-              </div>
-              <span>Entrega</span>
-            </div>
-            
-            <div className="w-12 h-0.5 bg-border"></div>
-            
-            <div className={`flex items-center gap-2 ${currentStep === 'payment' ? 'text-eco-green font-bold' : 'text-muted-foreground'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep === 'payment' ? 'bg-eco-green text-white' : 'bg-muted'}`}>
-                3
-              </div>
-              <span>Pagamento</span>
-            </div>
-          </div>
-        </div>
-      )}
+            </CardContent>
+          </Card>
+        )}
 
-      {renderCurrentStep()}
+        {renderCurrentStep()}
 
-      {/* Navigation Buttons */}
-      {cartItems.length > 0 && currentStep !== 'cart' && (
-        <div className="flex justify-between mt-8">
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (currentStep === 'delivery') setCurrentStep('cart');
-              if (currentStep === 'payment') setCurrentStep('delivery');
-            }}
-          >
-            Voltar
-          </Button>
-          
-          {currentStep === 'delivery' && (
+        {/* Navigation Buttons */}
+        {cartItems.length > 0 && currentStep !== 'cart' && (
+          <div className="flex justify-between mt-8">
             <Button
-              onClick={() => setCurrentStep('payment')}
-              className="bg-gradient-eco hover:opacity-90"
+              variant="outline"
+              onClick={() => {
+                if (currentStep === 'delivery') setCurrentStep('cart');
+                if (currentStep === 'payment') setCurrentStep('delivery');
+              }}
+              className="border-eco-green/30 text-eco-green hover:bg-eco-green-light"
             >
-              Continuar para Pagamento
+              Voltar
             </Button>
-          )}
-        </div>
-      )}
+            
+            {currentStep === 'delivery' && (
+              <Button
+                onClick={() => setCurrentStep('payment')}
+                className="bg-gradient-eco hover:opacity-90 shadow-eco"
+              >
+                Continuar para Pagamento
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
