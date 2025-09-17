@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Header } from '@/components/Header';
+import Footer from '@/components/Footer';
 import { HomePage } from '@/pages/HomePage';
 import { AuthPage } from '@/pages/AuthPage';
 import { CreateListingPage } from '@/pages/CreateListingPage';
@@ -109,11 +110,12 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Header onNavigate={handleNavigate} currentPage={currentPage} />
-      <div className="relative">
+      <div className="relative flex-1">
         {renderPage()}
       </div>
+      <Footer />
     </div>
   );
 };
