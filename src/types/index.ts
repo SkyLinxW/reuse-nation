@@ -40,6 +40,10 @@ export interface WasteItem {
       lng: number;
     };
   };
+  coordinates?: {
+    lat: number;
+    lng: number;
+  } | string; // Can be JSON string from database or parsed object
   technicalDetails?: {
     plasticType?: string;
     purity?: string;

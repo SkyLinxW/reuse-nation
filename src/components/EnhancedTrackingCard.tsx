@@ -52,6 +52,22 @@ export const EnhancedTrackingCard = ({
     const calculateAndSetDeliveryDetails = async () => {
       try {
         let destination = null;
+        let origin = SAO_PAULO_COORDINATES; // Default origin
+        
+        // Get product origin coordinates if available
+        if (product?.coordinates) {
+          try {
+            const parsedCoords = typeof product.coordinates === 'string' 
+              ? JSON.parse(product.coordinates) 
+              : product.coordinates;
+            if (parsedCoords && parsedCoords.lat && parsedCoords.lng) {
+              origin = parsedCoords;
+              console.log('Using product coordinates as origin:', origin);
+            }
+          } catch (error) {
+            console.log('Error parsing product coordinates, using default origin:', error);
+          }
+        }
         
         // Se já temos coordenadas definidas pelo usuário, não recalcule
         if (destinationCoords && destinationCoords.lat && destinationCoords.lng) {
@@ -112,6 +128,7 @@ export const EnhancedTrackingCard = ({
         
         // Calculate delivery details using real calculation
         const details = await calculateDeliveryDetails(
+          origin,
           destination,
           transaction.deliveryMethod as 'retirada_local' | 'entrega' | 'transportadora'
         );
@@ -124,7 +141,7 @@ export const EnhancedTrackingCard = ({
         setDeliveryDetails({
           ...details,
           steps: stepsWithStatus,
-          origin: SAO_PAULO_COORDINATES,
+          origin,
           destination
         });
         
@@ -163,8 +180,24 @@ export const EnhancedTrackingCard = ({
       
       setDestinationCoords(coordinates);
       
+      // Get origin coordinates from product
+      let origin = SAO_PAULO_COORDINATES; // Default origin
+      if (product?.coordinates) {
+        try {
+          const parsedCoords = typeof product.coordinates === 'string' 
+            ? JSON.parse(product.coordinates) 
+            : product.coordinates;
+          if (parsedCoords && parsedCoords.lat && parsedCoords.lng) {
+            origin = parsedCoords;
+          }
+        } catch (error) {
+          console.log('Error parsing product coordinates in address update:', error);
+        }
+      }
+      
       // Recalculate delivery details with new address
       const details = await calculateDeliveryDetails(
+        origin,
         coordinates,
         transaction.deliveryMethod as 'retirada_local' | 'entrega' | 'transportadora'
       );
@@ -174,7 +207,7 @@ export const EnhancedTrackingCard = ({
       setDeliveryDetails({
         ...details,
         steps: stepsWithStatus,
-        origin: SAO_PAULO_COORDINATES,
+        origin,
         destination: coordinates
       });
       

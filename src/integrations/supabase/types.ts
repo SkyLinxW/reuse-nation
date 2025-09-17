@@ -511,6 +511,7 @@ export type Database = {
           availability: boolean
           category: string
           condition: string
+          coordinates: Json | null
           created_at: string
           description: string
           id: string
@@ -526,6 +527,7 @@ export type Database = {
           availability?: boolean
           category: string
           condition: string
+          coordinates?: Json | null
           created_at?: string
           description: string
           id?: string
@@ -541,6 +543,7 @@ export type Database = {
           availability?: boolean
           category?: string
           condition?: string
+          coordinates?: Json | null
           created_at?: string
           description?: string
           id?: string

@@ -101,6 +101,7 @@ export const CreateListingPage = ({ onNavigate }: CreateListingPageProps) => {
         condition: formData.condition,
         price: parseFloat(formData.price),
         location: formData.location,
+        coordinates: formData.coordinates ? JSON.stringify(formData.coordinates) : null,
         availability: true
       };
 

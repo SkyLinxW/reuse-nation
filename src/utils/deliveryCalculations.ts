@@ -25,13 +25,14 @@ export interface DeliveryStep {
 
 // Real delivery calculation using route APIs
 export const calculateDeliveryDetails = async (
+  origin: Coordinates,
   destination: Coordinates, 
   deliveryMethod: 'retirada_local' | 'entrega' | 'transportadora'
 ): Promise<DeliveryCalculation> => {
-  console.log('calculateRealDeliveryDetails called with:', { destination, deliveryMethod });
+  console.log('calculateRealDeliveryDetails called with:', { origin, destination, deliveryMethod });
   
-  // Always use São Paulo as origin
-  const origin = SAO_PAULO_COORDINATES;
+  // Use the provided origin coordinates (from product location)
+  const actualOrigin = origin || SAO_PAULO_COORDINATES; // Fallback to São Paulo if no origin provided
   
   // Validate destination coordinates
   if (!destination || 
@@ -54,7 +55,7 @@ export const calculateDeliveryDetails = async (
   if (deliveryMethod === 'retirada_local') {
     // For local pickup, calculate distance for reference only
     try {
-      const routeInfo = await calculateRealRoute(origin, destination);
+      const routeInfo = await calculateRealRoute(actualOrigin, destination);
       if (routeInfo) {
         distance = routeInfo.distance;
       }
@@ -67,7 +68,7 @@ export const calculateDeliveryDetails = async (
   } else {
     // Calculate real route for delivery
     try {
-      const routeInfo = await calculateRealRoute(origin, destination);
+      const routeInfo = await calculateRealRoute(actualOrigin, destination);
       
       if (routeInfo) {
         distance = routeInfo.distance;
@@ -95,8 +96,8 @@ export const calculateDeliveryDetails = async (
       
       // Fallback to simple calculation
       distance = Math.sqrt(
-        Math.pow(destination.lat - origin.lat, 2) + 
-        Math.pow(destination.lng - origin.lng, 2)
+        Math.pow(destination.lat - actualOrigin.lat, 2) + 
+        Math.pow(destination.lng - actualOrigin.lng, 2)
       ) * 111; // Rough km conversion
       
       if (deliveryMethod === 'entrega') {
