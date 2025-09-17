@@ -85,33 +85,43 @@ export const Header = ({
       onNavigate(`search?q=${encodeURIComponent(searchTerm)}`);
     }
   };
-  return <header className="bg-card border-b border-border shadow-soft sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-3">
-        <div className="flex items-center justify-between gap-4">
-          {/* Logo */}
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => onNavigate('home')}>
-            <img src={ecoLogo} alt="EcoMarket" className="w-10 h-10" />
-            <div>
-              <h1 className="text-xl font-bold text-eco-green">EcoChain</h1>
-              <p className="text-xs text-muted-foreground">Resíduos Sustentáveis</p>
+  return (
+    <header className="bg-card border-b border-border shadow-soft sticky top-0 z-50">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center h-16 gap-6">
+          {/* Logo Section */}
+          <div 
+            className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" 
+            onClick={() => onNavigate('home')}
+          >
+            <img src={ecoLogo} alt="EcoChain" className="w-10 h-10" />
+            <div className="hidden sm:block">
+              <h1 className="text-xl font-bold text-eco-green leading-tight">EcoChain</h1>
+              <p className="text-xs text-muted-foreground leading-tight">Resíduos Sustentáveis</p>
             </div>
           </div>
 
-          {/* Search Bar */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-2xl mx-4">
+          {/* Search Bar - Central */}
+          <form onSubmit={handleSearch} className="flex-1 max-w-xl mx-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input type="text" placeholder="Buscar resíduos, materiais..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10 bg-secondary/50 border-border focus:ring-eco-green" />
+              <Input 
+                type="text" 
+                placeholder="Buscar resíduos, materiais..." 
+                value={searchTerm} 
+                onChange={(e) => setSearchTerm(e.target.value)} 
+                className="pl-10 h-10 bg-secondary/50 border-border focus:ring-eco-green focus:border-eco-green transition-all" 
+              />
             </div>
           </form>
 
-          {/* Main Navigation */}
-          <nav className="hidden lg:flex items-center gap-1 mr-4">
+          {/* Navigation Links - Desktop Only */}
+          <nav className="hidden xl:flex items-center gap-1">
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={() => onNavigate('about')}
-              className={currentPage === 'about' ? 'bg-eco-green-light' : ''}
+              className={`h-9 px-3 ${currentPage === 'about' ? 'bg-eco-green-light text-eco-green' : 'hover:bg-muted'}`}
             >
               Sobre
             </Button>
@@ -119,7 +129,7 @@ export const Header = ({
               variant="ghost" 
               size="sm" 
               onClick={() => onNavigate('services')}
-              className={currentPage === 'services' ? 'bg-eco-green-light' : ''}
+              className={`h-9 px-3 ${currentPage === 'services' ? 'bg-eco-green-light text-eco-green' : 'hover:bg-muted'}`}
             >
               Serviços
             </Button>
@@ -127,7 +137,7 @@ export const Header = ({
               variant="ghost" 
               size="sm" 
               onClick={() => onNavigate('news')}
-              className={currentPage === 'news' ? 'bg-eco-green-light' : ''}
+              className={`h-9 px-3 ${currentPage === 'news' ? 'bg-eco-green-light text-eco-green' : 'hover:bg-muted'}`}
             >
               Impacto
             </Button>
@@ -135,55 +145,90 @@ export const Header = ({
               variant="ghost" 
               size="sm" 
               onClick={() => onNavigate('announcements')}
-              className={currentPage === 'announcements' ? 'bg-eco-green-light' : ''}
+              className={`h-9 px-3 ${currentPage === 'announcements' ? 'bg-eco-green-light text-eco-green' : 'hover:bg-muted'}`}
             >
               Parcerias
             </Button>
           </nav>
 
-          {/* User Navigation */}
+          {/* User Actions */}
           <div className="flex items-center gap-2">
-            {user ? <>
-                <Button variant="ghost" size="sm" onClick={() => onNavigate('cart')} className={`relative ${currentPage === 'cart' ? 'bg-eco-green-light' : ''}`}>
-                  <ShoppingCart className="w-4 h-4" />
-                  {cartCount > 0 && <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                      {cartCount}
-                    </Badge>}
-                  <span className="hidden md:inline ml-2">Carrinho</span>
-                </Button>
+            {user ? (
+              <>
+                {/* Action Buttons */}
+                <div className="hidden md:flex items-center gap-1">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => onNavigate('cart')} 
+                    className={`relative h-9 px-3 ${currentPage === 'cart' ? 'bg-eco-green-light text-eco-green' : 'hover:bg-muted'}`}
+                  >
+                    <ShoppingCart className="w-4 h-4" />
+                    <span className="hidden lg:inline ml-2">Carrinho</span>
+                    {cartCount > 0 && (
+                      <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                        {cartCount}
+                      </Badge>
+                    )}
+                  </Button>
 
-                <Button variant="ghost" size="sm" onClick={() => onNavigate('notifications')} className={`relative ${currentPage === 'notifications' ? 'bg-eco-green-light' : ''}`}>
-                  <Bell className="w-4 h-4" />
-                  {notificationCount > 0 && <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                      {notificationCount}
-                    </Badge>}
-                  <span className="hidden md:inline ml-2">Notificações</span>
-                </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => onNavigate('favorites')} 
+                    className={`h-9 px-3 ${currentPage === 'favorites' ? 'bg-eco-green-light text-eco-green' : 'hover:bg-muted'}`}
+                  >
+                    <Heart className="w-4 h-4" />
+                    <span className="hidden lg:inline ml-2">Favoritos</span>
+                  </Button>
 
-                <Button variant="ghost" size="sm" onClick={() => onNavigate('favorites')} className={currentPage === 'favorites' ? 'bg-eco-green-light' : ''}>
-                  <Heart className="w-4 h-4" />
-                  <span className="hidden md:inline ml-2">Favoritos</span>
-                </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => onNavigate('messages')} 
+                    className={`relative h-9 px-3 ${currentPage === 'messages' ? 'bg-eco-green-light text-eco-green' : 'hover:bg-muted'}`}
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    <span className="hidden lg:inline ml-2">Mensagens</span>
+                    {unreadMessagesCount > 0 && (
+                      <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                        {unreadMessagesCount}
+                      </Badge>
+                    )}
+                  </Button>
 
-                <Button variant="ghost" size="sm" onClick={() => onNavigate('messages')} className={`relative ${currentPage === 'messages' ? 'bg-eco-green-light' : ''}`}>
-                  <MessageCircle className="w-4 h-4" />
-                  {unreadMessagesCount > 0 && <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                      {unreadMessagesCount}
-                    </Badge>}
-                  <span className="hidden md:inline ml-2">Mensagens</span>
-                </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => onNavigate('notifications')} 
+                    className={`relative h-9 px-3 ${currentPage === 'notifications' ? 'bg-eco-green-light text-eco-green' : 'hover:bg-muted'}`}
+                  >
+                    <Bell className="w-4 h-4" />
+                    <span className="hidden lg:inline ml-2">Notificações</span>
+                    {notificationCount > 0 && (
+                      <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                        {notificationCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </div>
 
-                <Button onClick={() => onNavigate('create-listing')} className="bg-gradient-eco hover:opacity-90 shadow-eco">
+                {/* Primary CTA */}
+                <Button 
+                  onClick={() => onNavigate('create-listing')} 
+                  className="bg-gradient-eco hover:opacity-90 shadow-eco h-9 px-4"
+                >
                   <Plus className="w-4 h-4" />
-                  <span className="hidden md:inline ml-2">Anunciar</span>
+                  <span className="hidden sm:inline ml-2">Anunciar</span>
                 </Button>
 
+                {/* User Menu */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                      <Avatar className="h-10 w-10">
+                    <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-muted">
+                      <Avatar className="h-8 w-8">
                         <AvatarImage src="" alt={user?.user_metadata?.name || user?.email || ''} />
-                        <AvatarFallback className="bg-eco-green text-white">
+                        <AvatarFallback className="bg-eco-green text-white text-sm">
                           {(user?.user_metadata?.name || user?.email || 'U').split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                         </AvatarFallback>
                       </Avatar>
@@ -192,8 +237,8 @@ export const Header = ({
                   <DropdownMenuContent className="w-56" align="end">
                     <div className="flex items-center justify-start gap-2 p-2">
                       <div className="flex flex-col space-y-1 leading-none">
-                        <p className="font-medium">{user?.user_metadata?.name || 'Usuário'}</p>
-                        <p className="w-[200px] truncate text-sm text-muted-foreground">
+                        <p className="font-medium text-sm">{user?.user_metadata?.name || 'Usuário'}</p>
+                        <p className="w-[200px] truncate text-xs text-muted-foreground">
                           {user?.email}
                         </p>
                       </div>
@@ -211,22 +256,72 @@ export const Header = ({
                       <Menu className="mr-2 h-4 w-4" />
                       Transações
                     </DropdownMenuItem>
+                    
+                    {/* Mobile-only navigation items */}
+                    <div className="md:hidden">
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => onNavigate('cart')} className="relative">
+                        <ShoppingCart className="mr-2 h-4 w-4" />
+                        Carrinho
+                        {cartCount > 0 && (
+                          <Badge variant="destructive" className="ml-auto h-5 w-5 flex items-center justify-center p-0 text-xs">
+                            {cartCount}
+                          </Badge>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onNavigate('favorites')}>
+                        <Heart className="mr-2 h-4 w-4" />
+                        Favoritos
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onNavigate('messages')} className="relative">
+                        <MessageCircle className="mr-2 h-4 w-4" />
+                        Mensagens
+                        {unreadMessagesCount > 0 && (
+                          <Badge variant="destructive" className="ml-auto h-5 w-5 flex items-center justify-center p-0 text-xs">
+                            {unreadMessagesCount}
+                          </Badge>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onNavigate('notifications')} className="relative">
+                        <Bell className="mr-2 h-4 w-4" />
+                        Notificações
+                        {notificationCount > 0 && (
+                          <Badge variant="destructive" className="ml-auto h-5 w-5 flex items-center justify-center p-0 text-xs">
+                            {notificationCount}
+                          </Badge>
+                        )}
+                      </DropdownMenuItem>
+                    </div>
+
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout}>
+                    <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+                      <LogOut className="mr-2 h-4 w-4" />
                       Sair
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </> : <>
-                <Button variant="ghost" onClick={() => onNavigate('auth')}>
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => onNavigate('auth')}
+                  className="h-9 px-4 hover:bg-muted"
+                >
                   Entrar
                 </Button>
-                <Button onClick={() => onNavigate('auth')} className="bg-gradient-eco hover:opacity-90">
+                <Button 
+                  onClick={() => onNavigate('auth')} 
+                  className="bg-gradient-eco hover:opacity-90 h-9 px-4"
+                >
                   Cadastrar
                 </Button>
-              </>}
+              </div>
+            )}
           </div>
         </div>
       </div>
-    </header>;
+    </header>
+  );
 };
