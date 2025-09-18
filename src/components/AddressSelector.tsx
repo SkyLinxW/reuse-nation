@@ -136,6 +136,35 @@ export const AddressSelector = ({ onAddressSelected, defaultAddress }: AddressSe
 
 
 
+  const getFullAddress = () => {
+    if (!selectedState || !selectedCity || !street) {
+      return '';
+    }
+    
+    const stateName = states.find(s => s.id.toString() === selectedState)?.nome || '';
+    return `${street}${neighborhood ? ', ' + neighborhood : ''}, ${selectedCity}, ${stateName}`;
+  };
+
+  const getAddressCoordinates = () => {
+    // For now, use São Paulo coordinates as default when address is complete
+    if (selectedState && selectedCity && street) {
+      return { lat: -23.5505, lng: -46.6333 };
+    }
+    return null;
+  };
+
+  // Send address when all required fields are filled
+  useEffect(() => {
+    if (selectedState && selectedCity && street.trim()) {
+      const fullAddress = getFullAddress();
+      const coordinates = getAddressCoordinates();
+      
+      if (fullAddress && coordinates) {
+        onAddressSelected(fullAddress, coordinates);
+      }
+    }
+  }, [selectedState, selectedCity, street, neighborhood]);
+
   const formatCep = (value: string) => {
     const numbers = value.replace(/\D/g, '');
     if (numbers.length <= 5) {
