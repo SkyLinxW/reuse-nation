@@ -234,6 +234,19 @@ export const EnhancedTrackingCard = ({
     }).format(price);
   };
 
+  const formatAddress = (address: string) => {
+    if (!address) return 'Endereço não definido';
+    
+    // Remove repetições - divide por vírgulas e remove duplicatas
+    const parts = address.split(',').map(part => part.trim());
+    const uniqueParts = [...new Set(parts)];
+    
+    // Limita a 4 partes principais (rua, bairro, cidade, estado)
+    const cleanParts = uniqueParts.slice(0, 4);
+    
+    return cleanParts.join(', ');
+  };
+
   const getStatusProgress = () => {
     const statusMap = {
       pendente: 20,
@@ -481,7 +494,7 @@ export const EnhancedTrackingCard = ({
             <p className="text-sm text-muted-foreground">
               {transaction.deliveryMethod === 'retirada_local' 
                 ? (typeof product?.location === 'string' ? product.location : product?.location?.city + ', ' + product?.location?.state || 'Local do vendedor')
-                : (transaction.deliveryAddress || 'Endereço não definido')}
+                : formatAddress(transaction.deliveryAddress)}
             </p>
             {!transaction.deliveryAddress && transaction.deliveryMethod !== 'retirada_local' && (
               <p className="text-xs text-red-600 mt-1">

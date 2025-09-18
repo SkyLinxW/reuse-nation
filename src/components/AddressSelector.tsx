@@ -142,7 +142,14 @@ export const AddressSelector = ({ onAddressSelected, defaultAddress }: AddressSe
     }
     
     const stateName = states.find(s => s.id.toString() === selectedState)?.nome || '';
-    return `${street}${neighborhood ? ', ' + neighborhood : ''}, ${selectedCity}, ${stateName}`;
+    const addressParts = [
+      street.trim(),
+      neighborhood ? neighborhood.trim() : null,
+      selectedCity.trim(),
+      stateName.trim()
+    ].filter(Boolean);
+    
+    return addressParts.join(', ');
   };
 
   const getAddressCoordinates = () => {
