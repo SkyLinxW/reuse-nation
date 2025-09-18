@@ -151,14 +151,13 @@ export const AddressSelector = ({ onAddressSelected, defaultAddress }: AddressSe
     return null;
   };
 
-  // Auto-send address when all required fields are filled - NO GEOCODING
+  // Send address when all required fields are filled
   useEffect(() => {
     if (selectedState && selectedCity && street.trim()) {
       const fullAddress = getFullAddress();
       const coordinates = getAddressCoordinates();
       
       if (fullAddress && coordinates) {
-        console.log('AddressSelector - Auto-setting address without geocoding:', { fullAddress, coordinates });
         onAddressSelected(fullAddress, coordinates);
       }
     }
@@ -277,38 +276,13 @@ export const AddressSelector = ({ onAddressSelected, defaultAddress }: AddressSe
         {/* Address Preview */}
         {selectedState && selectedCity && street && (
           <div className="p-3 bg-muted rounded-lg">
-            <Label className="text-sm font-medium">Endereço a ser localizado:</Label>
+            <Label className="text-sm font-medium">Endereço preenchido:</Label>
             <p className="text-sm mt-1">
               {street}
               {neighborhood && `, ${neighborhood}`}
               , {selectedCity}
               , {states.find(s => s.id.toString() === selectedState)?.nome}
             </p>
-          </div>
-        )}
-
-        {/* Origin Info */}
-        <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
-          <div className="flex items-center gap-2 mb-1">
-            <MapPin className="w-4 h-4 text-green-600" />
-            <Label className="text-sm font-medium text-green-800 dark:text-green-200">
-              Ponto de Origem (Sempre)
-            </Label>
-          </div>
-          <p className="text-sm text-green-700 dark:text-green-300">
-            São Paulo, SP - Centro de distribuição
-          </p>
-        </div>
-
-        {/* Status indicator */}
-        {selectedState && selectedCity && street && (
-          <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-green-600" />
-              <Label className="text-sm font-medium text-green-800 dark:text-green-200">
-                Endereço pronto para entrega
-              </Label>
-            </div>
           </div>
         )}
       </CardContent>
