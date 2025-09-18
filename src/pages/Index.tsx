@@ -5,6 +5,7 @@ import Footer from '@/components/Footer';
 import { HomePage } from '@/pages/HomePage';
 import { AuthPage } from '@/pages/AuthPage';
 import { CreateListingPage } from '@/pages/CreateListingPage';
+import { EditListingPage } from '@/pages/EditListingPage';
 import { ProductDetailsPage } from '@/pages/ProductDetailsPage';
 import { FavoritesPage } from '@/pages/FavoritesPage';
 import { CartPage } from '@/pages/CartPage';
@@ -38,7 +39,7 @@ const Index = () => {
     const [pageName, queryString] = page.split('?');
     
     // Protected routes that require authentication
-    const protectedRoutes = ['cart', 'favorites', 'create-listing', 'my-listings', 'profile', 'transactions', 'notifications', 'messages'];
+    const protectedRoutes = ['cart', 'favorites', 'create-listing', 'edit-listing', 'my-listings', 'profile', 'transactions', 'notifications', 'messages'];
     
     if (protectedRoutes.includes(pageName) && !user) {
       console.log('Protected route requires auth, redirecting to auth page');
@@ -76,6 +77,8 @@ const Index = () => {
         return <AuthPage onNavigate={handleNavigate} />;
       case 'create-listing':
         return <CreateListingPage onNavigate={handleNavigate} />;
+      case 'edit-listing':
+        return <EditListingPage onNavigate={handleNavigate} listingId={pageParams.id || ''} />;
       case 'product':
         return <ProductDetailsPage onNavigate={handleNavigate} productId={pageParams.id || ''} />;
       case 'favorites':

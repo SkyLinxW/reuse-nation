@@ -135,6 +135,7 @@ export const MyListingsPage = ({ onNavigate }: MyListingsPageProps) => {
                       variant="outline"
                       size="sm"
                       className="flex-1"
+                      onClick={() => onNavigate(`edit-listing?id=${item.id}`)}
                     >
                       <Edit className="w-4 h-4 mr-1" />
                       Editar
