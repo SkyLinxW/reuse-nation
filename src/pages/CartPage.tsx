@@ -89,10 +89,18 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
     
     // If delivery method is 'entrega' but no address selected, show error
     if (deliveryMethod === 'entrega') {
+      console.log('Checking address for delivery:', {
+        selectedAddress,
+        deliveryDataFullAddress: deliveryData.fullAddress,
+        deliveryDataAddress: deliveryData.address,
+        deliveryDataStreet: deliveryData.street,
+        deliveryDataCity: deliveryData.city,
+        deliveryData
+      });
+      
       const hasAddress = selectedAddress || 
                         deliveryData.fullAddress || 
-                        deliveryData.address || 
-                        (deliveryData.street && deliveryData.city);
+                        deliveryData.address;
       
       if (!hasAddress) {
         toast({
@@ -121,15 +129,14 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
         const finalDeliveryAddress = selectedAddress || 
                                     deliveryData.fullAddress || 
                                     deliveryData.address || 
-                                    (deliveryData.street && deliveryData.city ? 
-                                      `${deliveryData.street}, ${deliveryData.city}` : '') || 
                                     '';
         
         console.log('Creating transaction with delivery address:', {
           selectedAddress,
           deliveryDataFullAddress: deliveryData.fullAddress,
           deliveryDataAddress: deliveryData.address,
-          finalDeliveryAddress
+          finalDeliveryAddress,
+          allDeliveryData: deliveryData
         });
 
         await createTransaction({
@@ -339,12 +346,19 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
               <DeliveryForm
                 deliveryMethod={deliveryMethod}
                 onDeliveryMethodChange={setDeliveryMethod}
-                onDeliveryDataChange={setDeliveryData}
+                onDeliveryDataChange={(data) => {
+                  console.log('CartPage - Delivery data changed:', data);
+                  setDeliveryData(data);
+                }}
                 onAddressSelected={(address, coordinates) => {
                   console.log('CartPage - Address selected callback:', { address, coordinates });
                   setSelectedAddress(address);
                   // Also update deliveryData to ensure we have the address
-                  setDeliveryData(prev => ({ ...prev, fullAddress: address, address }));
+                  setDeliveryData(prev => {
+                    const updated = { ...prev, fullAddress: address, address };
+                    console.log('CartPage - Updated deliveryData in callback:', updated);
+                    return updated;
+                  });
                 }}
                 sellerAddress={sellerAddress}
               />

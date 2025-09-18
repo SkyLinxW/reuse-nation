@@ -68,6 +68,7 @@ export const DeliveryForm = ({
       fullAddress: address,
       coordinates 
     };
+    console.log('DeliveryForm - Updated deliveryData:', updated);
     setDeliveryData(updated);
     onDeliveryDataChange(updated);
     
@@ -78,6 +79,7 @@ export const DeliveryForm = ({
 
   const handleDataChange = (newData: any) => {
     const updated = { ...deliveryData, ...newData };
+    console.log('DeliveryForm - Data change:', { newData, updated });
     setDeliveryData(updated);
     onDeliveryDataChange(updated);
   };
