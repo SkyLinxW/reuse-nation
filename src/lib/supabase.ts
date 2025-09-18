@@ -291,6 +291,8 @@ export const getTransactions = async (userId: string) => {
 };
 
 export const updateTransactionStatus = async (id: string, status: string) => {
+  console.log('Updating transaction status:', { id, status });
+  
   const updates: any = { status };
   if (status === 'entregue') {
     updates.completed_at = new Date().toISOString();
@@ -303,7 +305,12 @@ export const updateTransactionStatus = async (id: string, status: string) => {
     .select()
     .single();
   
-  if (error) throw error;
+  if (error) {
+    console.error('Error updating transaction status:', error);
+    throw error;
+  }
+  
+  console.log('Transaction status updated successfully:', data);
   return data;
 };
 

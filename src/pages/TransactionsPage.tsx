@@ -104,6 +104,8 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
 
   const handleUpdateStatus = async (transactionId: string, newStatus: string) => {
     try {
+      console.log('Attempting to update transaction status:', { transactionId, newStatus });
+      
       await updateTransactionStatus(transactionId, newStatus);
       
       setTransactions(prev => 
@@ -114,10 +116,11 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
         title: "Status atualizado",
         description: `Transação marcada como ${getStatusInfo(newStatus).label.toLowerCase()}.`,
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error updating transaction status:', error);
       toast({
         title: "Erro",
-        description: "Erro ao atualizar status da transação.",
+        description: `Erro ao atualizar status da transação: ${error.message || 'Erro desconhecido'}`,
         variant: "destructive",
       });
     }
