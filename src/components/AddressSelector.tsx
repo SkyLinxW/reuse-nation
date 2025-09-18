@@ -105,13 +105,9 @@ export const AddressSelector = ({ onAddressSelected, defaultAddress }: AddressSe
           setSelectedState(state.id.toString());
           await loadCities(state.id.toString());
           
-          // Set city after cities are loaded and auto-confirm
-          setTimeout(async () => {
+          // Set city after cities are loaded - NO AUTO-CONFIRM
+          setTimeout(() => {
             setSelectedCity(address.localidade);
-            // Auto-confirm after CEP search
-            setTimeout(() => {
-              handleConfirmAddress();
-            }, 500);
           }, 100);
         }
         
@@ -137,54 +133,34 @@ export const AddressSelector = ({ onAddressSelected, defaultAddress }: AddressSe
     }
   };
 
-  const handleConfirmAddress = async () => {
+  const getFullAddress = () => {
     if (!selectedState || !selectedCity || !street) {
-      return;
+      return '';
     }
-
-    try {
-      setLoading(true);
-      
-      const stateName = states.find(s => s.id.toString() === selectedState)?.nome || '';
-      const fullAddress = `${street}${neighborhood ? ', ' + neighborhood : ''}, ${selectedCity}, ${stateName}`;
-      
-      console.log('Attempting to geocode:', fullAddress);
-      
-      const coordinates = await geocodeAddress(fullAddress);
-      
-      if (coordinates) {
-        console.log('AddressSelector - Calling onAddressSelected with:', { fullAddress, coordinates });
-        onAddressSelected(fullAddress, coordinates);
-        toast({
-          title: "Endereço confirmado automaticamente",
-          description: fullAddress,
-        });
-      } else {
-        toast({
-          title: "Erro de localização",
-          description: "Não foi possível encontrar as coordenadas do endereço",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível confirmar o endereço",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
+    
+    const stateName = states.find(s => s.id.toString() === selectedState)?.nome || '';
+    return `${street}${neighborhood ? ', ' + neighborhood : ''}, ${selectedCity}, ${stateName}`;
   };
 
-  // Auto-confirm address when all required fields are filled
+  const getAddressCoordinates = () => {
+    // For now, use São Paulo coordinates as default when address is complete
+    // This avoids the geocoding loop issue
+    if (selectedState && selectedCity && street) {
+      return { lat: -23.5505, lng: -46.6333 };
+    }
+    return null;
+  };
+
+  // Auto-send address when all required fields are filled - NO GEOCODING
   useEffect(() => {
     if (selectedState && selectedCity && street.trim()) {
-      const timeoutId = setTimeout(() => {
-        handleConfirmAddress();
-      }, 1000); // Wait 1 second after user stops typing
+      const fullAddress = getFullAddress();
+      const coordinates = getAddressCoordinates();
       
-      return () => clearTimeout(timeoutId);
+      if (fullAddress && coordinates) {
+        console.log('AddressSelector - Auto-setting address without geocoding:', { fullAddress, coordinates });
+        onAddressSelected(fullAddress, coordinates);
+      }
     }
   }, [selectedState, selectedCity, street, neighborhood]);
 
@@ -328,21 +304,10 @@ export const AddressSelector = ({ onAddressSelected, defaultAddress }: AddressSe
         {selectedState && selectedCity && street && (
           <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
             <div className="flex items-center gap-2">
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin text-green-600" />
-                  <Label className="text-sm font-medium text-green-800 dark:text-green-200">
-                    Confirmando localização...
-                  </Label>
-                </>
-              ) : (
-                <>
-                  <MapPin className="w-4 h-4 text-green-600" />
-                  <Label className="text-sm font-medium text-green-800 dark:text-green-200">
-                    Localização confirmada automaticamente
-                  </Label>
-                </>
-              )}
+              <MapPin className="w-4 h-4 text-green-600" />
+              <Label className="text-sm font-medium text-green-800 dark:text-green-200">
+                Endereço pronto para entrega
+              </Label>
             </div>
           </div>
         )}

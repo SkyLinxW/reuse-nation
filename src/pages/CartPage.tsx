@@ -93,19 +93,17 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
         selectedAddress,
         deliveryDataFullAddress: deliveryData.fullAddress,
         deliveryDataAddress: deliveryData.address,
-        deliveryDataStreet: deliveryData.street,
-        deliveryDataCity: deliveryData.city,
         deliveryData
       });
       
-      const hasAddress = selectedAddress || 
-                        deliveryData.fullAddress || 
-                        deliveryData.address;
+      const hasCompleteAddress = selectedAddress || 
+                                deliveryData.fullAddress || 
+                                deliveryData.address;
       
-      if (!hasAddress) {
+      if (!hasCompleteAddress) {
         toast({
           title: "Endereço necessário",
-          description: "Para entrega, é necessário selecionar um endereço de entrega.",
+          description: "Para entrega, é necessário preencher o endereço completo (CEP, estado, cidade e rua).",
           variant: "destructive",
         });
         setIsProcessing(false);
@@ -486,7 +484,21 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
             
             {currentStep === 'delivery' && (
               <Button
-                onClick={() => setCurrentStep('payment')}
+                onClick={() => {
+                  // Validate delivery data before proceeding
+                  if (deliveryMethod === 'entrega') {
+                    const hasAddress = selectedAddress || deliveryData.fullAddress || deliveryData.address;
+                    if (!hasAddress) {
+                      toast({
+                        title: "Endereço necessário",
+                        description: "Por favor, preencha o endereço de entrega antes de continuar.",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                  }
+                  setCurrentStep('payment');
+                }}
                 className="bg-gradient-eco hover:opacity-90 shadow-eco"
               >
                 Continuar para Pagamento
