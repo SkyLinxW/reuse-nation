@@ -23,7 +23,7 @@ interface CartPageProps {
 
 export const CartPage = ({ onNavigate }: CartPageProps) => {
   const [cartItems, setCartItems] = useState<any[]>([]);
-  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'boleto' | 'cartao' | 'dinheiro'>('pix');
+  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'boleto' | 'cartao'>('pix');
   const [deliveryMethod, setDeliveryMethod] = useState<'retirada_local' | 'entrega' | 'transportadora'>('retirada_local');
   const [deliveryData, setDeliveryData] = useState<any>({});
   const [selectedAddress, setSelectedAddress] = useState<string>('');
@@ -88,14 +88,21 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
     });
     
     // If delivery method is 'entrega' but no address selected, show error
-    if (deliveryMethod === 'entrega' && !selectedAddress && !deliveryData.fullAddress && !deliveryData.address) {
-      toast({
-        title: "Endereço necessário",
-        description: "Para entrega, é necessário selecionar um endereço de entrega.",
-        variant: "destructive",
-      });
-      setIsProcessing(false);
-      return;
+    if (deliveryMethod === 'entrega') {
+      const hasAddress = selectedAddress || 
+                        deliveryData.fullAddress || 
+                        deliveryData.address || 
+                        (deliveryData.street && deliveryData.city);
+      
+      if (!hasAddress) {
+        toast({
+          title: "Endereço necessário",
+          description: "Para entrega, é necessário selecionar um endereço de entrega.",
+          variant: "destructive",
+        });
+        setIsProcessing(false);
+        return;
+      }
     }
     
     try {
@@ -111,7 +118,12 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
       
       for (const cartItem of cartItems) {
         // Ensure delivery address is properly saved
-        const finalDeliveryAddress = selectedAddress || deliveryData.fullAddress || deliveryData.address || '';
+        const finalDeliveryAddress = selectedAddress || 
+                                    deliveryData.fullAddress || 
+                                    deliveryData.address || 
+                                    (deliveryData.street && deliveryData.city ? 
+                                      `${deliveryData.street}, ${deliveryData.city}` : '') || 
+                                    '';
         
         console.log('Creating transaction with delivery address:', {
           selectedAddress,

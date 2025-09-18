@@ -9,8 +9,8 @@ import { CreditCard, Smartphone, FileText, DollarSign, Shield, Lock } from 'luci
 import { Badge } from '@/components/ui/badge';
 
 interface PaymentFormProps {
-  paymentMethod: 'pix' | 'boleto' | 'cartao' | 'dinheiro';
-  onPaymentMethodChange: (method: 'pix' | 'boleto' | 'cartao' | 'dinheiro') => void;
+  paymentMethod: 'pix' | 'boleto' | 'cartao';
+  onPaymentMethodChange: (method: 'pix' | 'boleto' | 'cartao') => void;
   total: number;
   onPaymentProcess: (paymentData: any) => Promise<void>;
   isProcessing: boolean;
@@ -65,12 +65,6 @@ export const PaymentForm = ({
     });
   };
 
-  const handleCashPayment = async () => {
-    await onPaymentProcess({ 
-      type: 'dinheiro',
-      note: 'Pagamento será realizado na entrega/retirada'
-    });
-  };
 
   return (
     <Card>
@@ -88,7 +82,7 @@ export const PaymentForm = ({
           </div>
 
           <Tabs value={paymentMethod} onValueChange={(value: any) => onPaymentMethodChange(value)}>
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="pix" className="flex items-center gap-1">
                 <Smartphone className="w-4 h-4" />
                 PIX
@@ -100,10 +94,6 @@ export const PaymentForm = ({
               <TabsTrigger value="boleto" className="flex items-center gap-1">
                 <FileText className="w-4 h-4" />
                 Boleto
-              </TabsTrigger>
-              <TabsTrigger value="dinheiro" className="flex items-center gap-1">
-                <DollarSign className="w-4 h-4" />
-                Dinheiro
               </TabsTrigger>
             </TabsList>
 
@@ -220,24 +210,6 @@ export const PaymentForm = ({
               </div>
             </TabsContent>
 
-            <TabsContent value="dinheiro" className="space-y-4">
-              <div className="text-center space-y-3">
-                <div className="bg-card p-4 rounded-lg border">
-                  <h4 className="font-medium mb-2">Pagamento em Dinheiro</h4>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    O pagamento será realizado no momento da entrega ou retirada do produto.
-                  </p>
-                  <Badge variant="outline">Na entrega/retirada</Badge>
-                </div>
-                <Button 
-                  onClick={handleCashPayment}
-                  disabled={isProcessing}
-                  className="w-full bg-gradient-eco hover:opacity-90"
-                >
-                  {isProcessing ? 'Confirmando...' : 'Confirmar Pagamento em Dinheiro'}
-                </Button>
-              </div>
-            </TabsContent>
           </Tabs>
         </div>
       </CardContent>
