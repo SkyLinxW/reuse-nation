@@ -438,6 +438,7 @@ export type Database = {
           seller_id: string
           status: string
           total_price: number
+          updated_at: string | null
           waste_item_id: string
         }
         Insert: {
@@ -452,6 +453,7 @@ export type Database = {
           seller_id: string
           status?: string
           total_price: number
+          updated_at?: string | null
           waste_item_id: string
         }
         Update: {
@@ -466,6 +468,7 @@ export type Database = {
           seller_id?: string
           status?: string
           total_price?: number
+          updated_at?: string | null
           waste_item_id?: string
         }
         Relationships: [
