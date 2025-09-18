@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -34,6 +34,7 @@ export const AddressSelector = ({ onAddressSelected, defaultAddress }: AddressSe
   const [loading, setLoading] = useState(false);
   const [addressInfo, setAddressInfo] = useState<AddressInfo | null>(null);
   const { toast } = useToast();
+  const lastSentAddress = useRef<string>('');
 
   useEffect(() => {
     loadStates();
@@ -133,35 +134,36 @@ export const AddressSelector = ({ onAddressSelected, defaultAddress }: AddressSe
     }
   };
 
-  const getFullAddress = () => {
+  const getFullAddress = useCallback(() => {
     if (!selectedState || !selectedCity || !street) {
       return '';
     }
     
     const stateName = states.find(s => s.id.toString() === selectedState)?.nome || '';
     return `${street}${neighborhood ? ', ' + neighborhood : ''}, ${selectedCity}, ${stateName}`;
-  };
+  }, [selectedState, selectedCity, street, neighborhood, states]);
 
-  const getAddressCoordinates = () => {
+  const getAddressCoordinates = useCallback(() => {
     // For now, use São Paulo coordinates as default when address is complete
     // This avoids the geocoding loop issue
     if (selectedState && selectedCity && street) {
       return { lat: -23.5505, lng: -46.6333 };
     }
     return null;
-  };
+  }, [selectedState, selectedCity, street]);
 
-  // Send address when all required fields are filled
+  // Send address when all required fields are filled - with deduplication
   useEffect(() => {
     if (selectedState && selectedCity && street.trim()) {
       const fullAddress = getFullAddress();
       const coordinates = getAddressCoordinates();
       
-      if (fullAddress && coordinates) {
+      if (fullAddress && coordinates && fullAddress !== lastSentAddress.current) {
+        lastSentAddress.current = fullAddress;
         onAddressSelected(fullAddress, coordinates);
       }
     }
-  }, [selectedState, selectedCity, street, neighborhood]);
+  }, [selectedState, selectedCity, street, neighborhood, getFullAddress, getAddressCoordinates]);
 
   const formatCep = (value: string) => {
     const numbers = value.replace(/\D/g, '');
