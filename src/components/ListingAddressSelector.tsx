@@ -83,6 +83,24 @@ export const ListingAddressSelector = ({ onAddressSelected, defaultAddress }: Li
     loadCities(stateId);
   };
 
+  const handleCityChange = (cityName: string) => {
+    setSelectedCity(cityName);
+    setHasConfirmed(false);
+    setLastConfirmedAddress('');
+  };
+
+  const handleStreetChange = (streetValue: string) => {
+    setStreet(streetValue);
+    setHasConfirmed(false);
+    setLastConfirmedAddress('');
+  };
+
+  const handleNeighborhoodChange = (neighborhoodValue: string) => {
+    setNeighborhood(neighborhoodValue);
+    setHasConfirmed(false);
+    setLastConfirmedAddress('');
+  };
+
   const handleCepSearch = async () => {
     if (!cep || cep.length < 8) {
       toast({
@@ -151,7 +169,7 @@ export const ListingAddressSelector = ({ onAddressSelected, defaultAddress }: Li
     const fullAddress = `${street}${neighborhood ? ', ' + neighborhood : ''}, ${selectedCity}, ${stateName}`;
     
     // Evita confirmar o mesmo endereço repetidamente
-    if (lastConfirmedAddress === fullAddress) {
+    if (hasConfirmed && lastConfirmedAddress === fullAddress) {
       return;
     }
 
@@ -174,38 +192,40 @@ export const ListingAddressSelector = ({ onAddressSelected, defaultAddress }: Li
       } else {
         toast({
           title: "Erro de localização",
-          description: "Não foi possível encontrar as coordenadas do endereço",
+          description: "Não foi possível encontrar as coordenadas do endereço. Tente ser mais específico.",
           variant: "destructive"
         });
+        setHasConfirmed(false);
       }
     } catch (error) {
+      console.error('Error geocoding address:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível confirmar o endereço",
+        description: "Não foi possível confirmar o endereço. Verifique se os dados estão corretos.",
         variant: "destructive"
       });
+      setHasConfirmed(false);
     } finally {
       setLoading(false);
     }
   };
 
-  // Auto-confirm address when all required fields are filled
+  // Auto-confirm address when all required fields are filled (but only once per address)
   useEffect(() => {
-    if (selectedState && selectedCity && street.trim()) {
+    if (selectedState && selectedCity && street.trim() && !hasConfirmed) {
       const stateName = states.find(s => s.id.toString() === selectedState)?.nome || '';
       const currentAddress = `${street}${neighborhood ? ', ' + neighborhood : ''}, ${selectedCity}, ${stateName}`;
       
-      // Só confirma se o endereço mudou
+      // Só confirma se o endereço mudou e ainda não foi confirmado
       if (currentAddress !== lastConfirmedAddress) {
-        setHasConfirmed(false);
         const timeoutId = setTimeout(() => {
           handleConfirmAddress();
-        }, 1000); // Wait 1 second after user stops typing
+        }, 2000); // Wait 2 seconds after user stops typing
         
         return () => clearTimeout(timeoutId);
       }
     }
-  }, [selectedState, selectedCity, street, neighborhood]);
+  }, [selectedState, selectedCity, street, neighborhood, hasConfirmed, lastConfirmedAddress]);
 
   const formatCep = (value: string) => {
     const numbers = value.replace(/\D/g, '');
@@ -272,7 +292,7 @@ export const ListingAddressSelector = ({ onAddressSelected, defaultAddress }: Li
         <Label htmlFor="city">Cidade</Label>
         <Select 
           value={selectedCity} 
-          onValueChange={setSelectedCity}
+          onValueChange={handleCityChange}
           disabled={!selectedState || loading}
         >
           <SelectTrigger>
@@ -295,7 +315,7 @@ export const ListingAddressSelector = ({ onAddressSelected, defaultAddress }: Li
           id="street"
           placeholder="Digite o nome da rua"
           value={street}
-          onChange={(e) => setStreet(e.target.value)}
+          onChange={(e) => handleStreetChange(e.target.value)}
         />
       </div>
 
@@ -306,7 +326,7 @@ export const ListingAddressSelector = ({ onAddressSelected, defaultAddress }: Li
           id="neighborhood"
           placeholder="Digite o bairro"
           value={neighborhood}
-          onChange={(e) => setNeighborhood(e.target.value)}
+          onChange={(e) => handleNeighborhoodChange(e.target.value)}
         />
       </div>
 
@@ -325,20 +345,31 @@ export const ListingAddressSelector = ({ onAddressSelected, defaultAddress }: Li
 
       {/* Status indicator */}
       {selectedState && selectedCity && street && (
-        <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+        <div className={`p-3 rounded-lg border ${
+          hasConfirmed 
+            ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800'
+            : 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800'
+        }`}>
           <div className="flex items-center gap-2">
             {loading ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin text-green-600" />
-                <Label className="text-sm font-medium text-green-800 dark:text-green-200">
+                <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                <Label className="text-sm font-medium text-blue-800 dark:text-blue-200">
                   Confirmando localização...
+                </Label>
+              </>
+            ) : hasConfirmed ? (
+              <>
+                <MapPin className="w-4 h-4 text-green-600" />
+                <Label className="text-sm font-medium text-green-800 dark:text-green-200">
+                  Localização confirmada
                 </Label>
               </>
             ) : (
               <>
-                <MapPin className="w-4 h-4 text-green-600" />
-                <Label className="text-sm font-medium text-green-800 dark:text-green-200">
-                  Localização confirmada automaticamente
+                <MapPin className="w-4 h-4 text-blue-600" />
+                <Label className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                  Aguardando confirmação automática...
                 </Label>
               </>
             )}
