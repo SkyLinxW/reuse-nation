@@ -8,96 +8,51 @@ interface AnnouncementsPageProps {
 }
 
 export const AnnouncementsPage = ({ onNavigate }: AnnouncementsPageProps) => {
-  // Sample partner companies data - in a real app, this would come from a database
+  // Real partner companies data
   const partnerCompanies = [
     {
       id: 1,
-      name: "GreenTech Recycling",
-      logo: "🔄", // In real implementation, use actual logo URLs
-      category: "Reciclagem Avançada",
-      description: "Especializada em processamento de resíduos eletrônicos e plásticos de alta tecnologia.",
-      partnership_since: "2022",
-      website: "https://greentech-recycling.com",
+      name: "Sebrae - Serviço Brasileiro de Apoio às Micro e Pequenas Empresas",
+      logo: "https://logospng.org/download/sebrae/logo-sebrae-icon-256.png",
+      category: "Apoio ao Empreendedorismo",
+      description: "O Sebrae promove a competitividade e o desenvolvimento sustentável dos pequenos negócios, oferecendo capacitação, consultoria e acesso a mercados para empreendedores brasileiros.",
+      partnership_since: "2023",
+      website: "https://sebrae.com.br",
       featured: true,
       stats: {
-        materials_processed: "2.5M kg",
-        locations: 12,
-        employees: 450
+        empresas_atendidas: "6.7M+",
+        estados: 27,
+        consultores: "5.000+"
       }
     },
     {
       id: 2,
-      name: "EcoSolutions Brasil",
-      logo: "🌱",
-      category: "Consultoria Ambiental",
-      description: "Consultoria especializada em implementação de programas de sustentabilidade empresarial.",
-      partnership_since: "2021",
-      website: "https://ecosolutions.com.br",
+      name: "SECITECI - Secretaria de Estado de Ciência, Tecnologia e Inovação",
+      logo: "🔬",
+      category: "Ciência e Tecnologia",
+      description: "A SECITECI tem como missão elevar a capacidade científica e tecnológica em setores estratégicos para o desenvolvimento sustentável de Mato Grosso, promovendo inovação e educação tecnológica.",
+      partnership_since: "2023",
+      website: "https://www.secitec.mt.gov.br",
       featured: true,
       stats: {
-        projects_completed: "180+",
-        locations: 8,
-        employees: 120
+        escolas_tecnicas: "20+",
+        alunos: "15.000+",
+        municipios: "50+"
       }
     },
     {
       id: 3,
-      name: "Logística Verde",
-      logo: "🚛",
-      category: "Transporte Sustentável",
-      description: "Rede nacional de transporte especializada em coleta e distribuição de materiais recicláveis.",
-      partnership_since: "2023",
-      website: "https://logisticaverde.com",
-      featured: false,
-      stats: {
-        routes_covered: "50+ cidades",
-        fleet_size: 85,
-        employees: 200
-      }
-    },
-    {
-      id: 4,
-      name: "Metal Renova",
-      logo: "⚙️",
-      category: "Processamento de Metais",
-      description: "Líder em reciclagem e processamento de metais ferrosos e não-ferrosos no Brasil.",
-      partnership_since: "2020",
-      website: "https://metalrenova.com.br",
+      name: "Escola Estadual Dom Bosco",
+      logo: "🎓",
+      category: "Educação Ambiental",
+      description: "Instituição de ensino comprometida com a formação integral dos alunos, incluindo educação ambiental e práticas sustentáveis, preparando cidadãos conscientes para o futuro.",
+      partnership_since: "2024",
+      website: "#",
       featured: true,
       stats: {
-        capacity: "10K ton/mês",
-        locations: 15,
-        employees: 680
-      }
-    },
-    {
-      id: 5,
-      name: "BioWaste Solutions",
-      logo: "🍃",
-      category: "Resíduos Orgânicos",
-      description: "Especialista em transformação de resíduos orgânicos em biogás e fertilizantes.",
-      partnership_since: "2022",
-      website: "https://biowaste.com.br",
-      featured: false,
-      stats: {
-        biogas_produced: "2.8M m³",
-        facilities: 6,
-        employees: 95
-      }
-    },
-    {
-      id: 6,
-      name: "Paper Cycle",
-      logo: "📄",
-      category: "Reciclagem de Papel",
-      description: "Processamento completo de papel e papelão, do descarte até produtos finais.",
-      partnership_since: "2021",
-      website: "https://papercycle.com.br",
-      featured: false,
-      stats: {
-        paper_processed: "1.2M kg",
-        locations: 5,
-        employees: 150
+        alunos: "800+",
+        projetos_ambientais: "15",
+        anos_atuacao: "45+"
       }
     }
   ];
@@ -105,26 +60,26 @@ export const AnnouncementsPage = ({ onNavigate }: AnnouncementsPageProps) => {
   const announcements = [
     {
       id: 1,
-      title: "Nova Parceria com GreenTech Recycling",
-      date: "15 de Janeiro, 2024",
+      title: "Parceria com Sebrae para Capacitação de Empreendedores",
+      date: "10 de Janeiro, 2024",
       category: "Parceria",
-      description: "Expandimos nossa rede com uma das maiores empresas de reciclagem tecnológica do país.",
+      description: "Iniciamos colaboração com o Sebrae para oferecer cursos e mentorias sobre economia circular e empreendedorismo sustentável.",
       featured: true
     },
     {
       id: 2,
-      title: "Certificação ISO 14001 Renovada",
-      date: "8 de Janeiro, 2024",
-      category: "Certificação",
-      description: "EcoChain mantém seu compromisso com os mais altos padrões de gestão ambiental.",
+      title: "Projeto de Educação Ambiental com Escola Dom Bosco",
+      date: "5 de Janeiro, 2024",
+      category: "Educação",
+      description: "Programa piloto de reciclagem e conscientização ambiental implementado em parceria com a Escola Estadual Dom Bosco.",
       featured: false
     },
     {
       id: 3,
-      title: "Expansão para Região Sul",
-      date: "22 de Dezembro, 2023",
-      category: "Expansão",
-      description: "Novos parceiros e cobertura em Santa Catarina, Paraná e Rio Grande do Sul.",
+      title: "SECITECI Apoia Inovação em Sustentabilidade",
+      date: "20 de Dezembro, 2023",
+      category: "Inovação",
+      description: "Secretaria de Ciência e Tecnologia de MT reconhece EcoChain como plataforma inovadora para economia circular.",
       featured: true
     }
   ];
@@ -141,7 +96,7 @@ export const AnnouncementsPage = ({ onNavigate }: AnnouncementsPageProps) => {
             Conheça nossa rede de empresas parceiras e as últimas novidades da EcoChain
           </p>
           <Badge variant="secondary" className="bg-white text-eco-green px-4 py-2 text-lg">
-            Rede com 200+ Empresas Parceiras
+            3 Parceiros Institucionais
           </Badge>
         </div>
       </section>
@@ -202,8 +157,12 @@ export const AnnouncementsPage = ({ onNavigate }: AnnouncementsPageProps) => {
                 <Card key={partner.id} className="border-eco-green/20 hover:shadow-eco transition-all duration-300 bg-gradient-to-br from-card to-eco-green/5">
                   <CardHeader>
                     <div className="flex items-center gap-4">
-                      <div className="text-4xl bg-eco-green/10 p-3 rounded-lg">
-                        {partner.logo}
+                      <div className="text-4xl bg-eco-green/10 p-3 rounded-lg flex items-center justify-center">
+                        {partner.logo.startsWith('http') ? (
+                          <img src={partner.logo} alt={partner.name} className="w-12 h-12 object-contain" />
+                        ) : (
+                          <span>{partner.logo}</span>
+                        )}
                       </div>
                       <div>
                         <CardTitle className="text-xl font-bold text-eco-green">
@@ -228,73 +187,36 @@ export const AnnouncementsPage = ({ onNavigate }: AnnouncementsPageProps) => {
                         <div key={key} className="text-center">
                           <div className="text-lg font-bold text-eco-green">{value}</div>
                           <div className="text-xs text-muted-foreground">
-                            {key === 'materials_processed' && 'Materiais'}
-                            {key === 'locations' && 'Locais'}
-                            {key === 'employees' && 'Funcionários'}
-                            {key === 'projects_completed' && 'Projetos'}
-                            {key === 'routes_covered' && 'Rotas'}
-                            {key === 'fleet_size' && 'Frota'}
-                            {key === 'capacity' && 'Capacidade'}
-                            {key === 'biogas_produced' && 'Biogás'}
-                            {key === 'facilities' && 'Instalações'}
-                            {key === 'paper_processed' && 'Papel'}
+                            {key === 'empresas_atendidas' && 'Empresas'}
+                            {key === 'estados' && 'Estados'}
+                            {key === 'consultores' && 'Consultores'}
+                            {key === 'escolas_tecnicas' && 'Escolas'}
+                            {key === 'alunos' && 'Alunos'}
+                            {key === 'municipios' && 'Municípios'}
+                            {key === 'projetos_ambientais' && 'Projetos'}
+                            {key === 'anos_atuacao' && 'Anos'}
                           </div>
                         </div>
                       ))}
                     </div>
 
-                    <Button variant="outline" size="sm" className="w-full mt-4">
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Visitar Site
-                    </Button>
+                    {partner.website !== '#' && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full mt-4"
+                        onClick={() => window.open(partner.website, '_blank')}
+                      >
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Visitar Site
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               ))}
             </div>
           </div>
 
-          {/* All Partners Grid */}
-          <div>
-            <h3 className="text-2xl font-bold text-eco-green mb-8 text-center">
-              Todos os Parceiros
-            </h3>
-            <div className="grid md:grid-cols-3 gap-6">
-              {partnerCompanies.map((partner) => (
-                <Card key={partner.id} className="border-eco-green/20 hover:shadow-eco transition-all duration-300">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="text-2xl bg-eco-green/10 p-2 rounded">
-                        {partner.logo}
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg text-eco-green">
-                          {partner.name}
-                        </CardTitle>
-                        <CardDescription className="text-sm">
-                          {partner.category}
-                        </CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <p className="text-sm text-muted-foreground mb-3">
-                      {partner.description}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <Badge variant="secondary" className="text-xs">
-                        Desde {partner.partnership_since}
-                      </Badge>
-                      {partner.featured && (
-                        <Badge className="bg-eco-green text-xs">
-                          Destaque
-                        </Badge>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
         </div>
       </section>
 
