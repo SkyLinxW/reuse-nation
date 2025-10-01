@@ -16,7 +16,7 @@ export const AnnouncementsPage = ({ onNavigate }: AnnouncementsPageProps) => {
       logo: "https://upload.wikimedia.org/wikipedia/commons/6/65/Sebrae_logo.png",
       category: "Apoio ao Empreendedorismo",
       description: "O Sebrae promove a competitividade e o desenvolvimento sustentável dos pequenos negócios, oferecendo capacitação, consultoria e acesso a mercados para empreendedores brasileiros.",
-      partnership_since: "2023",
+      partnership_since: "2025",
       website: "https://sebrae.com.br",
       featured: true,
       stats: {
@@ -31,7 +31,7 @@ export const AnnouncementsPage = ({ onNavigate }: AnnouncementsPageProps) => {
       logo: "🔬",
       category: "Ciência e Tecnologia",
       description: "A SECITECI tem como missão elevar a capacidade científica e tecnológica em setores estratégicos para o desenvolvimento sustentável de Mato Grosso, promovendo inovação e educação tecnológica.",
-      partnership_since: "2023",
+      partnership_since: "2025",
       website: "https://www.secitec.mt.gov.br",
       featured: true,
       stats: {
@@ -46,7 +46,7 @@ export const AnnouncementsPage = ({ onNavigate }: AnnouncementsPageProps) => {
       logo: "🎓",
       category: "Educação Ambiental",
       description: "Instituição de ensino comprometida com a formação integral dos alunos, incluindo educação ambiental e práticas sustentáveis, preparando cidadãos conscientes para o futuro.",
-      partnership_since: "2024",
+      partnership_since: "2025",
       website: "#",
       featured: true,
       stats: {
