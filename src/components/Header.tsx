@@ -70,8 +70,34 @@ export const Header = ({
         )
         .subscribe();
 
+      // Set up real-time subscription for notifications
+      const notificationsChannel = supabase
+        .channel(`header-notifications-${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`,
+          },
+          async () => {
+            setTimeout(async () => {
+              try {
+                const unreadCount = await getUnreadNotificationCount(user.id);
+                setNotificationCount(unreadCount);
+                console.log('🔄 Header notification count updated:', unreadCount);
+              } catch (error) {
+                console.error('Error updating notification count:', error);
+              }
+            }, 100);
+          }
+        )
+        .subscribe();
+
       return () => {
         supabase.removeChannel(messagesChannel);
+        supabase.removeChannel(notificationsChannel);
       };
     }
   }, [user]);

@@ -42,15 +42,19 @@ export const NotificationsPage = ({ onNavigate }: NotificationsPageProps) => {
     loadNotifications();
   }, [user?.id]);
 
-  const handleMarkAsRead = (notificationId: string) => {
-    markNotificationAsRead(notificationId);
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === notificationId 
-          ? { ...notification, read: true }
-          : notification
-      )
-    );
+  const handleMarkAsRead = async (notificationId: string) => {
+    try {
+      await markNotificationAsRead(notificationId);
+      setNotifications(prev => 
+        prev.map(notification => 
+          notification.id === notificationId 
+            ? { ...notification, read: true }
+            : notification
+        )
+      );
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
   };
 
   const filteredNotifications = filter === 'unread' 
