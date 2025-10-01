@@ -243,25 +243,27 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
               </p>
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
-              <Button
-                size="lg"
-                onClick={() => onNavigate('auth')}
-                className="bg-gradient-eco hover:opacity-90 shadow-eco text-lg px-10 py-7 rounded-2xl font-semibold text-white transition-all duration-300 hover:shadow-xl hover:scale-105"
-              >
-                <TrendingUp className="w-5 h-5 mr-2" />
-                Começar Agora
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => onNavigate('about')}
-                className="text-lg px-10 py-7 rounded-2xl border-2 border-eco-green text-eco-green hover:bg-eco-green-light font-semibold transition-all duration-300 hover:shadow-lg"
-              >
-                <Search className="w-5 h-5 mr-2" />
-                Como Funciona
-              </Button>
-            </div>
+            {!user && (
+              <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
+                <Button
+                  size="lg"
+                  onClick={() => onNavigate('auth')}
+                  className="bg-gradient-eco hover:opacity-90 shadow-eco text-lg px-10 py-7 rounded-2xl font-semibold text-white transition-all duration-300 hover:shadow-xl hover:scale-105"
+                >
+                  <TrendingUp className="w-5 h-5 mr-2" />
+                  Começar Agora
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => onNavigate('about')}
+                  className="text-lg px-10 py-7 rounded-2xl border-2 border-eco-green text-eco-green hover:bg-eco-green-light font-semibold transition-all duration-300 hover:shadow-lg"
+                >
+                  <Search className="w-5 h-5 mr-2" />
+                  Como Funciona
+                </Button>
+              </div>
+            )}
 
             {/* Enhanced Impact Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
