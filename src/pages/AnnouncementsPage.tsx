@@ -13,7 +13,7 @@ export const AnnouncementsPage = ({ onNavigate }: AnnouncementsPageProps) => {
     {
       id: 1,
       name: "Sebrae - Serviço Brasileiro de Apoio às Micro e Pequenas Empresas",
-      logo: "https://logospng.org/download/sebrae/logo-sebrae-icon-256.png",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/6/65/Sebrae_logo.png",
       category: "Apoio ao Empreendedorismo",
       description: "O Sebrae promove a competitividade e o desenvolvimento sustentável dos pequenos negócios, oferecendo capacitação, consultoria e acesso a mercados para empreendedores brasileiros.",
       partnership_since: "2023",
