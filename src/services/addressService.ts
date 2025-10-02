@@ -94,97 +94,98 @@ export const getAddressByCep = async (cep: string): Promise<AddressInfo | null> 
   }
 };
 
-// Geocode address to coordinates using Nominatim
+// Geocode address to coordinates using edge function
 export const geocodeAddress = async (address: string): Promise<Coordinates | null> => {
   try {
-    console.log('Geocoding address:', address);
+    console.log('Geocoding address via edge function:', address);
     
-    const encodedAddress = encodeURIComponent(`${address}, Brasil`);
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1&countrycodes=br`,
+      `https://zhanwvqujchafxaijujv.supabase.co/functions/v1/geocode-address`,
       {
+        method: 'POST',
         headers: {
-          'User-Agent': 'EcoMarketplace/1.0'
-        }
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ address })
       }
     );
     
-    if (!response.ok) throw new Error('Geocoding failed');
+    if (!response.ok) {
+      console.error('Geocoding failed:', await response.text());
+      return null;
+    }
     
     const data = await response.json();
-    if (data.length === 0) throw new Error('Address not found');
     
-    const result = {
-      lat: parseFloat(data[0].lat),
-      lng: parseFloat(data[0].lon)
-    };
+    if (data.lat && data.lng) {
+      const result = {
+        lat: data.lat,
+        lng: data.lng
+      };
+      console.log('Geocoded successfully:', result);
+      return result;
+    }
     
-    console.log('Geocoded coordinates:', { address, result });
-    return result;
+    return null;
   } catch (error) {
     console.error('Error geocoding address:', error);
     return null;
   }
 };
 
-// Calculate real route using OSRM (Open Source Routing Machine) 
+// Calculate real route with robust fallback
 export const calculateRealRoute = async (origin: Coordinates, destination: Coordinates): Promise<{ distance: number; duration: number; coordinates?: Coordinates[] } | null> => {
   try {
-    console.log('Calculating real route using OSRM:', { origin, destination });
+    // Validate coordinates
+    if (!origin || !destination || 
+        isNaN(origin.lat) || isNaN(origin.lng) || 
+        isNaN(destination.lat) || isNaN(destination.lng)) {
+      console.error('Invalid coordinates provided:', { origin, destination });
+      return calculateFallbackRoute(origin || { lat: -23.5505, lng: -46.6333 }, 
+                                   destination || { lat: -23.5505, lng: -46.6333 });
+    }
+
+    console.log('Calculating route:', { origin, destination });
     
-    // Using OSRM free public API
-    const response = await fetch(
-      `https://router.project-osrm.org/route/v1/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson`,
-      {
-        headers: {
-          'User-Agent': 'EcoMarketplace/1.0'
+    // Try OSRM with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
+    try {
+      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson`;
+      
+      const response = await fetch(osrmUrl, {
+        headers: { 'User-Agent': 'EcoMarketplace/1.0' },
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data.routes && data.routes.length > 0) {
+          const route = data.routes[0];
+          const distance = route.distance / 1000; // Convert to km
+          const duration = route.duration; // Keep in seconds
+          const coordinates = route.geometry.coordinates.map(([lng, lat]: [number, number]) => ({ lat, lng }));
+          
+          console.log('OSRM route calculated:', { distance, duration });
+          return { distance, duration, coordinates };
         }
       }
-    );
-    
-    if (!response.ok) {
-      console.warn('OSRM API failed, using fallback calculation');
-      const fallback = calculateFallbackRoute(origin, destination);
-      return {
-        distance: fallback.distance,
-        duration: fallback.duration,
-        coordinates: fallback.coordinates
-      };
+    } catch (fetchError) {
+      console.warn('OSRM fetch failed, using fallback:', fetchError);
+      clearTimeout(timeoutId);
     }
     
-    const data = await response.json();
+    // Fallback to manual calculation
+    console.log('Using fallback route calculation');
+    return calculateFallbackRoute(origin, destination);
     
-    if (!data.routes || data.routes.length === 0) {
-      console.warn('No routes found, using fallback calculation');
-      const fallback = calculateFallbackRoute(origin, destination);
-      return {
-        distance: fallback.distance,
-        duration: fallback.duration,
-        coordinates: fallback.coordinates
-      };
-    }
-    
-    const route = data.routes[0];
-    const distance = route.distance / 1000; // Convert to km
-    const duration = route.duration; // Keep in seconds for compatibility
-    const coordinates = route.geometry.coordinates.map(([lng, lat]: [number, number]) => ({ lat, lng }));
-    
-    const result = {
-      distance,
-      duration,
-      coordinates
-    };
-    
-    console.log('OSRM route calculated successfully:', result);
-    return result;
   } catch (error) {
-    console.error('Error calculating real route with OSRM:', error);
-    const fallback = calculateFallbackRoute(origin, destination);
-    return {
-      distance: fallback.distance,
-      duration: fallback.duration * 60, // Convert minutes to seconds for compatibility
-      coordinates: fallback.coordinates
-    };
+    console.error('Error calculating route:', error);
+    return calculateFallbackRoute(origin, destination);
   }
 };
 

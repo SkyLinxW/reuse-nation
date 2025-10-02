@@ -34,7 +34,7 @@ export const AddressSelector = ({ onAddressSelected, defaultAddress }: AddressSe
   const [cep, setCep] = useState('');
   const [loading, setLoading] = useState(false);
   const [addressInfo, setAddressInfo] = useState<AddressInfo | null>(null);
-  const [lastSentAddress, setLastSentAddress] = useState<string>('');
+  const [isAddressSent, setIsAddressSent] = useState(false);
   const { toast } = useToast();
   
 
@@ -171,57 +171,73 @@ export const AddressSelector = ({ onAddressSelected, defaultAddress }: AddressSe
     return addressParts.join(', ');
   };
 
-  // Geocode address and send when complete - with debounce
+  // Send address only once when all fields are complete and user stops editing
   useEffect(() => {
-    // Only proceed if all required fields are filled
+    // Reset sent flag when user changes any field
+    setIsAddressSent(false);
+  }, [selectedState, selectedCity, street, neighborhood]);
+
+  // Handle address confirmation with explicit button
+  const handleConfirmAddress = async () => {
     if (!selectedState || !selectedCity || !street.trim()) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha Estado, Cidade e Rua para confirmar o endereço",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (isAddressSent) {
+      toast({
+        title: "Endereço já confirmado",
+        description: "O endereço já foi selecionado",
+      });
       return;
     }
 
     const fullAddress = getFullAddress();
-    
-    // Prevent duplicate calls for same address
-    if (!fullAddress || fullAddress === lastSentAddress) {
-      return;
-    }
+    console.log('AddressSelector - Confirming address:', fullAddress);
 
-    // Debounce address geocoding
-    const timeoutId = setTimeout(async () => {
-      try {
-        console.log('AddressSelector - Geocoding address:', fullAddress);
+    setLoading(true);
+    
+    try {
+      // Use geocoding service to get real coordinates
+      const coordinates = await geocodeAddress(fullAddress);
+      
+      if (coordinates) {
+        console.log('AddressSelector - Coordinates found:', coordinates);
+        setIsAddressSent(true);
+        onAddressSelected(fullAddress, coordinates);
         
-        // Use geocoding service to get real coordinates
-        const coordinates = await geocodeAddress(fullAddress);
-        
-        if (coordinates) {
-          console.log('AddressSelector - Coordinates found:', coordinates);
-          setLastSentAddress(fullAddress);
-          onAddressSelected(fullAddress, coordinates);
-        } else {
-          console.warn('AddressSelector - Could not geocode address, using fallback');
-          toast({
-            title: "Aviso",
-            description: "Não foi possível geocodificar o endereço. Usando localização aproximada.",
-            variant: "default"
-          });
-          
-          // Fallback to city-based coordinates
-          const fallbackCoords = await getAddressCoordinates(fullAddress);
-          setLastSentAddress(fullAddress);
-          onAddressSelected(fullAddress, fallbackCoords);
-        }
-      } catch (error) {
-        console.error('AddressSelector - Error geocoding:', error);
         toast({
-          title: "Erro",
-          description: "Não foi possível processar o endereço",
-          variant: "destructive"
+          title: "Endereço confirmado",
+          description: "Endereço de entrega selecionado com sucesso",
+        });
+      } else {
+        console.warn('AddressSelector - Could not geocode, using fallback');
+        
+        // Fallback to city-based coordinates
+        const fallbackCoords = await getAddressCoordinates(fullAddress);
+        setIsAddressSent(true);
+        onAddressSelected(fullAddress, fallbackCoords);
+        
+        toast({
+          title: "Endereço confirmado",
+          description: "Usando localização aproximada da cidade",
         });
       }
-    }, 800); // 800ms debounce
-
-    return () => clearTimeout(timeoutId);
-  }, [selectedState, selectedCity, street, neighborhood]);
+    } catch (error) {
+      console.error('AddressSelector - Error confirming:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível processar o endereço",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatCep = (value: string) => {
     const numbers = value.replace(/\D/g, '');
@@ -332,6 +348,24 @@ export const AddressSelector = ({ onAddressSelected, defaultAddress }: AddressSe
             onChange={(e) => setNeighborhood(e.target.value)}
           />
         </div>
+
+        {/* Confirm Button */}
+        <Button 
+          onClick={handleConfirmAddress}
+          disabled={loading || !selectedState || !selectedCity || !street.trim() || isAddressSent}
+          className="w-full"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Confirmando...
+            </>
+          ) : isAddressSent ? (
+            '✓ Endereço Confirmado'
+          ) : (
+            'Confirmar Endereço'
+          )}
+        </Button>
 
       </CardContent>
     </Card>
