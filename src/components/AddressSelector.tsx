@@ -33,6 +33,7 @@ export const AddressSelector = ({ onAddressSelected, defaultAddress }: AddressSe
   const [cep, setCep] = useState('');
   const [loading, setLoading] = useState(false);
   const [addressInfo, setAddressInfo] = useState<AddressInfo | null>(null);
+  const [lastSentAddress, setLastSentAddress] = useState<string>('');
   const { toast } = useToast();
   
 
@@ -160,13 +161,14 @@ export const AddressSelector = ({ onAddressSelected, defaultAddress }: AddressSe
     return null;
   };
 
-  // Send address when all required fields are filled
+  // Send address when all required fields are filled - but only if changed
   useEffect(() => {
     if (selectedState && selectedCity && street.trim()) {
       const fullAddress = getFullAddress();
       const coordinates = getAddressCoordinates();
       
-      if (fullAddress && coordinates) {
+      if (fullAddress && coordinates && fullAddress !== lastSentAddress) {
+        setLastSentAddress(fullAddress);
         onAddressSelected(fullAddress, coordinates);
       }
     }
