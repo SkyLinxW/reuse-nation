@@ -66,18 +66,27 @@ export const getCitiesByState = async (stateId: number): Promise<BrazilianCity[]
   }
 };
 
-// Search address by CEP
+// Search address by CEP using edge function to avoid CORS issues
 export const getAddressByCep = async (cep: string): Promise<AddressInfo | null> => {
   try {
     const cleanCep = cep.replace(/\D/g, '');
     if (cleanCep.length !== 8) throw new Error('Invalid CEP');
     
-    const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
-    if (!response.ok) throw new Error('Failed to fetch address');
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://vpftvuqkdffaydgfvekm.supabase.co';
+    const response = await fetch(`${supabaseUrl}/functions/v1/fetch-cep`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ cep: cleanCep })
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch address');
+    }
     
     const data = await response.json();
-    if (data.erro) throw new Error('CEP not found');
-    
     return data;
   } catch (error) {
     console.error('Error fetching address by CEP:', error);
