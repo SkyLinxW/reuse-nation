@@ -11,6 +11,7 @@ import {
   getCitiesByState, 
   getAddressByCep,
   geocodeAddress,
+  getAddressCoordinates,
   BrazilianState,
   BrazilianCity,
   AddressInfo,
@@ -143,35 +144,83 @@ export const AddressSelector = ({ onAddressSelected, defaultAddress }: AddressSe
     }
     
     const stateName = states.find(s => s.id.toString() === selectedState)?.nome || '';
-    const addressParts = [
-      street.trim(),
-      neighborhood ? neighborhood.trim() : null,
-      selectedCity.trim(),
-      stateName.trim()
-    ].filter(Boolean);
+    
+    // Build clean address parts without duplications
+    const addressParts: string[] = [];
+    
+    // Add street
+    if (street.trim()) {
+      addressParts.push(street.trim());
+    }
+    
+    // Add neighborhood if different from city
+    if (neighborhood && neighborhood.trim() && neighborhood.trim() !== selectedCity.trim()) {
+      addressParts.push(neighborhood.trim());
+    }
+    
+    // Add city
+    if (selectedCity.trim()) {
+      addressParts.push(selectedCity.trim());
+    }
+    
+    // Add state
+    if (stateName.trim()) {
+      addressParts.push(stateName.trim());
+    }
     
     return addressParts.join(', ');
   };
 
-  const getAddressCoordinates = () => {
-    // For now, use São Paulo coordinates as default when address is complete
-    if (selectedState && selectedCity && street) {
-      return { lat: -23.5505, lng: -46.6333 };
-    }
-    return null;
-  };
-
-  // Send address when all required fields are filled - but only if changed
+  // Geocode address and send when complete - with debounce
   useEffect(() => {
-    if (selectedState && selectedCity && street.trim()) {
-      const fullAddress = getFullAddress();
-      const coordinates = getAddressCoordinates();
-      
-      if (fullAddress && coordinates && fullAddress !== lastSentAddress) {
-        setLastSentAddress(fullAddress);
-        onAddressSelected(fullAddress, coordinates);
-      }
+    // Only proceed if all required fields are filled
+    if (!selectedState || !selectedCity || !street.trim()) {
+      return;
     }
+
+    const fullAddress = getFullAddress();
+    
+    // Prevent duplicate calls for same address
+    if (!fullAddress || fullAddress === lastSentAddress) {
+      return;
+    }
+
+    // Debounce address geocoding
+    const timeoutId = setTimeout(async () => {
+      try {
+        console.log('AddressSelector - Geocoding address:', fullAddress);
+        
+        // Use geocoding service to get real coordinates
+        const coordinates = await geocodeAddress(fullAddress);
+        
+        if (coordinates) {
+          console.log('AddressSelector - Coordinates found:', coordinates);
+          setLastSentAddress(fullAddress);
+          onAddressSelected(fullAddress, coordinates);
+        } else {
+          console.warn('AddressSelector - Could not geocode address, using fallback');
+          toast({
+            title: "Aviso",
+            description: "Não foi possível geocodificar o endereço. Usando localização aproximada.",
+            variant: "default"
+          });
+          
+          // Fallback to city-based coordinates
+          const fallbackCoords = await getAddressCoordinates(fullAddress);
+          setLastSentAddress(fullAddress);
+          onAddressSelected(fullAddress, fallbackCoords);
+        }
+      } catch (error) {
+        console.error('AddressSelector - Error geocoding:', error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível processar o endereço",
+          variant: "destructive"
+        });
+      }
+    }, 800); // 800ms debounce
+
+    return () => clearTimeout(timeoutId);
   }, [selectedState, selectedCity, street, neighborhood]);
 
   const formatCep = (value: string) => {
