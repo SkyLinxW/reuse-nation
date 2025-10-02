@@ -72,8 +72,7 @@ export const getAddressByCep = async (cep: string): Promise<AddressInfo | null> 
     const cleanCep = cep.replace(/\D/g, '');
     if (cleanCep.length !== 8) throw new Error('Invalid CEP');
     
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://vpftvuqkdffaydgfvekm.supabase.co';
-    const response = await fetch(`${supabaseUrl}/functions/v1/fetch-cep`, {
+    const response = await fetch(`https://zhanwvqujchafxaijujv.supabase.co/functions/v1/fetch-cep`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -82,8 +81,9 @@ export const getAddressByCep = async (cep: string): Promise<AddressInfo | null> 
     });
     
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to fetch address');
+      const errorText = await response.text();
+      console.error('CEP fetch error response:', errorText);
+      throw new Error('Failed to fetch address');
     }
     
     const data = await response.json();
