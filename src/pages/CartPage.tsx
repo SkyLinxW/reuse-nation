@@ -347,16 +347,10 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
                 onDeliveryDataChange={(data) => {
                   console.log('CartPage - Delivery data changed:', data);
                   setDeliveryData(data);
-                }}
-                onAddressSelected={(address, coordinates) => {
-                  console.log('CartPage - Address selected callback:', { address, coordinates });
-                  setSelectedAddress(address);
-                  // Also update deliveryData to ensure we have the address
-                  setDeliveryData(prev => {
-                    const updated = { ...prev, fullAddress: address, address };
-                    console.log('CartPage - Updated deliveryData in callback:', updated);
-                    return updated;
-                  });
+                  // Update selected address from delivery data
+                  if (data.fullAddress || data.address) {
+                    setSelectedAddress(data.fullAddress || data.address);
+                  }
                 }}
                 sellerAddress={sellerAddress}
               />

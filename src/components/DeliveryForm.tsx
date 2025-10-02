@@ -16,7 +16,6 @@ interface DeliveryFormProps {
   deliveryMethod: 'retirada_local' | 'entrega' | 'transportadora';
   onDeliveryMethodChange: (method: 'retirada_local' | 'entrega' | 'transportadora') => void;
   onDeliveryDataChange: (data: any) => void;
-  onAddressSelected?: (address: string, coordinates: Coordinates) => void;
   sellerAddress: string;
 }
 
@@ -24,7 +23,6 @@ export const DeliveryForm = ({
   deliveryMethod, 
   onDeliveryMethodChange, 
   onDeliveryDataChange,
-  onAddressSelected,
   sellerAddress 
 }: DeliveryFormProps) => {
   const [deliveryData, setDeliveryData] = useState({
@@ -71,10 +69,6 @@ export const DeliveryForm = ({
     console.log('DeliveryForm - Updated deliveryData:', updated);
     setDeliveryData(updated);
     onDeliveryDataChange(updated);
-    
-    if (onAddressSelected) {
-      onAddressSelected(address, coordinates);
-    }
   };
 
   const handleDataChange = (newData: any) => {
