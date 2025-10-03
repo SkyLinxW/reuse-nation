@@ -145,12 +145,23 @@ export const AddressSelector = ({ onAddressSelected, defaultAddress }: AddressSe
     
     const stateName = states.find(s => s.id.toString() === selectedState)?.nome || '';
     
+    // Clean street to ensure it doesn't already contain city/state
+    let cleanStreet = street.trim();
+    
+    // Remove city and state if they are already in the street field
+    const cityToRemove = selectedCity.trim();
+    const stateToRemove = stateName.trim();
+    
+    // Remove patterns like ", City" or ", State" from the end
+    cleanStreet = cleanStreet.replace(new RegExp(`,\\s*${cityToRemove}.*$`, 'i'), '');
+    cleanStreet = cleanStreet.replace(new RegExp(`,\\s*${stateToRemove}.*$`, 'i'), '');
+    
     // Build clean address parts without duplications
     const addressParts: string[] = [];
     
-    // Add street
-    if (street.trim()) {
-      addressParts.push(street.trim());
+    // Add street (cleaned)
+    if (cleanStreet) {
+      addressParts.push(cleanStreet);
     }
     
     // Add neighborhood if different from city
