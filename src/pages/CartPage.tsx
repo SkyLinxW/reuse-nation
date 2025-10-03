@@ -26,7 +26,6 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'boleto' | 'cartao'>('pix');
   const [deliveryMethod, setDeliveryMethod] = useState<'retirada_local' | 'entrega' | 'transportadora'>('retirada_local');
   const [deliveryData, setDeliveryData] = useState<any>({});
-  const [selectedAddress, setSelectedAddress] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState<'cart' | 'delivery' | 'payment' | 'summary'>('cart');
   const { user } = useAuth();
@@ -80,30 +79,29 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
     
     setIsProcessing(true);
     
-    console.log('handlePaymentProcess - Starting with method and data:', {
+    console.log('handlePaymentProcess - Starting with data:', {
       deliveryMethod,
-      selectedAddress,
       deliveryData,
       cartItems: cartItems.length
     });
     
-    // If delivery method is 'entrega' but no address selected, show error
-    if (deliveryMethod === 'entrega') {
-      console.log('Checking address for delivery:', {
-        selectedAddress,
-        deliveryDataFullAddress: deliveryData.fullAddress,
-        deliveryDataAddress: deliveryData.address,
-        deliveryData
+    // Validação de endereço para método de entrega
+    if (deliveryMethod === 'entrega' || deliveryMethod === 'transportadora') {
+      const hasAddress = deliveryData.address || deliveryData.fullAddress;
+      const hasCoordinates = deliveryData.coordinates;
+      
+      console.log('Validating address:', {
+        hasAddress,
+        hasCoordinates,
+        address: deliveryData.address,
+        fullAddress: deliveryData.fullAddress,
+        coordinates: deliveryData.coordinates
       });
       
-      const hasCompleteAddress = selectedAddress || 
-                                deliveryData.fullAddress || 
-                                deliveryData.address;
-      
-      if (!hasCompleteAddress) {
+      if (!hasAddress || !hasCoordinates) {
         toast({
           title: "Endereço necessário",
-          description: "Para entrega, é necessário preencher o endereço completo (CEP, estado, cidade e rua).",
+          description: "Por favor, preencha e confirme o endereço de entrega antes de continuar.",
           variant: "destructive",
         });
         setIsProcessing(false);
@@ -116,27 +114,14 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Create transactions for each item
-      console.log('Creating transaction with delivery data:', {
-        selectedAddress,
-        deliveryData,
-        finalAddress: selectedAddress || deliveryData.fullAddress || deliveryData.address
+      const finalDeliveryAddress = deliveryData.fullAddress || deliveryData.address || '';
+      
+      console.log('Creating transactions with delivery address:', {
+        finalDeliveryAddress,
+        deliveryData
       });
       
       for (const cartItem of cartItems) {
-        // Ensure delivery address is properly saved
-        const finalDeliveryAddress = selectedAddress || 
-                                    deliveryData.fullAddress || 
-                                    deliveryData.address || 
-                                    '';
-        
-        console.log('Creating transaction with delivery address:', {
-          selectedAddress,
-          deliveryDataFullAddress: deliveryData.fullAddress,
-          deliveryDataAddress: deliveryData.address,
-          finalDeliveryAddress,
-          allDeliveryData: deliveryData
-        });
-
         await createTransaction({
           buyer_id: user.id,
           seller_id: cartItem.waste_items?.user_id,
@@ -347,10 +332,6 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
                 onDeliveryDataChange={(data) => {
                   console.log('CartPage - Delivery data changed:', data);
                   setDeliveryData(data);
-                  // Update selected address from delivery data
-                  if (data.fullAddress || data.address) {
-                    setSelectedAddress(data.fullAddress || data.address);
-                  }
                 }}
                 sellerAddress={sellerAddress}
               />
@@ -364,6 +345,7 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
                 deliveryCost={getDeliveryCost()}
                 discount={getPixDiscount()}
                 total={getTotal()}
+                deliveryAddress={deliveryData.fullAddress || deliveryData.address}
               />
             </div>
           </div>
@@ -390,6 +372,7 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
                 deliveryCost={getDeliveryCost()}
                 discount={getPixDiscount()}
                 total={getTotal()}
+                deliveryAddress={deliveryData.fullAddress || deliveryData.address}
               />
             </div>
           </div>
@@ -480,12 +463,14 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
               <Button
                 onClick={() => {
                   // Validate delivery data before proceeding
-                  if (deliveryMethod === 'entrega') {
-                    const hasAddress = selectedAddress || deliveryData.fullAddress || deliveryData.address;
-                    if (!hasAddress) {
+                  if (deliveryMethod === 'entrega' || deliveryMethod === 'transportadora') {
+                    const hasAddress = deliveryData.fullAddress || deliveryData.address;
+                    const hasCoordinates = deliveryData.coordinates;
+                    
+                    if (!hasAddress || !hasCoordinates) {
                       toast({
                         title: "Endereço necessário",
-                        description: "Por favor, preencha o endereço de entrega antes de continuar.",
+                        description: "Por favor, preencha e confirme o endereço de entrega antes de continuar.",
                         variant: "destructive",
                       });
                       return;
@@ -493,7 +478,11 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
                   }
                   setCurrentStep('payment');
                 }}
-                className="bg-gradient-eco hover:opacity-90 shadow-eco"
+                disabled={
+                  (deliveryMethod === 'entrega' || deliveryMethod === 'transportadora') &&
+                  (!deliveryData.fullAddress && !deliveryData.address || !deliveryData.coordinates)
+                }
+                className="bg-gradient-eco hover:opacity-90 shadow-eco disabled:opacity-50"
               >
                 Continuar para Pagamento
               </Button>

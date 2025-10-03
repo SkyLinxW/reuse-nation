@@ -11,6 +11,7 @@ interface OrderSummaryProps {
   deliveryCost: number;
   discount?: number;
   total: number;
+  deliveryAddress?: string;
 }
 
 export const OrderSummary = ({
@@ -20,7 +21,8 @@ export const OrderSummary = ({
   subtotal,
   deliveryCost,
   discount = 0,
-  total
+  total,
+  deliveryAddress
 }: OrderSummaryProps) => {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -92,11 +94,23 @@ export const OrderSummary = ({
             <DeliveryIcon className="w-4 h-4" />
             Entrega
           </h4>
-          <div className="flex justify-between items-center">
-            <span className="text-sm">{deliveryInfo.label}</span>
-            <span className="font-medium">
-              {deliveryCost === 0 ? 'Grátis' : formatPrice(deliveryCost)}
-            </span>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-sm">{deliveryInfo.label}</span>
+              <span className="font-medium">
+                {deliveryCost === 0 ? 'Grátis' : formatPrice(deliveryCost)}
+              </span>
+            </div>
+            {deliveryAddress && (deliveryMethod === 'entrega' || deliveryMethod === 'transportadora') && (
+              <div className="p-2 bg-muted rounded-lg">
+                <p className="text-xs text-muted-foreground mb-1">Endereço de entrega:</p>
+                <p className="text-xs font-medium">{deliveryAddress}</p>
+                <Badge variant="outline" className="mt-1 text-xs">
+                  <Shield className="w-3 h-3 mr-1" />
+                  Confirmado
+                </Badge>
+              </div>
+            )}
           </div>
         </div>
 

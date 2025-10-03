@@ -64,7 +64,8 @@ export const DeliveryForm = ({
       ...deliveryData, 
       address,
       fullAddress: address,
-      coordinates 
+      coordinates,
+      isAddressConfirmed: true
     };
     console.log('DeliveryForm - Updated deliveryData:', updated);
     setDeliveryData(updated);
