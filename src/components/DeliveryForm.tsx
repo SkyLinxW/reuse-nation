@@ -277,7 +277,7 @@ export const DeliveryForm = ({
                 </div>
               <Badge className="mt-3 bg-eco-blue text-white">
                 <Clock className="w-3 h-3 mr-1" />
-                Entrega em até 24h
+                Preparação em até 24h
               </Badge>
             </div>
           </TabsContent>
