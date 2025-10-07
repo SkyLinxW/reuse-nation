@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { LoginPage } from '@/pages/LoginPage';
 import { RegisterPage } from '@/pages/RegisterPage';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,7 +9,10 @@ interface AuthPageProps {
 }
 
 export const AuthPage = ({ onNavigate }: AuthPageProps) => {
-  const [activeTab, setActiveTab] = useState('login');
+  // Check URL params for tab
+  const urlParams = new URLSearchParams(window.location.search);
+  const tabParam = urlParams.get('tab');
+  const [activeTab, setActiveTab] = useState(tabParam === 'register' ? 'register' : 'login');
 
   const handleNavigateToRegister = () => {
     setActiveTab('register');

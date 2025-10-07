@@ -362,7 +362,7 @@ export const Header = ({
                   Entrar
                 </Button>
                 <Button 
-                  onClick={() => onNavigate('auth')} 
+                  onClick={() => onNavigate('auth?tab=register')} 
                   className="bg-gradient-eco hover:opacity-90 h-11 px-6 rounded-xl font-medium text-white shadow-eco transition-all duration-200 hover:shadow-lg hover:scale-105"
                 >
                   Cadastrar
