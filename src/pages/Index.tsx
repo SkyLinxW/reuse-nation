@@ -74,7 +74,7 @@ const Index = () => {
       case 'home':
         return <HomePage onNavigate={handleNavigate} />;
       case 'auth':
-        return <AuthPage onNavigate={handleNavigate} />;
+        return <AuthPage onNavigate={handleNavigate} initialTab={pageParams.tab === 'register' ? 'register' : 'login'} />;
       case 'create-listing':
         return <CreateListingPage onNavigate={handleNavigate} />;
       case 'edit-listing':

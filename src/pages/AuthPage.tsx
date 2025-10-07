@@ -6,13 +6,15 @@ import { Card, CardContent } from '@/components/ui/card';
 
 interface AuthPageProps {
   onNavigate: (page: string) => void;
+  initialTab?: 'login' | 'register';
 }
 
-export const AuthPage = ({ onNavigate }: AuthPageProps) => {
-  // Check URL params for tab
-  const urlParams = new URLSearchParams(window.location.search);
-  const tabParam = urlParams.get('tab');
-  const [activeTab, setActiveTab] = useState(tabParam === 'register' ? 'register' : 'login');
+export const AuthPage = ({ onNavigate, initialTab }: AuthPageProps) => {
+  const [activeTab, setActiveTab] = useState(initialTab === 'register' ? 'register' : 'login');
+
+  useEffect(() => {
+    setActiveTab(initialTab === 'register' ? 'register' : 'login');
+  }, [initialTab]);
 
   const handleNavigateToRegister = () => {
     setActiveTab('register');
