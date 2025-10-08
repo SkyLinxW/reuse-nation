@@ -147,21 +147,33 @@ export const calculateRealRoute = async (origin: Coordinates, destination: Coord
 
     console.log('Calculating route:', { origin, destination });
     
-    // Try OSRM with timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    // Try OSRM with timeout and multiple endpoints
+    const endpoints = [
+      'https://router.project-osrm.org',
+      'https://routing.openstreetmap.de/routed-car'
+    ];
+    let lastError: any = null;
     
-    try {
-      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson`;
-      
-      const response = await fetch(osrmUrl, {
-        headers: { 'User-Agent': 'EcoMarketplace/1.0' },
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-      
-      if (response.ok) {
+    for (const baseUrl of endpoints) {
+      try {
+        console.log('Trying OSRM endpoint:', baseUrl);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+        const osrmUrl = `${baseUrl}/route/v1/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson&steps=false`;
+        
+        const response = await fetch(osrmUrl, {
+          headers: { 'User-Agent': 'EcoMarketplace/1.0' },
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          lastError = new Error(`OSRM API error: ${response.status}`);
+          console.warn('OSRM response not ok from', baseUrl, response.status);
+          continue;
+        }
+        
         const data = await response.json();
         
         if (data.routes && data.routes.length > 0) {
@@ -170,13 +182,17 @@ export const calculateRealRoute = async (origin: Coordinates, destination: Coord
           const duration = route.duration; // Keep in seconds
           const coordinates = route.geometry.coordinates.map(([lng, lat]: [number, number]) => ({ lat, lng }));
           
-          console.log('OSRM route calculated:', { distance, duration });
+          console.log('OSRM route calculated via', baseUrl, { distance, duration });
           return { distance, duration, coordinates };
+        } else {
+          lastError = new Error('No route found');
+          console.warn('No route found at', baseUrl);
         }
+      } catch (fetchError) {
+        lastError = fetchError;
+        console.warn('OSRM fetch failed for', baseUrl, fetchError);
+        continue;
       }
-    } catch (fetchError) {
-      console.warn('OSRM fetch failed, using fallback:', fetchError);
-      clearTimeout(timeoutId);
     }
     
     // Fallback to manual calculation
