@@ -95,18 +95,12 @@ export const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
         });
       } else {
         toast({
-          title: "Conta criada com sucesso!",
-          description: "Bem-vindo ao EcoMarket!",
+          title: "Cadastro realizado com sucesso!",
+          description: "Verificamos seu email e enviamos um link de confirmação. Por favor, verifique sua caixa de entrada.",
+          duration: 8000,
         });
         onNavigate('home');
       }
-
-      toast({
-        title: "Cadastro realizado com sucesso!",
-        description: `Bem-vindo(a) ao EcoMarket, ${newUser.name}!`,
-      });
-
-      onNavigate('home');
     } catch (error) {
       toast({
         title: "Erro no cadastro",
