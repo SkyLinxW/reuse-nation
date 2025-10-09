@@ -80,13 +80,13 @@ export const getAddressByCep = async (cep: string): Promise<AddressInfo | null> 
       body: JSON.stringify({ cep: cleanCep })
     });
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('CEP fetch error response:', errorText);
-      throw new Error('Failed to fetch address');
+    const data = await response.json();
+    
+    if (!response.ok || data.error) {
+      console.error('CEP fetch error:', data.error || response.statusText);
+      return null;
     }
     
-    const data = await response.json();
     return data;
   } catch (error) {
     console.error('Error fetching address by CEP:', error);

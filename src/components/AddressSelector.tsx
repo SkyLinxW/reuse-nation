@@ -108,27 +108,28 @@ export const AddressSelector = ({ onAddressSelected, defaultAddress }: AddressSe
           setSelectedState(state.id.toString());
           await loadCities(state.id.toString());
           
-          // Set city after cities are loaded - NO AUTO-CONFIRM
+          // Set city after cities are loaded
           setTimeout(() => {
             setSelectedCity(address.localidade);
           }, 100);
         }
         
         toast({
-          title: "Endereço encontrado",
-          description: `${address.logradouro}, ${address.bairro}, ${address.localidade} - ${address.uf}`,
+          title: "✓ Endereço encontrado",
+          description: `${address.logradouro}${address.bairro ? ', ' + address.bairro : ''}, ${address.localidade} - ${address.uf}`,
         });
       } else {
         toast({
           title: "CEP não encontrado",
-          description: "Verifique se o CEP está correto",
+          description: "Por favor, verifique se o CEP está correto e tente novamente",
           variant: "destructive"
         });
       }
     } catch (error) {
+      console.error('Error fetching CEP:', error);
       toast({
-        title: "Erro",
-        description: "Não foi possível buscar o CEP",
+        title: "Erro ao buscar CEP",
+        description: "Ocorreu um erro ao buscar o endereço. Tente novamente ou preencha manualmente.",
         variant: "destructive"
       });
     } finally {
