@@ -1,5 +1,27 @@
 import { supabase } from '@/integrations/supabase/client';
 
+
+// Auth retry helper to handle expired JWTs gracefully
+const withAuthRetry = async <T>(fn: () => Promise<T>): Promise<T> => {
+  try {
+    return await fn();
+  } catch (err: any) {
+    const code = err?.code || err?.status;
+    const message = err?.message || err?.error_description || '';
+    if (code === 'PGRST303' || (typeof message === 'string' && (message.includes('JWT expired') || message.includes('Invalid JWT')))) {
+      console.warn('Auth token expired. Attempting refresh...');
+      const { data, error } = await supabase.auth.refreshSession();
+      if (!error && data?.session) {
+        console.info('Token refreshed. Retrying request...');
+        return await fn();
+      }
+      console.error('Token refresh failed. Signing out.');
+      await supabase.auth.signOut();
+    }
+    throw err;
+  }
+};
+
 // Profile management functions
 export const getProfile = async (userId: string): Promise<any> => {
   console.log('getProfile called for userId:', userId);
@@ -71,24 +93,23 @@ export const updateProfile = async (userId: string, updates: any) => {
 
 // Waste Items
 export const getWasteItems = async () => {
-  console.log('getWasteItems: Starting query...');
-  
-  const { data, error } = await supabase
-    .from('waste_items')
-    .select(`
-      *,
-      public_profiles!inner(name, avatar_url)
-    `)
-    .eq('availability', true)
-    .order('created_at', { ascending: false });
-  
-  if (error) {
-    console.error('getWasteItems: Error occurred:', error);
-    throw error;
-  }
-  
-  console.log('getWasteItems: Success, returning data:', data?.length, 'items');
-  return data;
+  return withAuthRetry(async () => {
+    console.log('getWasteItems: Starting query...');
+    const { data, error } = await supabase
+      .from('waste_items')
+      .select(`
+        *,
+        public_profiles!inner(name, avatar_url)
+      `)
+      .eq('availability', true)
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.error('getWasteItems: Error occurred:', error);
+      throw error;
+    }
+    console.log('getWasteItems: Success, returning data:', data?.length, 'items');
+    return data;
+  });
 };
 
 export const getWasteItem = async (id: string) => {
@@ -206,16 +227,17 @@ export const isFavorite = async (userId: string, wasteItemId: string) => {
 
 // Cart
 export const getCartItems = async (userId: string) => {
-  const { data, error } = await supabase
-    .from('cart_items')
-    .select(`
-      *,
-      waste_items(*)
-    `)
-    .eq('user_id', userId);
-  
-  if (error) throw error;
-  return data;
+  return withAuthRetry(async () => {
+    const { data, error } = await supabase
+      .from('cart_items')
+      .select(`
+        *,
+        waste_items(*)
+      `)
+      .eq('user_id', userId);
+    if (error) throw error;
+    return data;
+  });
 };
 
 export const addToCart = async (userId: string, wasteItemId: string, quantity: number = 1) => {
@@ -590,44 +612,48 @@ export const markMessagesAsRead = async (conversationId: string, userId: string)
 
 // Get eco impact stats
 export const getEcoImpact = async () => {
-  const { data, error } = await supabase
-    .from('eco_impact')
-    .select('*')
-    .order('updated_at', { ascending: false })
-    .limit(1)
-    .single();
+  return withAuthRetry(async () => {
+    const { data, error } = await supabase
+      .from('eco_impact')
+      .select('*')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .single();
 
-  if (error) {
-    console.error('Error fetching eco impact:', error);
+    if (error) {
+      console.error('Error fetching eco impact:', error);
+      return {
+        totalWasteReused: 0,
+        co2Saved: 0,
+        transactionsCount: 0
+      };
+    }
+
     return {
-      totalWasteReused: 0,
-      co2Saved: 0,
-      transactionsCount: 0
+      totalWasteReused: Number(data.total_waste_reused),
+      co2Saved: Number(data.co2_saved),
+      transactionsCount: data.transactions_count
     };
-  }
-
-  return {
-    totalWasteReused: Number(data.total_waste_reused),
-    co2Saved: Number(data.co2_saved),
-    transactionsCount: data.transactions_count
-  };
+  });
 };
 
 // Search history functions
 export const getRecentSearches = async (userId: string) => {
-  const { data, error } = await supabase
-    .from('search_history')
-    .select('search_term')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(5);
+  return withAuthRetry(async () => {
+    const { data, error } = await supabase
+      .from('search_history')
+      .select('search_term')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(5);
 
-  if (error) {
-    console.error('Error fetching recent searches:', error);
-    return [];
-  }
+    if (error) {
+      console.error('Error fetching recent searches:', error);
+      return [];
+    }
 
-  return data.map(item => item.search_term);
+    return data.map(item => item.search_term);
+  });
 };
 
 export const saveSearchTerm = async (userId: string, searchTerm: string) => {

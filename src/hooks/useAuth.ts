@@ -31,11 +31,10 @@ export const useAuthProvider = (): AuthContextType => {
     
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         if (mounted) {
           console.log('Auth state changed:', event, session?.user?.id);
           
-          // If token expired, force sign out
           if (event === 'TOKEN_REFRESHED') {
             console.log('Token refreshed successfully');
           }
