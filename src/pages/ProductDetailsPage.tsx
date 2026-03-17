@@ -57,14 +57,19 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
         const item = await getWasteItem(productId);
         if (item) {
           setProduct(item);
-          // Combine profile data with user_id from item
           setSeller({
             ...item.public_profiles,
             user_id: item.user_id
           });
           
-          // Increment views count for this product
           await incrementWasteItemViews(productId);
+          
+          // Load favorites count for this product
+          const { count } = await supabase
+            .from('favorites')
+            .select('*', { count: 'exact', head: true })
+            .eq('waste_item_id', productId);
+          setFavoritesCount(count || 0);
           
           if (user) {
             const favorited = await isFavorite(user.id, productId);
