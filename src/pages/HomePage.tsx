@@ -171,7 +171,7 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
   };
 
   const handleItemClick = (id: string) => {
-    onNavigate(`item/${id}`);
+    onNavigate(`product?id=${id}`);
   };
 
   const handleContactSeller = async (sellerId: string, itemId: string) => {

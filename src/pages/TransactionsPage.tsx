@@ -154,7 +154,7 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
             <p className="text-muted-foreground mb-4">
               Você precisa estar logado para ver suas transações.
             </p>
-            <Button onClick={() => onNavigate('login')}>
+            <Button onClick={() => onNavigate('auth')}>
               Fazer Login
             </Button>
           </CardContent>

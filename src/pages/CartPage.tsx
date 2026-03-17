@@ -199,7 +199,7 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
             <p className="text-muted-foreground mb-4">
               Você precisa estar logado para acessar o carrinho.
             </p>
-            <Button onClick={() => onNavigate('login')} className="bg-eco-green hover:bg-eco-green/90">
+            <Button onClick={() => onNavigate('auth')} className="bg-eco-green hover:bg-eco-green/90">
               Fazer Login
             </Button>
           </CardContent>
