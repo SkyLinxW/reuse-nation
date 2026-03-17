@@ -308,8 +308,8 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
                         transaction={formattedTransaction}
                         otherUser={details.otherUser}
                         product={details.product}
-                        onContactSeller={handleContactSeller}
-                        onRateTransaction={handleRateTransaction}
+                        onContactSeller={() => handleContactSeller(details.otherUser.user_id)}
+                        onRateTransaction={() => handleRateTransaction(transaction.id)}
                       />
                     );
                   })}
