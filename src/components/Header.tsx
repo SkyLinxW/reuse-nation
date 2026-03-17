@@ -44,24 +44,18 @@ export const Header = ({
     
     loadCounts();
 
-    // Set up real-time subscription to update unread messages count
+    // Set up real-time subscriptions
     if (user) {
       const messagesChannel = supabase
         .channel(`header-messages-${user.id}`)
         .on(
           'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'messages',
-          },
+          { event: '*', schema: 'public', table: 'messages' },
           async () => {
-            // Add delay to ensure database consistency
             setTimeout(async () => {
               try {
                 const unreadMsgCount = await getUnreadMessagesCount(user.id);
                 setUnreadMessagesCount(unreadMsgCount);
-                console.log('🔄 Header unread count updated:', unreadMsgCount);
               } catch (error) {
                 console.error('Error updating unread messages count:', error);
               }
@@ -70,25 +64,37 @@ export const Header = ({
         )
         .subscribe();
 
-      // Set up real-time subscription for notifications
       const notificationsChannel = supabase
         .channel(`header-notifications-${user.id}`)
         .on(
           'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'notifications',
-            filter: `user_id=eq.${user.id}`,
-          },
+          { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
           async () => {
             setTimeout(async () => {
               try {
                 const unreadCount = await getUnreadNotificationCount(user.id);
                 setNotificationCount(unreadCount);
-                console.log('🔄 Header notification count updated:', unreadCount);
               } catch (error) {
                 console.error('Error updating notification count:', error);
+              }
+            }, 100);
+          }
+        )
+        .subscribe();
+
+      // Real-time cart count subscription
+      const cartChannel = supabase
+        .channel(`header-cart-${user.id}`)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'cart_items', filter: `user_id=eq.${user.id}` },
+          async () => {
+            setTimeout(async () => {
+              try {
+                const cartItems = await getCartItems(user.id);
+                setCartCount(cartItems.length);
+              } catch (error) {
+                console.error('Error updating cart count:', error);
               }
             }, 100);
           }
@@ -98,6 +104,7 @@ export const Header = ({
       return () => {
         supabase.removeChannel(messagesChannel);
         supabase.removeChannel(notificationsChannel);
+        supabase.removeChannel(cartChannel);
       };
     }
   }, [user]);

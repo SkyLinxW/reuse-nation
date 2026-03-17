@@ -13,7 +13,8 @@ import {
   updateCartItemQuantity,
   removeFromCart,
   clearCart,
-  createTransaction
+  createTransaction,
+  createNotification
 } from '@/lib/supabase';
 import { WasteItem } from '@/types';
 
@@ -122,9 +123,10 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
       });
       
       for (const cartItem of cartItems) {
+        const sellerId = cartItem.waste_items?.user_id;
         await createTransaction({
           buyer_id: user.id,
-          seller_id: cartItem.waste_items?.user_id,
+          seller_id: sellerId,
           waste_item_id: cartItem.waste_item_id,
           quantity: cartItem.quantity,
           total_price: (cartItem.waste_items?.price || 0) * cartItem.quantity,
@@ -133,6 +135,17 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
           delivery_address: finalDeliveryAddress,
           status: 'pendente'
         });
+        
+        // Notify seller about new order
+        if (sellerId) {
+          await createNotification({
+            user_id: sellerId,
+            type: 'new_order',
+            title: 'Novo Pedido!',
+            message: `Você recebeu um novo pedido de ${cartItem.waste_items?.title || 'produto'} (${cartItem.quantity} unidade(s)). Verifique suas transações.`,
+            read: false
+          });
+        }
       }
       
       await clearCart(user.id);
@@ -199,7 +212,7 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
             <p className="text-muted-foreground mb-4">
               Você precisa estar logado para acessar o carrinho.
             </p>
-            <Button onClick={() => onNavigate('login')} className="bg-eco-green hover:bg-eco-green/90">
+            <Button onClick={() => onNavigate('auth')} className="bg-eco-green hover:bg-eco-green/90">
               Fazer Login
             </Button>
           </CardContent>

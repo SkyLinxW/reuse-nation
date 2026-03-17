@@ -44,7 +44,7 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
           createdAt: item.created_at,
           updatedAt: item.updated_at,
           isActive: item.availability,
-          views: 0,
+          views: item.views || 0,
           favorites: 0,
           images: item.image_url ? [item.image_url] : [],
           location: typeof item.location === 'string' 
@@ -171,7 +171,7 @@ export const HomePage = ({ onNavigate }: HomePageProps) => {
   };
 
   const handleItemClick = (id: string) => {
-    onNavigate(`item/${id}`);
+    onNavigate(`product?id=${id}`);
   };
 
   const handleContactSeller = async (sellerId: string, itemId: string) => {

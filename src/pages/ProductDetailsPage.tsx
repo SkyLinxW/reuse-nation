@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   getWasteItem, 
   getProfile, 
@@ -16,9 +17,12 @@ import {
   removeFromFavorites,
   createTransaction,
   getOrCreateConversation,
-  incrementWasteItemViews
+  incrementWasteItemViews,
+  addToCart,
+  createNotification
 } from '@/lib/supabase';
 import { WasteItem, User, Transaction, Chat } from '@/types';
+import { useFavorites } from '@/hooks/useFavorites';
 import { 
   ArrowLeft, 
   Heart, 
@@ -40,6 +44,7 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
   const [product, setProduct] = useState<any | null>(null);
   const [seller, setSeller] = useState<any | null>(null);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [favoritesCount, setFavoritesCount] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -52,14 +57,19 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
         const item = await getWasteItem(productId);
         if (item) {
           setProduct(item);
-          // Combine profile data with user_id from item
           setSeller({
             ...item.public_profiles,
             user_id: item.user_id
           });
           
-          // Increment views count for this product
           await incrementWasteItemViews(productId);
+          
+          // Load favorites count for this product
+          const { count } = await supabase
+            .from('favorites')
+            .select('*', { count: 'exact', head: true })
+            .eq('waste_item_id', productId);
+          setFavoritesCount(count || 0);
           
           if (user) {
             const favorited = await isFavorite(user.id, productId);
@@ -92,7 +102,7 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
       }
       
       setIsFavorited(!isFavorited);
-      
+      setFavoritesCount(prev => isFavorited ? prev - 1 : prev + 1);
       toast({
         title: isFavorited ? "Removido dos favoritos" : "Adicionado aos favoritos",
         description: isFavorited ? 
@@ -164,6 +174,15 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
       };
 
       await createTransaction(transaction);
+
+      // Notify seller about new order
+      await createNotification({
+        user_id: seller.user_id,
+        type: 'new_order',
+        title: 'Novo Pedido!',
+        message: `Você recebeu um novo pedido de ${product.title} (${quantity} unidade(s)). Verifique suas transações.`,
+        read: false
+      });
 
       toast({
         title: "Pedido realizado!",
@@ -280,7 +299,7 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
                 </div>
                 <div className="flex items-center gap-1">
                   <Heart className="w-4 h-4" />
-                  0 favoritos
+                  {favoritesCount} favoritos
                 </div>
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />

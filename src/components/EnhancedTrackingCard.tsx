@@ -520,7 +520,7 @@ export const EnhancedTrackingCard = ({
                 <Phone className="w-3 h-3 mr-1" />
                 Contato
               </Button>
-              <Button size="sm" variant="outline">
+              <Button size="sm" variant="outline" onClick={onContactSeller}>
                 <MessageCircle className="w-3 h-3 mr-1" />
                 Chat
               </Button>

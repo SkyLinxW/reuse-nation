@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { EnhancedTrackingCard } from '@/components/EnhancedTrackingCard';
-import { getTransactions, updateTransactionStatus, getProfile, getWasteItem } from '@/lib/supabase';
+import { getTransactions, updateTransactionStatus, getProfile, getWasteItem, getOrCreateConversation, createReview, createNotification } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
-import { ArrowLeft, Package, TrendingUp, ShoppingBag, Clock, CheckCircle, Truck, XCircle } from 'lucide-react';
+import { ArrowLeft, Package, TrendingUp, ShoppingBag, Clock, CheckCircle, Truck, XCircle, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface TransactionsPageProps {
@@ -22,6 +25,11 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
   }>({});
   const [activeTab, setActiveTab] = useState<'all' | 'purchases' | 'sales'>('all');
   const [loading, setLoading] = useState(true);
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [reviewTransaction, setReviewTransaction] = useState<any>(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
   
   const { user } = useAuth();
   const { toast } = useToast();
@@ -104,13 +112,31 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
 
   const handleUpdateStatus = async (transactionId: string, newStatus: string) => {
     try {
-      console.log('Attempting to update transaction status:', { transactionId, newStatus });
-      
       await updateTransactionStatus(transactionId, newStatus);
+      
+      const transaction = transactions.find(t => t.id === transactionId);
       
       setTransactions(prev => 
         prev.map(t => t.id === transactionId ? { ...t, status: newStatus } : t)
       );
+
+      // Notify the buyer about status change
+      if (transaction) {
+        const statusLabels: Record<string, string> = {
+          confirmado: 'confirmado pelo vendedor',
+          em_transporte: 'enviado e está em transporte',
+          entregue: 'marcado como entregue',
+          cancelado: 'cancelado pelo vendedor'
+        };
+        
+        await createNotification({
+          user_id: transaction.buyer_id,
+          type: `order_${newStatus}`,
+          title: `Pedido ${getStatusInfo(newStatus).label}`,
+          message: `Seu pedido foi ${statusLabels[newStatus] || newStatus}. Verifique suas transações para mais detalhes.`,
+          read: false
+        });
+      }
 
       toast({
         title: "Status atualizado",
@@ -132,18 +158,63 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
     return true;
   });
 
-  const handleContactSeller = () => {
-    toast({
-      title: "Contato",
-      description: "Funcionalidade de contato em desenvolvimento.",
-    });
+  const handleContactSeller = async (sellerId?: string) => {
+    if (!user) return;
+    
+    // Find the seller from the transaction details
+    const transactionEntry = Object.entries(transactionDetails).find(([_, details]) => 
+      details.otherUser?.user_id
+    );
+    const otherUserId = sellerId || transactionEntry?.[1]?.otherUser?.user_id;
+    
+    if (!otherUserId) {
+      toast({ title: "Erro", description: "Não foi possível identificar o vendedor.", variant: "destructive" });
+      return;
+    }
+    
+    try {
+      const conversation = await getOrCreateConversation(user.id, otherUserId);
+      onNavigate(`messages?conversationId=${conversation.id}`);
+    } catch (error) {
+      toast({ title: "Erro", description: "Erro ao iniciar conversa.", variant: "destructive" });
+    }
   };
 
-  const handleRateTransaction = () => {
-    toast({
-      title: "Avaliação",
-      description: "Sistema de avaliação em desenvolvimento.",
-    });
+  const handleRateTransaction = (transactionId?: string) => {
+    if (!transactionId) return;
+    const transaction = transactions.find(t => t.id === transactionId);
+    if (transaction) {
+      setReviewTransaction(transaction);
+      setReviewRating(5);
+      setReviewComment('');
+      setReviewDialogOpen(true);
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!user || !reviewTransaction) return;
+    
+    setReviewSubmitting(true);
+    try {
+      const reviewedUserId = reviewTransaction.buyer_id === user.id 
+        ? reviewTransaction.seller_id 
+        : reviewTransaction.buyer_id;
+      
+      await createReview({
+        reviewer_id: user.id,
+        reviewed_user_id: reviewedUserId,
+        transaction_id: reviewTransaction.id,
+        rating: reviewRating,
+        comment: reviewComment || undefined
+      });
+
+      toast({ title: "Avaliação enviada!", description: "Obrigado pela sua avaliação." });
+      setReviewDialogOpen(false);
+    } catch (error) {
+      toast({ title: "Erro", description: "Erro ao enviar avaliação.", variant: "destructive" });
+    } finally {
+      setReviewSubmitting(false);
+    }
   };
 
   if (!user) {
@@ -154,7 +225,7 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
             <p className="text-muted-foreground mb-4">
               Você precisa estar logado para ver suas transações.
             </p>
-            <Button onClick={() => onNavigate('login')}>
+            <Button onClick={() => onNavigate('auth')}>
               Fazer Login
             </Button>
           </CardContent>
@@ -237,8 +308,8 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
                         transaction={formattedTransaction}
                         otherUser={details.otherUser}
                         product={details.product}
-                        onContactSeller={handleContactSeller}
-                        onRateTransaction={handleRateTransaction}
+                        onContactSeller={() => handleContactSeller(details.otherUser.user_id)}
+                        onRateTransaction={() => handleRateTransaction(transaction.id)}
                       />
                     );
                   })}
@@ -264,8 +335,8 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
                         transaction={formattedTransaction}
                         otherUser={details.otherUser}
                         product={details.product}
-                        onContactSeller={handleContactSeller}
-                        onRateTransaction={handleRateTransaction}
+                        onContactSeller={() => handleContactSeller(details.otherUser.user_id)}
+                        onRateTransaction={() => handleRateTransaction(transaction.id)}
                       />
                     );
                   })}
@@ -340,6 +411,59 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
           )}
         </CardContent>
       </Card>
+
+      {/* Review Dialog */}
+      <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Avaliar Transação</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Nota</Label>
+              <div className="flex gap-1 mt-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => setReviewRating(star)}
+                    className="focus:outline-none"
+                  >
+                    <Star
+                      className={`w-8 h-8 ${
+                        star <= reviewRating
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'text-muted-foreground'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="review-comment">Comentário (opcional)</Label>
+              <Textarea
+                id="review-comment"
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                placeholder="Conte como foi sua experiência..."
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReviewDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSubmitReview}
+              disabled={reviewSubmitting}
+              className="bg-gradient-eco hover:opacity-90"
+            >
+              {reviewSubmitting ? 'Enviando...' : 'Enviar Avaliação'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
