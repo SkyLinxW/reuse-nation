@@ -112,13 +112,31 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
 
   const handleUpdateStatus = async (transactionId: string, newStatus: string) => {
     try {
-      console.log('Attempting to update transaction status:', { transactionId, newStatus });
-      
       await updateTransactionStatus(transactionId, newStatus);
+      
+      const transaction = transactions.find(t => t.id === transactionId);
       
       setTransactions(prev => 
         prev.map(t => t.id === transactionId ? { ...t, status: newStatus } : t)
       );
+
+      // Notify the buyer about status change
+      if (transaction) {
+        const statusLabels: Record<string, string> = {
+          confirmado: 'confirmado pelo vendedor',
+          em_transporte: 'enviado e está em transporte',
+          entregue: 'marcado como entregue',
+          cancelado: 'cancelado pelo vendedor'
+        };
+        
+        await createNotification({
+          user_id: transaction.buyer_id,
+          type: `order_${newStatus}`,
+          title: `Pedido ${getStatusInfo(newStatus).label}`,
+          message: `Seu pedido foi ${statusLabels[newStatus] || newStatus}. Verifique suas transações para mais detalhes.`,
+          read: false
+        });
+      }
 
       toast({
         title: "Status atualizado",
