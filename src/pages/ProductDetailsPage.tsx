@@ -175,6 +175,15 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
 
       await createTransaction(transaction);
 
+      // Notify seller about new order
+      await createNotification({
+        user_id: seller.user_id,
+        type: 'new_order',
+        title: 'Novo Pedido!',
+        message: `Você recebeu um novo pedido de ${product.title} (${quantity} unidade(s)). Verifique suas transações.`,
+        read: false
+      });
+
       toast({
         title: "Pedido realizado!",
         description: "Seu pedido foi enviado para o vendedor. Acompanhe na aba de transações.",
