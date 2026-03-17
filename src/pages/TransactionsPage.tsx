@@ -25,6 +25,11 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
   }>({});
   const [activeTab, setActiveTab] = useState<'all' | 'purchases' | 'sales'>('all');
   const [loading, setLoading] = useState(true);
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [reviewTransaction, setReviewTransaction] = useState<any>(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
   
   const { user } = useAuth();
   const { toast } = useToast();
