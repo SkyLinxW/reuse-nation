@@ -13,7 +13,8 @@ import {
   updateCartItemQuantity,
   removeFromCart,
   clearCart,
-  createTransaction
+  createTransaction,
+  createNotification
 } from '@/lib/supabase';
 import { WasteItem } from '@/types';
 
