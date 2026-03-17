@@ -22,6 +22,7 @@ import {
   createNotification
 } from '@/lib/supabase';
 import { WasteItem, User, Transaction, Chat } from '@/types';
+import { useFavorites } from '@/hooks/useFavorites';
 import { 
   ArrowLeft, 
   Heart, 
