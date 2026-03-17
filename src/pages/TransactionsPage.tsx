@@ -158,18 +158,63 @@ export const TransactionsPage = ({ onNavigate }: TransactionsPageProps) => {
     return true;
   });
 
-  const handleContactSeller = () => {
-    toast({
-      title: "Contato",
-      description: "Funcionalidade de contato em desenvolvimento.",
-    });
+  const handleContactSeller = async (sellerId?: string) => {
+    if (!user) return;
+    
+    // Find the seller from the transaction details
+    const transactionEntry = Object.entries(transactionDetails).find(([_, details]) => 
+      details.otherUser?.user_id
+    );
+    const otherUserId = sellerId || transactionEntry?.[1]?.otherUser?.user_id;
+    
+    if (!otherUserId) {
+      toast({ title: "Erro", description: "Não foi possível identificar o vendedor.", variant: "destructive" });
+      return;
+    }
+    
+    try {
+      const conversation = await getOrCreateConversation(user.id, otherUserId);
+      onNavigate(`messages?conversationId=${conversation.id}`);
+    } catch (error) {
+      toast({ title: "Erro", description: "Erro ao iniciar conversa.", variant: "destructive" });
+    }
   };
 
-  const handleRateTransaction = () => {
-    toast({
-      title: "Avaliação",
-      description: "Sistema de avaliação em desenvolvimento.",
-    });
+  const handleRateTransaction = (transactionId?: string) => {
+    if (!transactionId) return;
+    const transaction = transactions.find(t => t.id === transactionId);
+    if (transaction) {
+      setReviewTransaction(transaction);
+      setReviewRating(5);
+      setReviewComment('');
+      setReviewDialogOpen(true);
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!user || !reviewTransaction) return;
+    
+    setReviewSubmitting(true);
+    try {
+      const reviewedUserId = reviewTransaction.buyer_id === user.id 
+        ? reviewTransaction.seller_id 
+        : reviewTransaction.buyer_id;
+      
+      await createReview({
+        reviewer_id: user.id,
+        reviewed_user_id: reviewedUserId,
+        transaction_id: reviewTransaction.id,
+        rating: reviewRating,
+        comment: reviewComment || undefined
+      });
+
+      toast({ title: "Avaliação enviada!", description: "Obrigado pela sua avaliação." });
+      setReviewDialogOpen(false);
+    } catch (error) {
+      toast({ title: "Erro", description: "Erro ao enviar avaliação.", variant: "destructive" });
+    } finally {
+      setReviewSubmitting(false);
+    }
   };
 
   if (!user) {
