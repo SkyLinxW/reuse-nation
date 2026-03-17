@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { EnhancedTrackingCard } from '@/components/EnhancedTrackingCard';
-import { getTransactions, updateTransactionStatus, getProfile, getWasteItem } from '@/lib/supabase';
+import { getTransactions, updateTransactionStatus, getProfile, getWasteItem, getOrCreateConversation, createReview, createNotification } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
-import { ArrowLeft, Package, TrendingUp, ShoppingBag, Clock, CheckCircle, Truck, XCircle } from 'lucide-react';
+import { ArrowLeft, Package, TrendingUp, ShoppingBag, Clock, CheckCircle, Truck, XCircle, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface TransactionsPageProps {
