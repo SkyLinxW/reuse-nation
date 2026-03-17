@@ -44,6 +44,7 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
   const [product, setProduct] = useState<any | null>(null);
   const [seller, setSeller] = useState<any | null>(null);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [favoritesCount, setFavoritesCount] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
