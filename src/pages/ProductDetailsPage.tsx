@@ -102,7 +102,7 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
       }
       
       setIsFavorited(!isFavorited);
-      
+      setFavoritesCount(prev => isFavorited ? prev - 1 : prev + 1);
       toast({
         title: isFavorited ? "Removido dos favoritos" : "Adicionado aos favoritos",
         description: isFavorited ? 
