@@ -290,7 +290,7 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
                 </div>
                 <div className="flex items-center gap-1">
                   <Heart className="w-4 h-4" />
-                  0 favoritos
+                  {favoritesCount} favoritos
                 </div>
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
