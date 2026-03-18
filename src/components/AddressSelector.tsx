@@ -95,23 +95,31 @@ export const AddressSelector = ({ onAddressSelected, defaultAddress }: AddressSe
 
     try {
       setLoading(true);
+      
+      // Reset all fields before applying new CEP data
+      setStreet('');
+      setNeighborhood('');
+      setSelectedCity('');
+      setSelectedState('');
+      setCities([]);
+      setAddressInfo(null);
+      setIsAddressSent(false);
+      
       const address = await getAddressByCep(cep);
       
       if (address) {
         setAddressInfo(address);
-        setStreet(address.logradouro);
-        setNeighborhood(address.bairro);
+        setStreet(address.logradouro || '');
+        setNeighborhood(address.bairro || '');
         
         // Find and select the state
         const state = states.find(s => s.sigla === address.uf);
         if (state) {
-          setSelectedState(state.id.toString());
-          await loadCities(state.id.toString());
-          
-          // Set city after cities are loaded
-          setTimeout(() => {
-            setSelectedCity(address.localidade);
-          }, 100);
+          const stateId = state.id.toString();
+          setSelectedState(stateId);
+          const citiesData = await getCitiesByState(state.id);
+          setCities(citiesData);
+          setSelectedCity(address.localidade);
         }
         
         toast({
