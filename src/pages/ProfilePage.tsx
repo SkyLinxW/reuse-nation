@@ -197,7 +197,7 @@ export const ProfilePage = ({ onNavigate }: ProfilePageProps) => {
                       )}
                     </div>
                     <div>
-                      <h1 className="text-3xl font-bold">{user.email}</h1>
+                      <h1 className="text-3xl font-bold">{formData.name || user.email}</h1>
                       <div className="flex items-center gap-2 mt-2">
                         <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                         <span className="text-lg font-semibold">5.0</span>
