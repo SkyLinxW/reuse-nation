@@ -52,9 +52,23 @@ export const LoginPage = ({ onNavigate }: LoginPageProps) => {
     }
   };
 
-  const handleDemoLogin = () => {
-    setEmail('contato@ecoindustria.com');
-    setPassword('demo123');
+  const handleGoogleLogin = async () => {
+    try {
+      const { error } = await signInWithGoogle();
+      if (error) {
+        toast({
+          title: "Erro ao fazer login com Google",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro no login",
+        description: "Ocorreu um erro ao conectar com o Google.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
