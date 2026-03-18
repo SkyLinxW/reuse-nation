@@ -113,29 +113,42 @@ export const ListingAddressSelector = ({ onAddressSelected, defaultAddress }: Li
 
     try {
       setLoading(true);
+      
+      // Reset all fields before applying new CEP data
+      setStreet('');
+      setNeighborhood('');
+      setSelectedCity('');
+      setSelectedState('');
+      setCities([]);
+      setAddressInfo(null);
+      setHasConfirmed(false);
+      setLastConfirmedAddress('');
+      
       const address = await getAddressByCep(cep);
       
       if (address) {
         setAddressInfo(address);
-        setStreet(address.logradouro);
-        setNeighborhood(address.bairro);
+        setStreet(address.logradouro || '');
+        setNeighborhood(address.bairro || '');
         
         // Find and select the state
         const state = states.find(s => s.sigla === address.uf);
         if (state) {
-          setSelectedState(state.id.toString());
-          await loadCities(state.id.toString());
+          const stateId = state.id.toString();
+          setSelectedState(stateId);
+          const citiesData = await getCitiesByState(state.id);
+          setCities(citiesData);
+          setSelectedCity(address.localidade);
           
-          // Set city after cities are loaded and auto-confirm
-          setTimeout(async () => {
-            setSelectedCity(address.localidade);
-            // Reset confirmation state and auto-confirm after CEP search
-            setHasConfirmed(false);
-            setLastConfirmedAddress('');
-            setTimeout(() => {
-              handleConfirmAddress();
-            }, 500);
-          }, 100);
+          // Build and confirm address directly (no setTimeout chains)
+          const fullAddress = `${address.logradouro || ''}${address.bairro ? ', ' + address.bairro : ''}, ${address.localidade}, ${state.nome}`;
+          
+          const coordinates = await geocodeAddress(fullAddress);
+          if (coordinates) {
+            setLastConfirmedAddress(fullAddress);
+            setHasConfirmed(true);
+            onAddressSelected(fullAddress, coordinates);
+          }
         }
         
         toast({
