@@ -14,7 +14,7 @@ interface LoginPageProps {
 }
 
 export const LoginPage = ({ onNavigate }: LoginPageProps) => {
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -52,9 +52,23 @@ export const LoginPage = ({ onNavigate }: LoginPageProps) => {
     }
   };
 
-  const handleDemoLogin = () => {
-    setEmail('contato@ecoindustria.com');
-    setPassword('demo123');
+  const handleGoogleLogin = async () => {
+    try {
+      const { error } = await signInWithGoogle();
+      if (error) {
+        toast({
+          title: "Erro ao fazer login com Google",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro no login",
+        description: "Ocorreu um erro ao conectar com o Google.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -194,10 +208,10 @@ export const LoginPage = ({ onNavigate }: LoginPageProps) => {
                 <Button 
                   variant="outline" 
                   className="w-full h-12 border-border/50 hover:bg-background/80"
-                  onClick={handleDemoLogin}
+                  onClick={handleGoogleLogin}
                 >
                   <Chrome className="w-5 h-5 mr-2" />
-                  Google
+                  Entrar com Google
                 </Button>
 
                 <div className="text-center pt-4">

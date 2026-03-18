@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/useAuth';
-import { updateProfile, getTransactions } from '@/lib/supabase';
+import { updateProfile, getTransactions, getProfile, getReviewsByUser } from '@/lib/supabase';
 import { ArrowLeft, User as UserIcon, Star, Package, MessageCircle, Award, Mail, Phone, MapPin, Edit3, Camera, Save, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -41,23 +41,45 @@ export const ProfilePage = ({ onNavigate }: ProfilePageProps) => {
   useEffect(() => {
     const loadUserData = async () => {
       if (user) {
-        setFormData({
-          name: user.email || '',
-          email: user.email || '',
-          phone: '',
-          bio: '',
-          street: '',
-          city: '',
-          state: '',
-          zipCode: '',
-          userType: 'pessoa_fisica',
-          cnpj: '',
-          cpf: '',
-        });
-
         try {
+          // Load profile from database
+          const profile = await getProfile(user.id);
+          if (profile) {
+            setFormData({
+              name: profile.name || user.user_metadata?.name || user.email || '',
+              email: profile.email || user.email || '',
+              phone: profile.phone || '',
+              bio: profile.bio || '',
+              street: '',
+              city: '',
+              state: '',
+              zipCode: '',
+              userType: 'pessoa_fisica',
+              cnpj: '',
+              cpf: '',
+            });
+          } else {
+            setFormData({
+              name: user.user_metadata?.name || user.email || '',
+              email: user.email || '',
+              phone: '',
+              bio: '',
+              street: '',
+              city: '',
+              state: '',
+              zipCode: '',
+              userType: 'pessoa_fisica',
+              cnpj: '',
+              cpf: '',
+            });
+          }
+
           const userTransactions = await getTransactions(user.id);
           setTransactionCount(userTransactions?.length || 0);
+          
+          // Load reviews
+          const userReviews = await getReviewsByUser(user.id);
+          setReviews(userReviews || []);
         } catch (error) {
           console.error('Error loading user data:', error);
         }
@@ -75,7 +97,12 @@ export const ProfilePage = ({ onNavigate }: ProfilePageProps) => {
 
     setLoading(true);
     try {
-      await updateProfile(user.id, formData);
+      await updateProfile(user.id, {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        bio: formData.bio,
+      });
       setIsEditing(false);
 
       toast({
@@ -93,21 +120,26 @@ export const ProfilePage = ({ onNavigate }: ProfilePageProps) => {
     }
   };
 
-  const handleCancel = () => {
+  const handleCancel = async () => {
     if (user) {
-      setFormData({
-        name: user.email || '',
-        email: user.email || '',
-        phone: '',
-        bio: '',
-        street: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        userType: 'pessoa_fisica',
-        cnpj: '',
-        cpf: '',
-      });
+      try {
+        const profile = await getProfile(user.id);
+        setFormData({
+          name: profile?.name || user.user_metadata?.name || user.email || '',
+          email: profile?.email || user.email || '',
+          phone: profile?.phone || '',
+          bio: profile?.bio || '',
+          street: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          userType: 'pessoa_fisica',
+          cnpj: '',
+          cpf: '',
+        });
+      } catch {
+        // fallback
+      }
     }
     setIsEditing(false);
   };
@@ -121,7 +153,7 @@ export const ProfilePage = ({ onNavigate }: ProfilePageProps) => {
             <p className="text-muted-foreground mb-4">
               Você precisa estar logado para ver seu perfil.
             </p>
-            <Button onClick={() => onNavigate('login')} className="bg-eco-green hover:bg-eco-green/90">
+            <Button onClick={() => onNavigate('auth')} className="bg-eco-green hover:bg-eco-green/90">
               Fazer Login
             </Button>
           </CardContent>
@@ -170,11 +202,11 @@ export const ProfilePage = ({ onNavigate }: ProfilePageProps) => {
                       )}
                     </div>
                     <div>
-                      <h1 className="text-3xl font-bold">{user.email}</h1>
+                      <h1 className="text-3xl font-bold">{formData.name || user.email}</h1>
                       <div className="flex items-center gap-2 mt-2">
                         <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                        <span className="text-lg font-semibold">5.0</span>
-                        <span className="text-white/80">(0 avaliações)</span>
+                        <span className="text-lg font-semibold">{reviews.length > 0 ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1) : '5.0'}</span>
+                        <span className="text-white/80">({reviews.length} avaliações)</span>
                       </div>
                       <div className="flex gap-2 mt-3">
                         <Badge variant="secondary" className="bg-white/20 text-white border-white/20">
