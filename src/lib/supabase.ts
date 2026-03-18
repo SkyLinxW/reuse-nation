@@ -236,7 +236,8 @@ export const getCartItems = async (userId: string) => {
       `)
       .eq('user_id', userId);
     if (error) throw error;
-    return data;
+    // Filter out orphaned cart items (where waste_item was deleted)
+    return (data || []).filter(item => item.waste_items !== null);
   });
 };
 
@@ -378,6 +379,18 @@ export const markNotificationAsRead = async (id: string) => {
     .eq('id', id)
     .select()
     .single();
+  
+  if (error) throw error;
+  return data;
+};
+
+export const markAllNotificationsAsRead = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('notifications')
+    .update({ read: true })
+    .eq('user_id', userId)
+    .eq('read', false)
+    .select();
   
   if (error) throw error;
   return data;
