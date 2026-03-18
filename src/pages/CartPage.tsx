@@ -80,24 +80,10 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
     
     setIsProcessing(true);
     
-    console.log('handlePaymentProcess - Starting with data:', {
-      deliveryMethod,
-      deliveryData,
-      cartItems: cartItems.length
-    });
-    
     // Validação de endereço para método de entrega
     if (deliveryMethod === 'entrega' || deliveryMethod === 'transportadora') {
       const hasAddress = deliveryData.address || deliveryData.fullAddress;
       const hasCoordinates = deliveryData.coordinates;
-      
-      console.log('Validating address:', {
-        hasAddress,
-        hasCoordinates,
-        address: deliveryData.address,
-        fullAddress: deliveryData.fullAddress,
-        coordinates: deliveryData.coordinates
-      });
       
       if (!hasAddress || !hasCoordinates) {
         toast({
@@ -109,55 +95,92 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
         return;
       }
     }
+
+    // Filter valid cart items (must have waste_items with user_id)
+    const validItems = cartItems.filter(item => item.waste_items && item.waste_items.user_id);
+    
+    if (validItems.length === 0) {
+      toast({
+        title: "Carrinho inválido",
+        description: "Os itens do carrinho não estão mais disponíveis. Por favor, adicione novos itens.",
+        variant: "destructive",
+      });
+      setIsProcessing(false);
+      return;
+    }
     
     try {
-      // Simular processamento de pagamento
+      // Simular processamento de pagamento (2s delay)
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Create transactions for each item
       const finalDeliveryAddress = deliveryData.fullAddress || deliveryData.address || '';
+      let successCount = 0;
       
-      console.log('Creating transactions with delivery address:', {
-        finalDeliveryAddress,
-        deliveryData
-      });
-      
-      for (const cartItem of cartItems) {
-        const sellerId = cartItem.waste_items?.user_id;
-        await createTransaction({
-          buyer_id: user.id,
-          seller_id: sellerId,
-          waste_item_id: cartItem.waste_item_id,
-          quantity: cartItem.quantity,
-          total_price: (cartItem.waste_items?.price || 0) * cartItem.quantity,
-          payment_method: paymentMethod,
-          delivery_method: deliveryMethod,
-          delivery_address: finalDeliveryAddress,
-          status: 'pendente'
-        });
+      for (const cartItem of validItems) {
+        const sellerId = cartItem.waste_items.user_id;
+        const itemPrice = Number(cartItem.waste_items.price) || 0;
+        const totalPrice = itemPrice * cartItem.quantity;
         
-        // Notify seller about new order
-        if (sellerId) {
-          await createNotification({
-            user_id: sellerId,
-            type: 'new_order',
-            title: 'Novo Pedido!',
-            message: `Você recebeu um novo pedido de ${cartItem.waste_items?.title || 'produto'} (${cartItem.quantity} unidade(s)). Verifique suas transações.`,
-            read: false
+        try {
+          await createTransaction({
+            buyer_id: user.id,
+            seller_id: sellerId,
+            waste_item_id: cartItem.waste_item_id,
+            quantity: cartItem.quantity,
+            total_price: totalPrice,
+            payment_method: paymentMethod,
+            delivery_method: deliveryMethod,
+            delivery_address: finalDeliveryAddress,
+            status: 'confirmado'
           });
+          
+          successCount++;
+          
+          // Notify seller about new order
+          try {
+            await createNotification({
+              user_id: sellerId,
+              type: 'new_order',
+              title: 'Novo Pedido Confirmado!',
+              message: `Você recebeu um novo pedido de ${cartItem.waste_items.title} (${cartItem.quantity} unidade(s)). Pagamento via ${paymentData.type === 'pix' ? 'PIX' : paymentData.type === 'boleto' ? 'Boleto' : 'Cartão de Crédito'}.`,
+              read: false
+            });
+          } catch (notifError) {
+            console.warn('Failed to send seller notification:', notifError);
+          }
+
+          // Notify buyer about confirmation
+          try {
+            await createNotification({
+              user_id: user.id,
+              type: 'order_confirmed',
+              title: 'Pagamento Confirmado!',
+              message: `Seu pagamento de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalPrice)} para "${cartItem.waste_items.title}" foi processado com sucesso.`,
+              read: false
+            });
+          } catch (notifError) {
+            console.warn('Failed to send buyer notification:', notifError);
+          }
+        } catch (txError) {
+          console.error('Failed to create transaction for item:', cartItem.waste_item_id, txError);
         }
+      }
+      
+      if (successCount === 0) {
+        throw new Error('No transactions were created');
       }
       
       await clearCart(user.id);
       setCartItems([]);
       
       toast({
-        title: "Compra realizada com sucesso!",
-        description: `Pagamento processado. ${cartItems.length} transação(ões) foram criadas.`,
+        title: "Compra realizada com sucesso! 🎉",
+        description: `Pagamento processado via ${paymentData.type === 'pix' ? 'PIX' : paymentData.type === 'boleto' ? 'Boleto' : 'Cartão'}. ${successCount} transação(ões) confirmada(s).`,
       });
       
       onNavigate('transactions');
     } catch (error) {
+      console.error('Payment process error:', error);
       toast({
         title: "Erro no pagamento",
         description: "Ocorreu um erro ao processar seu pagamento. Tente novamente.",
