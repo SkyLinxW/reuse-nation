@@ -223,22 +223,21 @@ export const ListingAddressSelector = ({ onAddressSelected, defaultAddress }: Li
     }
   };
 
-  // Auto-confirm address when all required fields are filled (but only once per address)
+  // Auto-confirm address when all required fields are filled manually (not from CEP)
   useEffect(() => {
-    if (selectedState && selectedCity && street.trim() && !hasConfirmed) {
+    if (selectedState && selectedCity && street.trim() && !hasConfirmed && !addressInfo) {
       const stateName = states.find(s => s.id.toString() === selectedState)?.nome || '';
       const currentAddress = `${street}${neighborhood ? ', ' + neighborhood : ''}, ${selectedCity}, ${stateName}`;
       
-      // Só confirma se o endereço mudou e ainda não foi confirmado
       if (currentAddress !== lastConfirmedAddress) {
         const timeoutId = setTimeout(() => {
           handleConfirmAddress();
-        }, 2000); // Wait 2 seconds after user stops typing
+        }, 2000);
         
         return () => clearTimeout(timeoutId);
       }
     }
-  }, [selectedState, selectedCity, street, neighborhood, hasConfirmed, lastConfirmedAddress]);
+  }, [selectedState, selectedCity, street, neighborhood, hasConfirmed, lastConfirmedAddress, addressInfo]);
 
   const formatCep = (value: string) => {
     const numbers = value.replace(/\D/g, '');
