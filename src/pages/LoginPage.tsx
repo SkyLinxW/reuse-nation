@@ -14,7 +14,7 @@ interface LoginPageProps {
 }
 
 export const LoginPage = ({ onNavigate }: LoginPageProps) => {
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
