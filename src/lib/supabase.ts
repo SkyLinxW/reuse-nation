@@ -384,6 +384,18 @@ export const markNotificationAsRead = async (id: string) => {
   return data;
 };
 
+export const markAllNotificationsAsRead = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('notifications')
+    .update({ read: true })
+    .eq('user_id', userId)
+    .eq('read', false)
+    .select();
+  
+  if (error) throw error;
+  return data;
+};
+
 export const getUnreadNotificationCount = async (userId: string) => {
   const { count, error } = await supabase
     .from('notifications')
