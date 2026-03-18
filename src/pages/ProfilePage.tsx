@@ -97,7 +97,12 @@ export const ProfilePage = ({ onNavigate }: ProfilePageProps) => {
 
     setLoading(true);
     try {
-      await updateProfile(user.id, formData);
+      await updateProfile(user.id, {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        bio: formData.bio,
+      });
       setIsEditing(false);
 
       toast({

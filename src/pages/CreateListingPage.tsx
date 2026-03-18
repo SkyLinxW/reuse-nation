@@ -149,7 +149,7 @@ export const CreateListingPage = ({ onNavigate }: CreateListingPageProps) => {
             <p className="text-muted-foreground mb-4">
               Você precisa estar logado para criar um anúncio.
             </p>
-            <Button onClick={() => onNavigate('login')} className="bg-eco-green hover:bg-eco-green/90">
+            <Button onClick={() => onNavigate('auth')} className="bg-eco-green hover:bg-eco-green/90">
               Fazer Login
             </Button>
           </CardContent>

@@ -208,10 +208,10 @@ export const LoginPage = ({ onNavigate }: LoginPageProps) => {
                 <Button 
                   variant="outline" 
                   className="w-full h-12 border-border/50 hover:bg-background/80"
-                  onClick={handleDemoLogin}
+                  onClick={handleGoogleLogin}
                 >
                   <Chrome className="w-5 h-5 mr-2" />
-                  Google
+                  Entrar com Google
                 </Button>
 
                 <div className="text-center pt-4">
