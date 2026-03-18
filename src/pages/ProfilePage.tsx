@@ -200,8 +200,8 @@ export const ProfilePage = ({ onNavigate }: ProfilePageProps) => {
                       <h1 className="text-3xl font-bold">{formData.name || user.email}</h1>
                       <div className="flex items-center gap-2 mt-2">
                         <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                        <span className="text-lg font-semibold">5.0</span>
-                        <span className="text-white/80">(0 avaliações)</span>
+                        <span className="text-lg font-semibold">{reviews.length > 0 ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1) : '5.0'}</span>
+                        <span className="text-white/80">({reviews.length} avaliações)</span>
                       </div>
                       <div className="flex gap-2 mt-3">
                         <Badge variant="secondary" className="bg-white/20 text-white border-white/20">
