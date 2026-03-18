@@ -16,7 +16,7 @@ interface RegisterPageProps {
 }
 
 export const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
-  const { signUp } = useAuth();
+  const { signUp, signInWithGoogle } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
