@@ -115,21 +115,26 @@ export const ProfilePage = ({ onNavigate }: ProfilePageProps) => {
     }
   };
 
-  const handleCancel = () => {
+  const handleCancel = async () => {
     if (user) {
-      setFormData({
-        name: user.email || '',
-        email: user.email || '',
-        phone: '',
-        bio: '',
-        street: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        userType: 'pessoa_fisica',
-        cnpj: '',
-        cpf: '',
-      });
+      try {
+        const profile = await getProfile(user.id);
+        setFormData({
+          name: profile?.name || user.user_metadata?.name || user.email || '',
+          email: profile?.email || user.email || '',
+          phone: profile?.phone || '',
+          bio: profile?.bio || '',
+          street: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          userType: 'pessoa_fisica',
+          cnpj: '',
+          cpf: '',
+        });
+      } catch {
+        // fallback
+      }
     }
     setIsEditing(false);
   };
