@@ -121,7 +121,7 @@ export const ProfilePage = ({ onNavigate }: ProfilePageProps) => {
             <p className="text-muted-foreground mb-4">
               Você precisa estar logado para ver seu perfil.
             </p>
-            <Button onClick={() => onNavigate('login')} className="bg-eco-green hover:bg-eco-green/90">
+            <Button onClick={() => onNavigate('auth')} className="bg-eco-green hover:bg-eco-green/90">
               Fazer Login
             </Button>
           </CardContent>
