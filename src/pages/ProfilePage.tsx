@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/useAuth';
-import { updateProfile, getTransactions } from '@/lib/supabase';
+import { updateProfile, getTransactions, getProfile, getReviewsByUser } from '@/lib/supabase';
 import { ArrowLeft, User as UserIcon, Star, Package, MessageCircle, Award, Mail, Phone, MapPin, Edit3, Camera, Save, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
