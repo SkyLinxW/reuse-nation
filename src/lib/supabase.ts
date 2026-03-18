@@ -236,7 +236,8 @@ export const getCartItems = async (userId: string) => {
       `)
       .eq('user_id', userId);
     if (error) throw error;
-    return data;
+    // Filter out orphaned cart items (where waste_item was deleted)
+    return (data || []).filter(item => item.waste_items !== null);
   });
 };
 
