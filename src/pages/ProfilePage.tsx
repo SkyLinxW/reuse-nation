@@ -41,23 +41,45 @@ export const ProfilePage = ({ onNavigate }: ProfilePageProps) => {
   useEffect(() => {
     const loadUserData = async () => {
       if (user) {
-        setFormData({
-          name: user.email || '',
-          email: user.email || '',
-          phone: '',
-          bio: '',
-          street: '',
-          city: '',
-          state: '',
-          zipCode: '',
-          userType: 'pessoa_fisica',
-          cnpj: '',
-          cpf: '',
-        });
-
         try {
+          // Load profile from database
+          const profile = await getProfile(user.id);
+          if (profile) {
+            setFormData({
+              name: profile.name || user.user_metadata?.name || user.email || '',
+              email: profile.email || user.email || '',
+              phone: profile.phone || '',
+              bio: profile.bio || '',
+              street: '',
+              city: '',
+              state: '',
+              zipCode: '',
+              userType: 'pessoa_fisica',
+              cnpj: '',
+              cpf: '',
+            });
+          } else {
+            setFormData({
+              name: user.user_metadata?.name || user.email || '',
+              email: user.email || '',
+              phone: '',
+              bio: '',
+              street: '',
+              city: '',
+              state: '',
+              zipCode: '',
+              userType: 'pessoa_fisica',
+              cnpj: '',
+              cpf: '',
+            });
+          }
+
           const userTransactions = await getTransactions(user.id);
           setTransactionCount(userTransactions?.length || 0);
+          
+          // Load reviews
+          const userReviews = await getReviewsByUser(user.id);
+          setReviews(userReviews || []);
         } catch (error) {
           console.error('Error loading user data:', error);
         }
