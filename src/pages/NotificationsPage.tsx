@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Bell, Check, X, MessageCircle, ShoppingCart, Heart, Star } from 'lucide-react';
+import { ArrowLeft, Bell, Check, CheckCheck, MessageCircle, ShoppingCart, Heart, Star, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import {
   getNotifications,
-  markNotificationAsRead
+  markNotificationAsRead,
+  markAllNotificationsAsRead
 } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Notification {
   id: string;
@@ -26,28 +28,51 @@ interface NotificationsPageProps {
 export const NotificationsPage = ({ onNavigate }: NotificationsPageProps) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
+  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
-  useEffect(() => {
-    const loadNotifications = async () => {
-      if (user) {
-        try {
-          const userNotifications = await getNotifications(user.id);
-          setNotifications(userNotifications || []);
-        } catch (error) {
-          console.error('Error loading notifications:', error);
-        }
+  const loadNotifications = async () => {
+    if (user) {
+      try {
+        setLoading(true);
+        const userNotifications = await getNotifications(user.id);
+        setNotifications(userNotifications || []);
+      } catch (error) {
+        console.error('Error loading notifications:', error);
+      } finally {
+        setLoading(false);
       }
-    };
+    }
+  };
+
+  useEffect(() => {
     loadNotifications();
+
+    // Real-time subscription to keep notifications in sync
+    if (user) {
+      const channel = supabase
+        .channel(`notifications-page-${user.id}`)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+          () => {
+            loadNotifications();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
   }, [user?.id]);
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {
       await markNotificationAsRead(notificationId);
-      setNotifications(prev => 
-        prev.map(notification => 
-          notification.id === notificationId 
+      setNotifications(prev =>
+        prev.map(notification =>
+          notification.id === notificationId
             ? { ...notification, read: true }
             : notification
         )
@@ -57,13 +82,28 @@ export const NotificationsPage = ({ onNavigate }: NotificationsPageProps) => {
     }
   };
 
-  const filteredNotifications = filter === 'unread' 
+  const handleMarkAllAsRead = async () => {
+    if (!user) return;
+    try {
+      await markAllNotificationsAsRead(user.id);
+      setNotifications(prev =>
+        prev.map(notification => ({ ...notification, read: true }))
+      );
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    }
+  };
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+  const filteredNotifications = filter === 'unread'
     ? notifications.filter(n => !n.read)
     : notifications;
 
-  const getNotificationIcon = (type: Notification['type']) => {
+  const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'purchase':
+      case 'new_order':
+      case 'order_confirmed':
         return <ShoppingCart className="w-5 h-5 text-eco-green" />;
       case 'sale':
         return <ShoppingCart className="w-5 h-5 text-eco-blue" />;
@@ -85,15 +125,10 @@ export const NotificationsPage = ({ onNavigate }: NotificationsPageProps) => {
     const diffHours = diffMs / (1000 * 60 * 60);
     const diffDays = diffMs / (1000 * 60 * 60 * 24);
 
-    if (diffHours < 1) {
-      return 'Agora há pouco';
-    } else if (diffHours < 24) {
-      return `${Math.floor(diffHours)}h atrás`;
-    } else if (diffDays < 7) {
-      return `${Math.floor(diffDays)} dias atrás`;
-    } else {
-      return date.toLocaleDateString('pt-BR');
-    }
+    if (diffHours < 1) return 'Agora há pouco';
+    if (diffHours < 24) return `${Math.floor(diffHours)}h atrás`;
+    if (diffDays < 7) return `${Math.floor(diffDays)} dias atrás`;
+    return date.toLocaleDateString('pt-BR');
   };
 
   if (!user) {
@@ -105,7 +140,7 @@ export const NotificationsPage = ({ onNavigate }: NotificationsPageProps) => {
             <p className="text-muted-foreground mb-4">
               Você precisa estar logado para ver suas notificações.
             </p>
-            <Button onClick={() => onNavigate('login')}>
+            <Button onClick={() => onNavigate('auth')}>
               Fazer Login
             </Button>
           </CardContent>
@@ -116,23 +151,25 @@ export const NotificationsPage = ({ onNavigate }: NotificationsPageProps) => {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <Button
-        variant="ghost"
-        onClick={() => onNavigate('home')}
-        className="mb-6"
-      >
+      <Button variant="ghost" onClick={() => onNavigate('home')} className="mb-6">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Voltar
       </Button>
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <CardTitle className="flex items-center gap-2">
               <Bell className="w-5 h-5" />
               Notificações
             </CardTitle>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
+              {unreadCount > 0 && (
+                <Button variant="outline" size="sm" onClick={handleMarkAllAsRead}>
+                  <CheckCheck className="w-4 h-4 mr-1" />
+                  Marcar todas como lidas
+                </Button>
+              )}
               <Button
                 variant={filter === 'all' ? 'default' : 'outline'}
                 size="sm"
@@ -145,18 +182,22 @@ export const NotificationsPage = ({ onNavigate }: NotificationsPageProps) => {
                 size="sm"
                 onClick={() => setFilter('unread')}
               >
-                Não lidas ({notifications.filter(n => !n.read).length})
+                Não lidas ({unreadCount})
               </Button>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          {filteredNotifications.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Carregando notificações...</p>
+            </div>
+          ) : filteredNotifications.length === 0 ? (
             <div className="text-center py-8">
               <Bell className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
               <p className="text-muted-foreground mb-4">
-                {filter === 'unread' 
-                  ? 'Você não tem notificações não lidas.' 
+                {filter === 'unread'
+                  ? 'Você não tem notificações não lidas.'
                   : 'Você ainda não tem notificações.'
                 }
               </p>
@@ -172,44 +213,39 @@ export const NotificationsPage = ({ onNavigate }: NotificationsPageProps) => {
                 <div
                   key={notification.id}
                   className={`flex items-start gap-3 p-4 rounded-lg border transition-colors ${
-                    notification.read 
-                      ? 'bg-background border-border' 
+                    notification.read
+                      ? 'bg-background border-border'
                       : 'bg-eco-green-light/10 border-eco-green/20'
                   }`}
                 >
                   <div className="flex-shrink-0 mt-1">
                     {getNotificationIcon(notification.type)}
                   </div>
-                  
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <h3 className="font-semibold text-sm">
-                          {notification.title}
-                        </h3>
-                        <p className="text-muted-foreground text-sm mt-1">
-                          {notification.message}
-                        </p>
+                        <h3 className="font-semibold text-sm">{notification.title}</h3>
+                        <p className="text-muted-foreground text-sm mt-1">{notification.message}</p>
                         <p className="text-xs text-muted-foreground mt-2">
                           {formatDate(notification.created_at)}
                         </p>
                       </div>
-                      
+
                       <div className="flex items-center gap-2">
                         {!notification.read && (
-                          <Badge variant="secondary" className="text-xs">
-                            Nova
-                          </Badge>
-                        )}
-                        {!notification.read && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleMarkAsRead(notification.id)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Check className="w-4 h-4" />
-                          </Button>
+                          <>
+                            <Badge variant="secondary" className="text-xs">Nova</Badge>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleMarkAsRead(notification.id)}
+                              className="h-8 w-8 p-0"
+                              title="Marcar como lida"
+                            >
+                              <Check className="w-4 h-4" />
+                            </Button>
+                          </>
                         )}
                       </div>
                     </div>
