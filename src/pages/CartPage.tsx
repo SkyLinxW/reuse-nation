@@ -377,6 +377,7 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
                   setDeliveryData(data);
                 }}
                 sellerAddress={sellerAddress}
+                sellerCoordinates={sellerCoordinates}
               />
             </div>
             <div className="lg:col-span-1">

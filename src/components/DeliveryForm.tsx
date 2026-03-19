@@ -44,9 +44,10 @@ export const DeliveryForm = ({
     const updateCalculation = async () => {
       if (deliveryData.coordinates) {
         try {
-          // For DeliveryForm, we use São Paulo as default origin since we don't have product context here
+          // Use actual seller coordinates if available, otherwise fallback to São Paulo
+          const origin = sellerCoordinates || { lat: -23.5505, lng: -46.6333 };
           const calculation = await calculateDeliveryDetails(
-            { lat: -23.5505, lng: -46.6333 }, // São Paulo coordinates as origin
+            origin,
             deliveryData.coordinates, 
             deliveryMethod
           );
