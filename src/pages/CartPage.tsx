@@ -224,7 +224,14 @@ export const CartPage = ({ onNavigate }: CartPageProps) => {
     }).format(price);
   };
 
-  const sellerAddress = cartItems.length > 0 ? "Rua das Empresas, 123 - São Paulo, SP" : "";
+  // Extract real seller address and coordinates from cart items
+  const sellerAddress = cartItems.length > 0 && cartItems[0].waste_items?.location 
+    ? cartItems[0].waste_items.location 
+    : "Endereço do vendedor";
+  
+  const sellerCoordinates = cartItems.length > 0 && cartItems[0].waste_items?.coordinates
+    ? cartItems[0].waste_items.coordinates as { lat: number; lng: number }
+    : null;
 
   if (!user) {
     return (
