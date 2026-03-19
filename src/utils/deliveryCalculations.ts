@@ -72,23 +72,41 @@ export const calculateDeliveryDetails = async (
       
       if (routeInfo) {
         distance = routeInfo.distance;
-        duration = routeInfo.duration;
+        duration = routeInfo.duration; // Always in seconds
         
-        console.log('Real route calculated:', { distance, duration });
+        console.log('Route calculated:', { distanceKm: distance, durationSeconds: duration });
         
         // Calculate time and cost based on delivery method
         if (deliveryMethod === 'entrega') {
-          // Local delivery service - use real duration + processing time
-          const durationInMinutes = duration / 60; // Convert seconds to minutes
-          const totalHours = Math.max(2, Math.ceil(durationInMinutes / 60) + 1); // Add 1 hour processing
-          estimatedTime = `${totalHours} hora${totalHours > 1 ? 's' : ''}`;
-          cost = Math.max(15, distance * 0.8); // Minimum R$ 15, then R$ 0.80 per km
+          // Local delivery: travel time + 1h processing
+          const travelHours = duration / 3600;
+          const totalHours = Math.max(2, Math.ceil(travelHours + 1));
+          
+          if (totalHours >= 24) {
+            const days = Math.ceil(totalHours / 24);
+            estimatedTime = `${days} dia${days > 1 ? 's' : ''}`;
+          } else {
+            estimatedTime = `${totalHours} hora${totalHours > 1 ? 's' : ''}`;
+          }
+          
+          // Pricing: R$8 base + R$1.50/km for first 20km, R$0.80/km after
+          if (distance <= 20) {
+            cost = 8 + distance * 1.50;
+          } else {
+            cost = 8 + 20 * 1.50 + (distance - 20) * 0.80;
+          }
+          cost = Math.min(cost, 150); // Cap at R$150
+          
         } else if (deliveryMethod === 'transportadora') {
-          // Shipping company - convert to days
-          const durationInHours = duration / 3600; // Convert seconds to hours
-          const totalDays = Math.max(1, Math.ceil(durationInHours / 8)); // 8 hours driving per day
-          estimatedTime = `${totalDays} dia${totalDays > 1 ? 's' : ''}`;
-          cost = Math.max(25, distance * 0.5); // Minimum R$ 25, then R$ 0.50 per km
+          // Shipping company: business days estimate
+          const travelHours = duration / 3600;
+          const drivingDays = Math.ceil(travelHours / 10); // 10h driving per day
+          const totalDays = Math.max(2, drivingDays + 1); // +1 day processing
+          estimatedTime = `${totalDays}-${totalDays + 2} dias úteis`;
+          
+          // Pricing: R$15 base + R$0.40/km, with weight tiers
+          cost = 15 + distance * 0.40;
+          cost = Math.min(cost, 200); // Cap at R$200
         }
       } else {
         throw new Error('Failed to calculate route');
@@ -96,20 +114,22 @@ export const calculateDeliveryDetails = async (
     } catch (error) {
       console.error('Error calculating real route, using fallback:', error);
       
-      // Fallback to simple calculation
-      distance = Math.sqrt(
-        Math.pow(destination.lat - actualOrigin.lat, 2) + 
-        Math.pow(destination.lng - actualOrigin.lng, 2)
-      ) * 111; // Rough km conversion
+      // Fallback using Haversine * 1.3 road factor
+      const R = 6371;
+      const dLat = (destination.lat - actualOrigin.lat) * Math.PI / 180;
+      const dLng = (destination.lng - actualOrigin.lng) * Math.PI / 180;
+      const a = Math.sin(dLat/2)**2 + Math.cos(actualOrigin.lat*Math.PI/180) * Math.cos(destination.lat*Math.PI/180) * Math.sin(dLng/2)**2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      distance = R * c * 1.3;
       
       if (deliveryMethod === 'entrega') {
-        const hours = Math.max(2, Math.floor(distance / 50)); // 50 km/h average
-        estimatedTime = `${hours} hora${hours > 1 ? 's' : ''}`;
-        cost = Math.max(15, distance * 0.8);
+        const hours = Math.max(2, Math.ceil(distance / 40) + 1);
+        estimatedTime = hours >= 24 ? `${Math.ceil(hours/24)} dia(s)` : `${hours} hora${hours > 1 ? 's' : ''}`;
+        cost = Math.min(8 + distance * (distance <= 20 ? 1.50 : 0.80), 150);
       } else {
-        const days = Math.max(1, Math.ceil(distance / 400)); // 400 km per day
-        estimatedTime = `${days} dia${days > 1 ? 's' : ''}`;
-        cost = Math.max(25, distance * 0.5);
+        const days = Math.max(2, Math.ceil(distance / 400) + 1);
+        estimatedTime = `${days}-${days + 2} dias úteis`;
+        cost = Math.min(15 + distance * 0.40, 200);
       }
     }
   }
