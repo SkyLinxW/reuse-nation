@@ -17,13 +17,15 @@ interface DeliveryFormProps {
   onDeliveryMethodChange: (method: 'retirada_local' | 'entrega' | 'transportadora') => void;
   onDeliveryDataChange: (data: any) => void;
   sellerAddress: string;
+  sellerCoordinates?: Coordinates | null;
 }
 
 export const DeliveryForm = ({ 
   deliveryMethod, 
   onDeliveryMethodChange, 
   onDeliveryDataChange,
-  sellerAddress 
+  sellerAddress,
+  sellerCoordinates
 }: DeliveryFormProps) => {
   const [deliveryData, setDeliveryData] = useState({
     address: '',
