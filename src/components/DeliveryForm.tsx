@@ -17,13 +17,15 @@ interface DeliveryFormProps {
   onDeliveryMethodChange: (method: 'retirada_local' | 'entrega' | 'transportadora') => void;
   onDeliveryDataChange: (data: any) => void;
   sellerAddress: string;
+  sellerCoordinates?: Coordinates | null;
 }
 
 export const DeliveryForm = ({ 
   deliveryMethod, 
   onDeliveryMethodChange, 
   onDeliveryDataChange,
-  sellerAddress 
+  sellerAddress,
+  sellerCoordinates
 }: DeliveryFormProps) => {
   const [deliveryData, setDeliveryData] = useState({
     address: '',
@@ -42,9 +44,10 @@ export const DeliveryForm = ({
     const updateCalculation = async () => {
       if (deliveryData.coordinates) {
         try {
-          // For DeliveryForm, we use São Paulo as default origin since we don't have product context here
+          // Use actual seller coordinates if available, otherwise fallback to São Paulo
+          const origin = sellerCoordinates || { lat: -23.5505, lng: -46.6333 };
           const calculation = await calculateDeliveryDetails(
-            { lat: -23.5505, lng: -46.6333 }, // São Paulo coordinates as origin
+            origin,
             deliveryData.coordinates, 
             deliveryMethod
           );
@@ -56,7 +59,7 @@ export const DeliveryForm = ({
     };
     
     updateCalculation();
-  }, [deliveryMethod, deliveryData.coordinates]);
+  }, [deliveryMethod, deliveryData.coordinates, sellerCoordinates]);
 
   const handleAddressSelected = (address: string, coordinates: Coordinates) => {
     console.log('DeliveryForm - Address selected:', { address, coordinates });

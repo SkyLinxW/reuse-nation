@@ -219,11 +219,14 @@ const calculateFallbackRoute = (origin: Coordinates, destination: Coordinates): 
     Math.sin(dLng / 2) * Math.sin(dLng / 2);
   
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const distance = R * c;
+  const straightLineDistance = R * c;
   
-  // Estimate duration: average speed of 60 km/h for highways, 40 km/h for cities
-  const averageSpeed = distance > 100 ? 60 : 40;
-  const duration = (distance / averageSpeed) * 60; // in minutes
+  // Road distance is typically 1.3x straight-line distance
+  const distance = straightLineDistance * 1.3;
+  
+  // Estimate duration in SECONDS (to match OSRM format)
+  const averageSpeed = distance > 100 ? 70 : 40; // km/h
+  const duration = (distance / averageSpeed) * 3600; // convert hours to seconds
   
   // Generate simple linear route
   const coordinates = generateLinearRoute(origin, destination);
@@ -234,7 +237,7 @@ const calculateFallbackRoute = (origin: Coordinates, destination: Coordinates): 
     coordinates
   };
   
-  console.log('Fallback route calculated:', result);
+  console.log('Fallback route calculated:', { distance: result.distance.toFixed(1) + 'km', durationSeconds: result.duration });
   return result;
 };
 
