@@ -6,7 +6,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, name: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, name: string, phone?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -69,17 +69,30 @@ export const useAuthProvider = (): AuthContextType => {
     };
   }, []);
 
-  const signUp = async (email: string, password: string, name: string) => {
+  const signUp = async (email: string, password: string, name: string, phone?: string) => {
     const redirectUrl = `${window.location.origin}/`;
     
-    const { error } = await supabase.auth.signUp({
+    const { error, data } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
-        data: { name }
+        data: { name, phone }
       }
     });
+
+    // If signup succeeded and user is immediately available, update profile with phone
+    if (!error && data?.user && phone) {
+      try {
+        await supabase
+          .from('profiles')
+          .update({ phone })
+          .eq('user_id', data.user.id);
+      } catch (profileError) {
+        console.warn('Could not update profile phone immediately:', profileError);
+      }
+    }
+
     return { error };
   };
 

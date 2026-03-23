@@ -99,7 +99,7 @@ export const getWasteItems = async () => {
       .from('waste_items')
       .select(`
         *,
-        public_profiles!inner(name, avatar_url)
+        public_profiles(name, avatar_url)
       `)
       .eq('availability', true)
       .order('created_at', { ascending: false });
@@ -115,12 +115,12 @@ export const getWasteItems = async () => {
 export const getWasteItem = async (id: string) => {
   const { data, error } = await supabase
     .from('waste_items')
-    .select(`
+      .select(`
       *,
-      public_profiles!inner(name, avatar_url, bio)
+      public_profiles(name, avatar_url, bio)
     `)
-    .eq('id', id)
-    .single();
+      .eq('id', id)
+      .single();
   
   if (error) throw error;
   return data;
