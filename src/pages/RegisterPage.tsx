@@ -85,7 +85,7 @@ export const RegisterPage = ({ onNavigate }: RegisterPageProps) => {
         isVerified: false
       };
 
-      const { error } = await signUp(formData.email, formData.password, formData.name);
+      const { error } = await signUp(formData.email, formData.password, formData.name, formData.phone);
       
       if (error) {
         toast({
