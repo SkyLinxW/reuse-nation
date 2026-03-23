@@ -99,7 +99,7 @@ export const getWasteItems = async () => {
       .from('waste_items')
       .select(`
         *,
-        public_profiles!inner(name, avatar_url)
+        public_profiles(name, avatar_url)
       `)
       .eq('availability', true)
       .order('created_at', { ascending: false });
