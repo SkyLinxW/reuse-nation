@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ArrowLeft, Bell, Check, CheckCheck, MessageCircle, ShoppingCart, Heart, Star, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,19 +31,24 @@ export const NotificationsPage = ({ onNavigate }: NotificationsPageProps) => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
-  const loadNotifications = async () => {
+  const notifyNotificationsChanged = useCallback(() => {
+    window.dispatchEvent(new CustomEvent('notifications:changed'));
+  }, []);
+
+  const loadNotifications = useCallback(async () => {
     if (user) {
       try {
         setLoading(true);
         const userNotifications = await getNotifications(user.id);
         setNotifications(userNotifications || []);
+        notifyNotificationsChanged();
       } catch (error) {
         console.error('Error loading notifications:', error);
       } finally {
         setLoading(false);
       }
     }
-  };
+  }, [user, notifyNotificationsChanged]);
 
   useEffect(() => {
     loadNotifications();
@@ -65,7 +70,7 @@ export const NotificationsPage = ({ onNavigate }: NotificationsPageProps) => {
         supabase.removeChannel(channel);
       };
     }
-  }, [user?.id]);
+  }, [user?.id, loadNotifications]);
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {
@@ -77,6 +82,7 @@ export const NotificationsPage = ({ onNavigate }: NotificationsPageProps) => {
             : notification
         )
       );
+      notifyNotificationsChanged();
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
@@ -89,6 +95,7 @@ export const NotificationsPage = ({ onNavigate }: NotificationsPageProps) => {
       setNotifications(prev =>
         prev.map(notification => ({ ...notification, read: true }))
       );
+      notifyNotificationsChanged();
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
     }

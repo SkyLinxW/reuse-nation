@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Search, Menu, User, Heart, MessageCircle, Plus, ShoppingCart, Bell, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,14 +22,28 @@ export const Header = ({
   const [notificationCount, setNotificationCount] = useState(0);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
   const { user, signOut } = useAuth();
+
+  const refreshNotificationCount = useCallback(async () => {
+    if (!user) {
+      setNotificationCount(0);
+      return;
+    }
+
+    try {
+      const unreadCount = await getUnreadNotificationCount(user.id);
+      setNotificationCount(unreadCount);
+    } catch (error) {
+      console.error('Error refreshing notification count:', error);
+    }
+  }, [user]);
+
   useEffect(() => {
     const loadCounts = async () => {
       if (user) {
         try {
           const cartItems = await getCartItems(user.id);
           setCartCount(cartItems.length);
-          const unreadCount = await getUnreadNotificationCount(user.id);
-          setNotificationCount(unreadCount);
+          await refreshNotificationCount();
           const unreadMsgCount = await getUnreadMessagesCount(user.id);
           setUnreadMessagesCount(unreadMsgCount);
         } catch (error) {
@@ -41,7 +55,7 @@ export const Header = ({
         setUnreadMessagesCount(0);
       }
     };
-    
+
     loadCounts();
 
     // Set up real-time subscriptions
@@ -71,16 +85,15 @@ export const Header = ({
           { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
           async () => {
             setTimeout(async () => {
-              try {
-                const unreadCount = await getUnreadNotificationCount(user.id);
-                setNotificationCount(unreadCount);
-              } catch (error) {
-                console.error('Error updating notification count:', error);
-              }
+              await refreshNotificationCount();
             }, 100);
           }
         )
-        .subscribe();
+        .subscribe((status) => {
+          if (status === 'CHANNEL_ERROR') {
+            console.error('Notifications realtime channel disconnected, using fallback refresh.');
+          }
+        });
 
       // Real-time cart count subscription
       const cartChannel = supabase
@@ -101,13 +114,28 @@ export const Header = ({
         )
         .subscribe();
 
+      // Fallback sync when notifications are changed locally or realtime reconnects slowly
+      const handleNotificationsChanged = () => {
+        refreshNotificationCount();
+      };
+
+      const notificationPollingInterval = window.setInterval(() => {
+        refreshNotificationCount();
+      }, 20000);
+
+      window.addEventListener('notifications:changed', handleNotificationsChanged);
+      window.addEventListener('focus', handleNotificationsChanged);
+
       return () => {
+        window.clearInterval(notificationPollingInterval);
+        window.removeEventListener('notifications:changed', handleNotificationsChanged);
+        window.removeEventListener('focus', handleNotificationsChanged);
         supabase.removeChannel(messagesChannel);
         supabase.removeChannel(notificationsChannel);
         supabase.removeChannel(cartChannel);
       };
     }
-  }, [user]);
+  }, [user, refreshNotificationCount]);
   const handleLogout = async () => {
     await signOut();
     onNavigate('home');
