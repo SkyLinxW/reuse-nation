@@ -82,6 +82,7 @@ export const NotificationsPage = ({ onNavigate }: NotificationsPageProps) => {
             : notification
         )
       );
+      notifyNotificationsChanged();
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
@@ -94,6 +95,7 @@ export const NotificationsPage = ({ onNavigate }: NotificationsPageProps) => {
       setNotifications(prev =>
         prev.map(notification => ({ ...notification, read: true }))
       );
+      notifyNotificationsChanged();
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
     }
