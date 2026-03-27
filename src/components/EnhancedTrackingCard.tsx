@@ -70,8 +70,9 @@ export const EnhancedTrackingCard = ({
           destination = destinationCoords;
         } else {
           // Try delivery address
-          if (transaction.deliveryAddress && String(transaction.deliveryAddress).trim()) {
-            destination = await geocodeAddress(transaction.deliveryAddress);
+          const addr = (transaction as any).deliveryAddress as string | undefined;
+          if (addr && addr.trim()) {
+            destination = await geocodeAddress(addr);
           }
 
           // Try product location string
