@@ -77,9 +77,10 @@ export const EnhancedTrackingCard = ({
 
           // Try product location string
           if (!destination && product?.location) {
-            if (typeof product.location === 'string' && product.location.trim()) {
-              destination = await geocodeAddress(`${product.location}, Brasil`);
-            } else if (typeof product.location === 'object') {
+            const loc = product.location as any;
+            if (typeof loc === 'string' && loc.trim()) {
+              destination = await geocodeAddress(`${loc}, Brasil`);
+            } else if (typeof loc === 'object') {
               const loc = product.location as any;
               if (loc.coordinates?.lat) {
                 destination = loc.coordinates;
