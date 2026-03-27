@@ -157,14 +157,22 @@ export const SellerProfilePage = ({ onNavigate, sellerId }: SellerProfilePagePro
               </div>
 
               <Button 
-                className="w-full bg-eco-green hover:bg-eco-green/90"
+                className="w-full bg-primary hover:bg-primary/90"
+                disabled={user?.id === sellerId}
                 onClick={() => {
-                  console.log('Entrar em contato clicked, sellerId:', sellerId);
+                  if (!user) {
+                    toast({ title: "Login necessário", description: "Faça login para entrar em contato.", variant: "destructive" });
+                    return;
+                  }
+                  if (user.id === sellerId) {
+                    toast({ title: "Ação inválida", description: "Você não pode enviar mensagens para si mesmo.", variant: "destructive" });
+                    return;
+                  }
                   onNavigate(`messages?sellerId=${sellerId}`);
                 }}
               >
                 <MessageCircle className="w-4 h-4 mr-2" />
-                Entrar em Contato
+                {user?.id === sellerId ? 'Seu Perfil' : 'Entrar em Contato'}
               </Button>
             </CardContent>
           </Card>
