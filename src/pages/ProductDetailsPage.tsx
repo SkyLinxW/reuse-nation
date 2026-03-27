@@ -128,6 +128,15 @@ export const ProductDetailsPage = ({ onNavigate, productId }: ProductDetailsPage
       return;
     }
 
+    if (user.id === seller.user_id) {
+      toast({
+        title: "Ação inválida",
+        description: "Você não pode enviar mensagens para si mesmo.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const conversation = await getOrCreateConversation(user.id, seller.user_id);
       onNavigate(`messages?conversationId=${conversation.id}`);
