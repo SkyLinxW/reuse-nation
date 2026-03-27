@@ -7,6 +7,8 @@ import { WasteCard } from '@/components/WasteCard';
 import { ReviewCard } from '@/components/ReviewCard';
 import { getProfile, getWasteItems } from '@/lib/supabase';
 import { ArrowLeft, Star, MapPin, Calendar, MessageCircle } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 interface SellerProfilePageProps {
   onNavigate: (page: string) => void;
@@ -19,6 +21,8 @@ export const SellerProfilePage = ({ onNavigate, sellerId }: SellerProfilePagePro
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   // sellerId is now passed as a prop from the router
 
