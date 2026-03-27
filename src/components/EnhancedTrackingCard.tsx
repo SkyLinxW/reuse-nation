@@ -70,7 +70,7 @@ export const EnhancedTrackingCard = ({
           destination = destinationCoords;
         } else {
           // Try delivery address
-          if (transaction.deliveryAddress?.trim()) {
+          if (transaction.deliveryAddress && String(transaction.deliveryAddress).trim()) {
             destination = await geocodeAddress(transaction.deliveryAddress);
           }
 
