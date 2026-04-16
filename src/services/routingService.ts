@@ -8,8 +8,8 @@ export interface RouteInfo {
 }
 
 const OSRM_ENDPOINTS = [
-  'https://router.project-osrm.org',
   'https://routing.openstreetmap.de/routed-car',
+  'https://router.project-osrm.org',
 ];
 
 export const calculateRealRoute = async (
@@ -26,7 +26,7 @@ export const calculateRealRoute = async (
       try {
         console.log('Trying OSRM endpoint:', baseUrl);
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 6000);
+        const timeout = setTimeout(() => controller.abort(), 15000);
         const url = `${baseUrl}/route/v1/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson&steps=false`;
         const response = await fetch(url, {
           headers: { 'User-Agent': 'EcoMarketplace/1.0' },
