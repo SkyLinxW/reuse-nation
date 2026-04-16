@@ -8,8 +8,8 @@ export interface RouteInfo {
 }
 
 const OSRM_ENDPOINTS = [
-  'https://router.project-osrm.org',
   'https://routing.openstreetmap.de/routed-car',
+  'https://router.project-osrm.org',
 ];
 
 export const calculateRealRoute = async (
